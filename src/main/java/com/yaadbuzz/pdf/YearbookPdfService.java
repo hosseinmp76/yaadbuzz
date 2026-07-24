@@ -112,10 +112,33 @@ public class YearbookPdfService {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             PdfRendererBuilder builder = new PdfRendererBuilder();
             builder.useFastMode();
-            builder.withHtmlContent(html, null);
+            // Non-null base URI lets OpenHTMLToPDF resolve absolute http(s) image URLs (avatars/logos).
+            builder.withHtmlContent(html, resolvePdfBaseUri(content));
             builder.toStream(out);
             builder.run();
             return out.toByteArray();
         }
+    }
+
+    private static String resolvePdfBaseUri(YearbookContent content) {
+        for (String candidate : new String[] {
+                content.coverMediaUrl(),
+                content.logoUrl()
+        }) {
+            if (candidate != null && !candidate.isBlank() && candidate.contains("://")) {
+                int scheme = candidate.indexOf("://");
+                int slash = candidate.indexOf('/', scheme + 3);
+                return slash > 0 ? candidate.substring(0, slash + 1) : candidate + "/";
+            }
+        }
+        for (YearbookContent.Member member : content.members()) {
+            String avatar = member.avatarUrl();
+            if (avatar != null && !avatar.isBlank() && avatar.contains("://")) {
+                int scheme = avatar.indexOf("://");
+                int slash = avatar.indexOf('/', scheme + 3);
+                return slash > 0 ? avatar.substring(0, slash + 1) : avatar + "/";
+            }
+        }
+        return "http://localhost/";
     }
 }

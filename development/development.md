@@ -91,10 +91,12 @@ Quarkus serves APIs on http://localhost:8080 with Java live reload. Disabling Qu
 nvm use --lts
 cd src/main/webui
 npm install          # first time / after lockfile changes
-npm run dev
+VITE_PROXY_API=1 npm run dev
 ```
 
-Open http://localhost:3000. Vite proxies `/graphql`, `/api`, and `/q` to `http://localhost:8080` (see `vite.config.ts`).
+Open http://127.0.0.1:3000. With `VITE_PROXY_API=1`, Vite proxies `/graphql`, `/api`, and `/q` to Quarkus on `:8080`.
+
+Do **not** enable that proxy while Quinoa is also managing Vite (`./mvnw quarkus:dev` without disabling the Quinoa dev server) — it deadlocks SPA requests on `:8080`.
 
 Useful frontend scripts:
 

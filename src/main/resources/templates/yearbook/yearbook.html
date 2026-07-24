@@ -3,136 +3,178 @@
 <head>
   <meta charset="UTF-8"/>
   <style>
-    @page { size: A4; margin: 24mm 18mm; }
+    /* OpenHTMLToPDF: prefer solid colors, tables, and simple blocks (no flex/gradient/opacity). */
+    @page { size: A4; margin: 18mm 16mm; }
     body {
       margin: 0;
       color: #1c1917;
+      font-size: 12pt;
+      line-height: 1.45;
     }
     body.theme-CLASSIC { font-family: Georgia, 'Times New Roman', serif; }
-    body.theme-MODERN { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    body.theme-MODERN { font-family: Helvetica, Arial, sans-serif; }
     body.theme-SCRAPBOOK { font-family: Georgia, 'Palatino Linotype', serif; }
-    body.theme-MINIMAL { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    body.theme-MINIMAL { font-family: Helvetica, Arial, sans-serif; }
 
-    .cover {
+    .cover-table {
+      width: 100%;
+      height: 240mm;
       page-break-after: always;
-      min-height: 220mm;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+      border-collapse: collapse;
+    }
+    .theme-CLASSIC .cover-table,
+    .theme-MODERN .cover-table {
+      background-color: {brandColor};
+      color: #ffffff;
+    }
+    .theme-SCRAPBOOK .cover-table {
+      background-color: #faf7f2;
+      color: #1c1917;
+      border: 8px solid {brandColor};
+    }
+    .theme-MINIMAL .cover-table {
+      background-color: #ffffff;
+      color: #1c1917;
+      border-top: 14px solid {brandColor};
+    }
+    .cover-cell {
       text-align: center;
-      padding: 40px;
-      color: #fafaf9;
-    }
-    .theme-CLASSIC .cover,
-    .theme-MODERN .cover {
-      background: linear-gradient(160deg, {brandColor} 0%, #134e4a 70%);
-    }
-    .theme-SCRAPBOOK .cover {
-      background: #faf7f2;
-      color: #1c1917;
-      border: 10px solid {brandColor};
-    }
-    .theme-MINIMAL .cover {
-      background: #ffffff;
-      color: #1c1917;
-      border-top: 12px solid {brandColor};
+      vertical-align: middle;
+      padding: 36px 28px;
     }
     .cover h1 {
-      font-size: 42px;
-      letter-spacing: 0.04em;
-      margin: 0 0 12px;
+      font-size: 34pt;
+      letter-spacing: 0.03em;
+      margin: 0 0 10px 0;
     }
     .cover h2 {
-      font-size: 24px;
+      font-size: 16pt;
       font-weight: normal;
       margin: 0;
-      opacity: 0.92;
     }
     .dedication {
-      margin-top: 28px;
+      margin: 22px auto 0 auto;
       max-width: 420px;
       font-style: italic;
       line-height: 1.5;
     }
-    .logo, .cover-media {
-      max-height: 80px;
-      margin-bottom: 24px;
+    .brand-mark {
+      margin-top: 28px;
+      font-size: 10pt;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
     }
-    .cover-media { max-height: 160px; max-width: 70%; }
+    .logo, .cover-media {
+      display: block;
+      margin: 0 auto 20px auto;
+      max-height: 90px;
+    }
+    .cover-media { max-height: 150px; max-width: 70%; }
+
     h3 {
       color: {brandColor};
       border-bottom: 2px solid {brandColor};
       padding-bottom: 6px;
-      margin-top: 28px;
+      margin: 26px 0 14px 0;
+      font-size: 16pt;
     }
     .theme-MINIMAL h3 {
       border-bottom-width: 1px;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      font-size: 14px;
+      font-size: 11pt;
     }
+
     .member {
       page-break-inside: avoid;
-      margin-bottom: 28px;
+      margin-bottom: 22px;
+      clear: both;
     }
     .theme-SCRAPBOOK .member {
       border: 1px solid #e7e5e4;
-      padding: 14px;
-      background: #fffdf8;
+      padding: 12px;
+      background-color: #fffdf8;
+    }
+    .avatar {
+      float: left;
+      width: 56px;
+      height: 56px;
+      margin: 0 12px 8px 0;
+      border: 2px solid {brandColor};
     }
     .member-header {
-      font-size: 22px;
-      margin-bottom: 6px;
+      font-size: 16pt;
+      margin: 0 0 4px 0;
     }
-    .bio { color: #57534e; margin-bottom: 10px; }
+    .bio {
+      color: #57534e;
+      margin: 0 0 8px 0;
+    }
     .tribute {
       margin: 8px 0;
-      padding: 10px 12px;
-      background: #f5f5f4;
-      border-left: 3px solid {brandColor};
+      padding: 8px 10px;
+      background-color: #f5f5f4;
+      border-left: 4px solid {brandColor};
+      clear: both;
     }
     .theme-MODERN .tribute {
-      background: #f8fafc;
-      border-left-width: 4px;
-      border-radius: 0 8px 8px 0;
+      background-color: #f1f5f9;
     }
-    .meta { font-size: 12px; color: #78716c; margin-top: 4px; }
+    .meta {
+      font-size: 9pt;
+      color: #78716c;
+      margin-top: 4px;
+    }
     .chip {
       display: inline-block;
-      margin: 2px 6px 2px 0;
-      padding: 2px 8px;
-      background: #ecfdf5;
-      color: #115e59;
-      border-radius: 4px;
-      font-size: 12px;
+      margin: 2px 5px 2px 0;
+      padding: 2px 7px;
+      background-color: #d1fae5;
+      color: #065f46;
+      border: 1px solid {brandColor};
+      font-size: 9pt;
     }
     .memory, .topic {
       page-break-inside: avoid;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e7e5e4;
+    }
+    .accent-bar {
+      height: 8px;
+      background-color: {brandColor};
+      margin-bottom: 18px;
     }
   </style>
 </head>
 <body class="theme-{theme}">
-  <section class="cover">
-    {#if coverMediaUrl}
-    <img class="cover-media" src="{coverMediaUrl}" alt="cover"/>
-    {#else if logoUrl}
-    <img class="logo" src="{logoUrl}" alt="logo"/>
-    {/if}
-    <h1>{title}</h1>
-    <h2>{subtitle}</h2>
-    {#if dedication}
-    <p class="dedication">{dedication}</p>
-    {/if}
-    <p>Yaadbuzz</p>
-  </section>
+  <table class="cover-table cover">
+    <tr>
+      <td class="cover-cell">
+        {#if coverMediaUrl}
+        <img class="cover-media" src="{coverMediaUrl}" alt="cover"/>
+        {#else if logoUrl}
+        <img class="logo" src="{logoUrl}" alt="logo"/>
+        {/if}
+        <h1>{title}</h1>
+        <h2>{subtitle}</h2>
+        {#if dedication}
+        <p class="dedication">{dedication}</p>
+        {/if}
+        <p class="brand-mark">Yaadbuzz</p>
+      </td>
+    </tr>
+  </table>
 
   {#if showMembers}
+  <div class="accent-bar"></div>
   <section>
     <h3>Members</h3>
     {#for member in members}
     <div class="member">
+      {#if member.avatarUrl}
+      <img class="avatar" src="{member.avatarUrl}" alt=""/>
+      {/if}
       <div class="member-header">{member.nickname}</div>
       {#if member.bio}
       <div class="bio">{member.bio}</div>

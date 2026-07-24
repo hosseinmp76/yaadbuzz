@@ -113,8 +113,22 @@
 }
 
 @media print {
-  body {
-    background: #fff !important;
+  /* Keep yearbook colors independent of the app UI theme (dark themes were washing print to grey). */
+  html,
+  body,
+  .yearbook-print-root,
+  .yearbook-doc,
+  .yearbook-doc * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  html,
+  body,
+  .yearbook-print-root {
+    background: #ffffff !important;
+    color: #1c1917 !important;
   }
 
   .no-print {
@@ -123,6 +137,13 @@
 
   .yearbook-doc {
     box-shadow: none !important;
+    background: #ffffff !important;
+    color: #1c1917 !important;
+  }
+
+  .yearbook-body {
+    background: #ffffff !important;
+    color: #1c1917 !important;
   }
 
   .yearbook-cover {
@@ -131,5 +152,40 @@
 
   .yearbook-block {
     break-inside: avoid;
+  }
+
+  .yearbook-cover--branded {
+    background-image: none !important;
+    background-color: var(--yb-brand, #0f766e) !important;
+    color: #ffffff !important;
+  }
+
+  .yearbook-cover--branded * {
+    color: #ffffff !important;
+    opacity: 1 !important;
+  }
+
+  .yearbook-cover--scrapbook {
+    background-image: none !important;
+    background-color: #faf7f2 !important;
+    border: 10px solid var(--yb-brand, #0f766e) !important;
+    color: #1c1917 !important;
+  }
+
+  .yearbook-cover--scrapbook * {
+    color: #1c1917 !important;
+    opacity: 1 !important;
+  }
+
+  .yearbook-cover--minimal {
+    background-image: none !important;
+    background-color: #ffffff !important;
+    border-top: 12px solid var(--yb-brand, #0f766e) !important;
+    color: #1c1917 !important;
+  }
+
+  .yearbook-cover--minimal * {
+    color: #1c1917 !important;
+    opacity: 1 !important;
   }
 }

@@ -1,11 +1,5 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { ThemeContext, type ThemeContextValue } from './theme-context'
 import {
   THEME_STORAGE_KEY,
   THEMES,
@@ -13,15 +7,6 @@ import {
   type ThemeDefinition,
   type ThemeId,
 } from './themes'
-
-type ThemeContextValue = {
-  themeId: ThemeId
-  theme: ThemeDefinition
-  themes: ThemeDefinition[]
-  setThemeId: (id: ThemeId) => void
-}
-
-const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 function applyTheme(theme: ThemeDefinition) {
   const root = document.documentElement
@@ -55,10 +40,4 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
-}
-
-export function useTheme() {
-  const ctx = useContext(ThemeContext)
-  if (!ctx) throw new Error('ThemeProvider missing')
-  return ctx
 }

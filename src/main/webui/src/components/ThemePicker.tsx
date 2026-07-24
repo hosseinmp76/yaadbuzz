@@ -1,6 +1,6 @@
 import { Check, Palette } from '@phosphor-icons/react'
 import clsx from 'clsx'
-import { useTheme } from '../theme/ThemeProvider'
+import { useTheme } from '../theme/theme-context'
 import type { ThemeId } from '../theme/themes'
 
 export function ThemePicker({ compact = false }: { compact?: boolean }) {

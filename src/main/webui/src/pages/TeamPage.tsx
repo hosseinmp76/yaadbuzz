@@ -1,5 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { BookOpenText, DownloadSimple, MagnifyingGlass, Printer, Sparkle } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useClient, useMutation, useQuery } from 'urql'
@@ -23,6 +23,7 @@ import {
   UPDATE_TEAM_SETTINGS,
   UPDATE_YEARBOOK_SETTINGS,
   VOTE_TOPIC,
+  YEARBOOK,
   YEARBOOK_EXPORTS,
 } from '../api/queries'
 
@@ -430,6 +431,8 @@ function YearbookTab({
     yearbookShowAwards?: boolean
   }
 }) {
+  const navigate = useNavigate()
+  const client = useClient()
   const [{ data }, reexecute] = useQuery({ query: YEARBOOK_EXPORTS, variables: { teamId } })
   const [, requestExport] = useMutation(REQUEST_EXPORT)
   const [, updateYearbook] = useMutation(UPDATE_YEARBOOK_SETTINGS)
@@ -446,6 +449,7 @@ function YearbookTab({
   )
   const [showMemories, setShowMemories] = useState(team?.yearbookShowMemories ?? true)
   const [showAwards, setShowAwards] = useState(team?.yearbookShowAwards ?? true)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setTitle(team?.yearbookTitle ?? '')
@@ -474,8 +478,7 @@ function YearbookTab({
     reexecute({ requestPolicy: 'network-only' })
   }
 
-  async function onSaveCustomization(e: FormEvent) {
-    e.preventDefault()
+  async function saveCustomization(showToast = true) {
     const result = await updateYearbook({
       teamId,
       title,
@@ -490,10 +493,36 @@ function YearbookTab({
     })
     if (result.error) {
       toast.error(result.error.message)
-      return
+      return false
     }
-    toast.success('Yearbook customization saved')
+    // Refresh cached team + assembled yearbook so the print page never shows a stale theme.
     reTeam({ requestPolicy: 'network-only' })
+    await client
+      .query(YEARBOOK, { teamId }, { requestPolicy: 'network-only' })
+      .toPromise()
+    if (showToast) toast.success('Yearbook customization saved')
+    return true
+  }
+
+  async function onSaveCustomization(e: FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      await saveCustomization(true)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function openYearbookPreview() {
+    setSaving(true)
+    try {
+      const ok = await saveCustomization(false)
+      if (!ok) return
+      navigate(`/teams/${teamId}/yearbook`)
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -504,21 +533,18 @@ function YearbookTab({
           View & print online
         </h2>
         <p className="text-muted">
-          Open the live yearbook in your browser, then use Print → Save as PDF.
+          Open the live yearbook in your browser, then use Print → Save as PDF. Current form
+          values are saved before opening.
         </p>
         <div className="flex flex-wrap gap-2">
-          <Link to={`/teams/${teamId}/yearbook`}>
-            <Button>
-              <BookOpenText size={18} />
-              Open yearbook
-            </Button>
-          </Link>
-          <Link to={`/teams/${teamId}/yearbook`}>
-            <Button variant="secondary">
-              <Printer size={18} />
-              Print-ready page
-            </Button>
-          </Link>
+          <Button onClick={openYearbookPreview} disabled={saving}>
+            <BookOpenText size={18} />
+            Open yearbook
+          </Button>
+          <Button variant="secondary" onClick={openYearbookPreview} disabled={saving}>
+            <Printer size={18} />
+            Print-ready page
+          </Button>
         </div>
       </section>
 
@@ -615,7 +641,9 @@ function YearbookTab({
           <Toggle label="Show memories" checked={showMemories} onChange={setShowMemories} />
           <Toggle label="Show awards" checked={showAwards} onChange={setShowAwards} />
         </div>
-        <Button type="submit">Save yearbook design</Button>
+        <Button type="submit" disabled={saving}>
+          {saving ? 'Saving…' : 'Save yearbook design'}
+        </Button>
       </form>
     </div>
   )
