@@ -1,7 +1,12 @@
-import { type FormEvent, useCallback, useEffect, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { DownloadSimple, MagnifyingGlass, Sparkle } from '@phosphor-icons/react'
+import { toast } from 'sonner'
 import { useClient, useMutation, useQuery } from 'urql'
 import Layout from '../components/Layout'
+import { ThemePicker } from '../components/ThemePicker'
+import { Button } from '../components/ui/Button'
+import { Input, Label, Select, Textarea } from '../components/ui/Field'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 import { downloadYearbook } from '../api/graphql'
 import {
@@ -33,20 +38,39 @@ export default function TeamPage() {
 
   return (
     <Layout>
-      <Link to={team ? `/orgs/${team.organizationId}` : '/app'} className="muted">← Back</Link>
+      <Link
+        to={team ? `/orgs/${team.organizationId}` : '/app'}
+        className="text-sm font-semibold text-muted hover:text-ink"
+      >
+        ← Back
+      </Link>
       <h1 className="page-title">{team?.name ?? 'Team'}</h1>
-      <p className="muted">{team?.tributesRevealed ? 'Tributes are revealed' : 'Tributes stay sealed until reveal day'}</p>
+      <p className="text-muted">
+        {team?.tributesRevealed
+          ? 'Tributes are revealed'
+          : 'Tributes stay sealed until reveal day'}
+      </p>
       <div className="tabs">
-        {(['members', 'memories', 'topics', 'search', 'yearbook', 'settings'] as Tab[]).map((t) => (
-          <button key={t} className={tab === t ? 'active' : ''} onClick={() => setTab(t)}>{t}</button>
-        ))}
+        {(['members', 'memories', 'topics', 'search', 'yearbook', 'settings'] as Tab[]).map(
+          (t) => (
+            <button key={t} className={tab === t ? 'active' : ''} onClick={() => setTab(t)}>
+              {t}
+            </button>
+          ),
+        )}
       </div>
       {tab === 'members' && <MembersTab teamId={teamId} />}
       {tab === 'memories' && <MemoriesTab teamId={teamId} />}
       {tab === 'topics' && <TopicsTab teamId={teamId} />}
       {tab === 'search' && <SearchTab teamId={teamId} />}
       {tab === 'yearbook' && <YearbookTab teamId={teamId} />}
-      {tab === 'settings' && <SettingsTab teamId={teamId} revealTributes={!!team?.revealTributes} brandColor={team?.brandColor ?? '#0F766E'} />}
+      {tab === 'settings' && (
+        <SettingsTab
+          teamId={teamId}
+          revealTributes={!!team?.revealTributes}
+          brandColor={team?.brandColor ?? '#0F766E'}
+        />
+      )}
     </Layout>
   )
 }
@@ -58,48 +82,81 @@ function MembersTab({ teamId }: { teamId: string }) {
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasNext, setHasNext] = useState(false)
   const [loading, setLoading] = useState(false)
+  const loadingRef = useRef(false)
+  const cursorRef = useRef<string | null>(null)
 
-  const load = useCallback(async (reset = false) => {
-    if (loading) return
-    setLoading(true)
-    const after = reset ? null : cursor
-    const result = await client.query(TEAM_MEMBERS, {
-      teamId, first: 12, after, query: query || null,
-    }).toPromise()
-    const page = result.data?.teamMembers
-    if (page) {
-      setItems((prev) => reset ? page.items : [...prev, ...page.items])
-      setCursor(page.nextCursor)
-      setHasNext(page.hasNext)
-    }
-    setLoading(false)
-  }, [client, teamId, cursor, query, loading])
+  useEffect(() => {
+    cursorRef.current = cursor
+  }, [cursor])
+
+  const load = useCallback(
+    async (reset = false) => {
+      if (loadingRef.current) return
+      loadingRef.current = true
+      setLoading(true)
+      const after = reset ? null : cursorRef.current
+      const result = await client
+        .query(TEAM_MEMBERS, {
+          teamId,
+          first: 12,
+          after,
+          query: query || null,
+        })
+        .toPromise()
+      const page = result.data?.teamMembers
+      if (page) {
+        setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
+        setCursor(page.nextCursor)
+        setHasNext(page.hasNext)
+      }
+      loadingRef.current = false
+      setLoading(false)
+    },
+    [client, teamId, query],
+  )
 
   useEffect(() => {
     setItems([])
     setCursor(null)
     setHasNext(false)
     void load(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teamId, query])
+  }, [teamId, query, load])
 
-  const sentinelRef = useInfiniteScroll(() => { if (hasNext) void load(false) }, hasNext && !loading)
+  const sentinelRef = useInfiniteScroll(() => {
+    if (hasNext) void load(false)
+  }, hasNext && !loading)
 
   return (
     <section className="stack">
-      <input placeholder="Search members…" value={query} onChange={(e) => setQuery(e.target.value)} />
-      <div className="list">
+      <Label className="mb-0">
+        <span className="sr-only">Search members</span>
+        <div className="relative">
+          <MagnifyingGlass
+            size={18}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+          />
+          <Input
+            className="pl-10"
+            placeholder="Search members…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+      </Label>
+      <div className="stack">
         {items.map((m) => (
           <Link key={m.id} to={`/members/${m.id}`} className="list-item">
             <div>
               <strong>{m.nickname}</strong>
-              <div className="muted">{m.bio || 'No bio yet'}</div>
+              <div className="text-sm text-muted">{m.bio || 'No bio yet'}</div>
             </div>
             <span className="chip">{m.role}</span>
           </Link>
         ))}
       </div>
-      <div ref={sentinelRef} className="infinite-sentinel">{loading ? 'Loading…' : hasNext ? 'Scroll for more' : 'End of list'}</div>
+      <div ref={sentinelRef} className="infinite-sentinel">
+        {loading ? 'Loading…' : hasNext ? 'Scroll for more' : 'End of list'}
+      </div>
     </section>
   )
 }
@@ -112,31 +169,53 @@ function MemoriesTab({ teamId }: { teamId: string }) {
   const [hasNext, setHasNext] = useState(false)
   const [title, setTitle] = useState('')
   const [bodyText, setBodyText] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const cursorRef = useRef<string | null>(null)
 
-  const load = useCallback(async (reset = false) => {
-    const result = await client.query(MEMORIES, {
-      teamId, first: 10, after: reset ? null : cursor,
-    }).toPromise()
-    const page = result.data?.memories
-    if (page) {
-      setItems((prev) => reset ? page.items : [...prev, ...page.items])
-      setCursor(page.nextCursor)
-      setHasNext(page.hasNext)
-    }
-  }, [client, teamId, cursor])
+  useEffect(() => {
+    cursorRef.current = cursor
+  }, [cursor])
 
-  useEffect(() => { void load(true) }, [teamId])
-  const sentinelRef = useInfiniteScroll(() => { if (hasNext) void load(false) }, hasNext)
+  const load = useCallback(
+    async (reset = false) => {
+      const result = await client
+        .query(MEMORIES, {
+          teamId,
+          first: 10,
+          after: reset ? null : cursorRef.current,
+        })
+        .toPromise()
+      const page = result.data?.memories
+      if (page) {
+        setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
+        setCursor(page.nextCursor)
+        setHasNext(page.hasNext)
+      }
+    },
+    [client, teamId],
+  )
+
+  useEffect(() => {
+    void load(true)
+  }, [teamId, load])
+
+  const sentinelRef = useInfiniteScroll(() => {
+    if (hasNext) void load(false)
+  }, hasNext)
 
   async function onCreate(e: FormEvent) {
     e.preventDefault()
-    setError(null)
-    const result = await createMemory({ teamId, title: title || null, bodyText, privateMemory: false, taggedIds: [] })
+    const result = await createMemory({
+      teamId,
+      title: title || null,
+      bodyText,
+      privateMemory: false,
+      taggedIds: [],
+    })
     if (result.error) {
-      setError(result.error.message)
+      toast.error(result.error.message)
       return
     }
+    toast.success('Memory posted')
     setTitle('')
     setBodyText('')
     setCursor(null)
@@ -144,23 +223,35 @@ function MemoriesTab({ teamId }: { teamId: string }) {
   }
 
   return (
-    <div className="grid-2">
+    <div className="grid gap-4 md:grid-cols-2">
       <section className="stack">
         {items.map((m) => (
           <article key={m.id} className="panel">
             <strong>{m.title || 'Untitled memory'}</strong>
-            <p>{m.bodyText}</p>
-            <div className="muted">— {m.writer.nickname}</div>
+            <p className="mt-2 whitespace-pre-wrap">{m.bodyText}</p>
+            <div className="mt-2 text-sm text-muted">— {m.writer.nickname}</div>
           </article>
         ))}
-        <div ref={sentinelRef} className="infinite-sentinel">{hasNext ? 'Loading more…' : 'No more memories'}</div>
+        <div ref={sentinelRef} className="infinite-sentinel">
+          {hasNext ? 'Loading more…' : 'No more memories'}
+        </div>
       </section>
-      <form className="panel" onSubmit={onCreate}>
-        <h2>Share a memory</h2>
-        <label>Title<input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
-        <label>Story<textarea value={bodyText} onChange={(e) => setBodyText(e.target.value)} rows={5} required /></label>
-        {error && <p className="error">{error}</p>}
-        <button type="submit">Post</button>
+      <form className="panel stack" onSubmit={onCreate}>
+        <h2 className="font-display text-xl tracking-tight">Share a memory</h2>
+        <Label>
+          Title
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+        </Label>
+        <Label>
+          Story
+          <Textarea
+            value={bodyText}
+            onChange={(e) => setBodyText(e.target.value)}
+            rows={5}
+            required
+          />
+        </Label>
+        <Button type="submit">Post</Button>
       </form>
     </div>
   )
@@ -168,7 +259,10 @@ function MemoriesTab({ teamId }: { teamId: string }) {
 
 function TopicsTab({ teamId }: { teamId: string }) {
   const [{ data }, reexecute] = useQuery({ query: TOPICS, variables: { teamId } })
-  const [{ data: membersData }] = useQuery({ query: TEAM_MEMBERS, variables: { teamId, first: 50 } })
+  const [{ data: membersData }] = useQuery({
+    query: TEAM_MEMBERS,
+    variables: { teamId, first: 50 },
+  })
   const [, createTopic] = useMutation(CREATE_TOPIC)
   const [, voteTopic] = useMutation(VOTE_TOPIC)
   const [title, setTitle] = useState('')
@@ -188,54 +282,79 @@ function TopicsTab({ teamId }: { teamId: string }) {
 
   async function onCreate(e: FormEvent) {
     e.preventDefault()
-    await createTopic({ teamId, title })
+    const result = await createTopic({ teamId, title })
+    if (result.error) {
+      toast.error(result.error.message)
+      return
+    }
+    toast.success('Topic added')
     setTitle('')
     reexecute({ requestPolicy: 'network-only' })
   }
 
   async function onVote(e: FormEvent) {
     e.preventDefault()
-    await voteTopic({ topicId: selectedTopic, nomineeId, repetitions: 1 })
+    const result = await voteTopic({ topicId: selectedTopic, nomineeId, repetitions: 1 })
+    if (result.error) {
+      toast.error(result.error.message)
+      return
+    }
+    toast.success('Vote cast')
     reStandings({ requestPolicy: 'network-only' })
   }
 
   return (
-    <div className="grid-2">
+    <div className="grid gap-4 md:grid-cols-2">
       <section className="panel stack">
-        <h2>Award topics</h2>
-        <div className="list">
-          {(data?.topics ?? []).map((t: any) => (
-            <button key={t.id} className={selectedTopic === t.id ? 'active' : 'secondary'} onClick={() => setSelectedTopic(t.id)}>
+        <h2 className="font-display text-xl tracking-tight">Award topics</h2>
+        <div className="stack">
+          {(data?.topics ?? []).map((t: { id: string; title: string }) => (
+            <Button
+              key={t.id}
+              variant={selectedTopic === t.id ? 'primary' : 'secondary'}
+              onClick={() => setSelectedTopic(t.id)}
+            >
               {t.title}
-            </button>
+            </Button>
           ))}
         </div>
-        <form onSubmit={onCreate}>
-          <label>New topic<input value={title} onChange={(e) => setTitle(e.target.value)} required /></label>
-          <button type="submit">Add topic</button>
+        <form className="stack" onSubmit={onCreate}>
+          <Label>
+            New topic
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
+          </Label>
+          <Button type="submit">Add topic</Button>
         </form>
       </section>
       <section className="panel stack">
-        <h2>Vote & standings</h2>
-        <form onSubmit={onVote}>
-          <label>
+        <h2 className="font-display text-xl tracking-tight">Vote & standings</h2>
+        <form className="stack" onSubmit={onVote}>
+          <Label>
             Nominee
-            <select value={nomineeId} onChange={(e) => setNomineeId(e.target.value)} required>
+            <Select value={nomineeId} onChange={(e) => setNomineeId(e.target.value)} required>
               <option value="">Select member</option>
-              {(membersData?.teamMembers?.items ?? []).map((m: any) => (
-                <option key={m.id} value={m.id}>{m.nickname}</option>
-              ))}
-            </select>
-          </label>
-          <button type="submit" disabled={!selectedTopic}>Cast vote</button>
+              {(membersData?.teamMembers?.items ?? []).map(
+                (m: { id: string; nickname: string }) => (
+                  <option key={m.id} value={m.id}>
+                    {m.nickname}
+                  </option>
+                ),
+              )}
+            </Select>
+          </Label>
+          <Button type="submit" disabled={!selectedTopic}>
+            Cast vote
+          </Button>
         </form>
-        <div className="list">
-          {(standingsData?.topicStandings ?? []).map((s: any) => (
-            <div key={s.nominee.id} className="list-item">
-              <strong>{s.nominee.nickname}</strong>
-              <span className="chip">{s.score}</span>
-            </div>
-          ))}
+        <div className="stack">
+          {(standingsData?.topicStandings ?? []).map(
+            (s: { nominee: { id: string; nickname: string }; score: number }) => (
+              <div key={s.nominee.id} className="list-item">
+                <strong>{s.nominee.nickname}</strong>
+                <span className="chip">{s.score}</span>
+              </div>
+            ),
+          )}
         </div>
       </section>
     </div>
@@ -257,18 +376,34 @@ function SearchTab({ teamId }: { teamId: string }) {
 
   return (
     <section className="panel stack">
-      <input placeholder="Search members, tributes, memories, topics…" value={q} onChange={(e) => setQ(e.target.value)} />
-      {fetching && <p className="muted">Searching…</p>}
-      <div className="list">
-        {(data?.search?.items ?? []).map((hit: any) => (
-          <div key={`${hit.type}-${hit.id}`} className="list-item">
-            <div>
-              <span className="chip">{hit.type}</span>
-              <strong>{hit.title || 'Result'}</strong>
-              <div className="muted">{hit.snippet}</div>
+      <Label className="mb-0">
+        <span className="sr-only">Search</span>
+        <div className="relative">
+          <MagnifyingGlass
+            size={18}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+          />
+          <Input
+            className="pl-10"
+            placeholder="Search members, tributes, memories, topics…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+        </div>
+      </Label>
+      {fetching && <p className="text-muted">Searching…</p>}
+      <div className="stack">
+        {(data?.search?.items ?? []).map(
+          (hit: { type: string; id: string; title?: string; snippet?: string }) => (
+            <div key={`${hit.type}-${hit.id}`} className="list-item">
+              <div>
+                <span className="chip">{hit.type}</span>
+                <strong className="ml-2">{hit.title || 'Result'}</strong>
+                <div className="text-sm text-muted">{hit.snippet}</div>
+              </div>
             </div>
-          </div>
-        ))}
+          ),
+        )}
       </div>
     </section>
   )
@@ -277,7 +412,6 @@ function SearchTab({ teamId }: { teamId: string }) {
 function YearbookTab({ teamId }: { teamId: string }) {
   const [{ data }, reexecute] = useQuery({ query: YEARBOOK_EXPORTS, variables: { teamId } })
   const [, requestExport] = useMutation(REQUEST_EXPORT)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const id = setInterval(() => reexecute({ requestPolicy: 'network-only' }), 5000)
@@ -285,43 +419,69 @@ function YearbookTab({ teamId }: { teamId: string }) {
   }, [reexecute])
 
   async function onGenerate() {
-    setError(null)
     const result = await requestExport({ teamId })
-    if (result.error) setError(result.error.message)
+    if (result.error) {
+      toast.error(result.error.message)
+      return
+    }
+    toast.success('Yearbook generation started')
     reexecute({ requestPolicy: 'network-only' })
   }
 
   return (
     <section className="panel stack">
-      <h2>Yearbook PDF</h2>
-      <p className="muted">Generate a printable yearbook from tributes, memories, awards, and characteristics.</p>
-      <button onClick={onGenerate}>Generate yearbook</button>
-      {error && <p className="error">{error}</p>}
-      <div className="list">
-        {(data?.yearbookExports ?? []).map((exp: any) => (
-          <div key={exp.id} className="list-item">
-            <div>
-              <strong>{exp.status}</strong>
-              <div className="muted">{new Date(exp.createdAt).toLocaleString()}</div>
-              {exp.errorMessage && <div className="error">{exp.errorMessage}</div>}
+      <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
+        <Sparkle size={22} weight="duotone" className="text-accent" />
+        Yearbook PDF
+      </h2>
+      <p className="text-muted">
+        Generate a printable yearbook from tributes, memories, awards, and characteristics.
+      </p>
+      <Button onClick={onGenerate}>Generate yearbook</Button>
+      <div className="stack">
+        {(data?.yearbookExports ?? []).map(
+          (exp: {
+            id: string
+            status: string
+            createdAt: string
+            errorMessage?: string
+          }) => (
+            <div key={exp.id} className="list-item">
+              <div>
+                <strong>{exp.status}</strong>
+                <div className="text-sm text-muted">
+                  {new Date(exp.createdAt).toLocaleString()}
+                </div>
+                {exp.errorMessage && <div className="text-danger">{exp.errorMessage}</div>}
+              </div>
+              {exp.status === 'READY' && (
+                <Button variant="secondary" onClick={() => downloadYearbook(exp.id)}>
+                  <DownloadSimple size={18} />
+                  Download
+                </Button>
+              )}
             </div>
-            {exp.status === 'READY' && (
-              <button className="secondary" onClick={() => downloadYearbook(exp.id)}>Download</button>
-            )}
-          </div>
-        ))}
+          ),
+        )}
       </div>
     </section>
   )
 }
 
-function SettingsTab({ teamId, revealTributes, brandColor }: { teamId: string; revealTributes: boolean; brandColor: string }) {
+function SettingsTab({
+  teamId,
+  revealTributes,
+  brandColor,
+}: {
+  teamId: string
+  revealTributes: boolean
+  brandColor: string
+}) {
   const [, createInvite] = useMutation(CREATE_INVITE)
   const [, updateSettings] = useMutation(UPDATE_TEAM_SETTINGS)
   const [inviteCode, setInviteCode] = useState<string | null>(null)
   const [reveal, setReveal] = useState(revealTributes)
   const [color, setColor] = useState(brandColor)
-  const [message, setMessage] = useState<string | null>(null)
 
   useEffect(() => {
     setReveal(revealTributes)
@@ -330,34 +490,56 @@ function SettingsTab({ teamId, revealTributes, brandColor }: { teamId: string; r
 
   async function onInvite() {
     const result = await createInvite({ teamId, role: 'MEMBER', maxUses: 50 })
+    if (result.error) {
+      toast.error(result.error.message)
+      return
+    }
     if (result.data?.createInvite?.code) {
       setInviteCode(result.data.createInvite.code)
+      toast.success('Invite code created')
     }
   }
 
   async function onSave(e: FormEvent) {
     e.preventDefault()
     const result = await updateSettings({ teamId, brandColor: color, revealTributes: reveal })
-    setMessage(result.error ? result.error.message : 'Settings saved')
+    if (result.error) {
+      toast.error(result.error.message)
+      return
+    }
+    toast.success('Settings saved')
   }
 
   return (
-    <div className="grid-2">
+    <div className="grid gap-4 md:grid-cols-2">
       <section className="panel stack">
-        <h2>Invites</h2>
-        <button onClick={onInvite}>Create invite code</button>
-        {inviteCode && <p>Share code: <strong>{inviteCode}</strong></p>}
+        <h2 className="font-display text-xl tracking-tight">Invites</h2>
+        <Button onClick={onInvite}>Create invite code</Button>
+        {inviteCode && (
+          <p>
+            Share code: <strong>{inviteCode}</strong>
+          </p>
+        )}
       </section>
-      <form className="panel" onSubmit={onSave}>
-        <h2>Team settings</h2>
-        <label>Brand color<input value={color} onChange={(e) => setColor(e.target.value)} /></label>
-        <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <input type="checkbox" checked={reveal} onChange={(e) => setReveal(e.target.checked)} />
+      <form className="panel stack" onSubmit={onSave}>
+        <h2 className="font-display text-xl tracking-tight">Team settings</h2>
+        <Label>
+          Brand color
+          <Input value={color} onChange={(e) => setColor(e.target.value)} />
+        </Label>
+        <label className="flex items-center gap-2 font-semibold">
+          <input
+            type="checkbox"
+            checked={reveal}
+            onChange={(e) => setReveal(e.target.checked)}
+          />
           Reveal tributes to recipients
         </label>
-        {message && <p className="muted">{message}</p>}
-        <button type="submit">Save</button>
+        <Button type="submit">Save</Button>
       </form>
+      <section className="panel md:col-span-2">
+        <ThemePicker />
+      </section>
     </div>
   )
 }

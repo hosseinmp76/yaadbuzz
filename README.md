@@ -81,6 +81,15 @@ source "$HOME/.sdkman/bin/sdkman-init.sh"
 
 Uses Quarkus Dev Services (Postgres + Elasticsearch 8). Quinoa and seed data are disabled in the `%test` profile.
 
+## Frontend lint
+
+```bash
+cd src/main/webui
+nvm use --lts
+npm run lint
+npm run lint:fix   # auto-fix where possible
+```
+
 ## API split
 
 | Surface | Purpose |

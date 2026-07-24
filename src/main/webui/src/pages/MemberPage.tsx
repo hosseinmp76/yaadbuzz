@@ -1,7 +1,10 @@
-import { type FormEvent, useCallback, useEffect, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { toast } from 'sonner'
 import { useClient, useMutation, useQuery } from 'urql'
 import Layout from '../components/Layout'
+import { Button } from '../components/ui/Button'
+import { Input, Label, Textarea } from '../components/ui/Field'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 import {
   ADD_CHARACTERISTIC,
@@ -37,10 +40,14 @@ export default function MemberPage() {
   const [charTitle, setCharTitle] = useState('')
   const [bio, setBio] = useState('')
   const [nickname, setNickname] = useState('')
-  const [message, setMessage] = useState<string | null>(null)
   const [items, setItems] = useState<any[]>([])
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasNext, setHasNext] = useState(false)
+  const cursorRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    cursorRef.current = cursor
+  }, [cursor])
 
   useEffect(() => {
     if (member) {
@@ -49,30 +56,36 @@ export default function MemberPage() {
     }
   }, [member])
 
-  const loadTributes = useCallback(async (reset = false) => {
-    if (!member) return
-    const result = await client.query(TRIBUTES, {
-      teamId: member.teamId,
-      recipientId: member.id,
-      first: 10,
-      after: reset ? null : cursor,
-    }).toPromise()
-    const page = result.data?.tributes
-    if (page) {
-      setItems((prev) => reset ? page.items : [...prev, ...page.items])
-      setCursor(page.nextCursor)
-      setHasNext(page.hasNext)
-    }
-  }, [client, member, cursor])
+  const loadTributes = useCallback(
+    async (reset = false) => {
+      if (!member) return
+      const result = await client
+        .query(TRIBUTES, {
+          teamId: member.teamId,
+          recipientId: member.id,
+          first: 10,
+          after: reset ? null : cursorRef.current,
+        })
+        .toPromise()
+      const page = result.data?.tributes
+      if (page) {
+        setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
+        setCursor(page.nextCursor)
+        setHasNext(page.hasNext)
+      }
+    },
+    [client, member],
+  )
 
   useEffect(() => {
     setItems([])
     setCursor(null)
     if (member) void loadTributes(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [memberId, member?.id])
+  }, [memberId, member?.id, loadTributes, member])
 
-  const sentinelRef = useInfiniteScroll(() => { if (hasNext) void loadTributes(false) }, hasNext)
+  const sentinelRef = useInfiniteScroll(() => {
+    if (hasNext) void loadTributes(false)
+  }, hasNext)
 
   async function onTribute(e: FormEvent) {
     e.preventDefault()
@@ -84,18 +97,24 @@ export default function MemberPage() {
       anonymous,
       privateTribute,
     })
-    setMessage(result.error ? result.error.message : 'Tribute saved')
-    if (!result.error) {
-      setText('')
-      setCursor(null)
-      await loadTributes(true)
+    if (result.error) {
+      toast.error(result.error.message)
+      return
     }
+    toast.success('Tribute saved')
+    setText('')
+    setCursor(null)
+    await loadTributes(true)
   }
 
   async function onCharacteristic(e: FormEvent) {
     e.preventDefault()
     const result = await addCharacteristic({ teamMemberId: memberId, title: charTitle })
-    setMessage(result.error ? result.error.message : 'Characteristic added')
+    if (result.error) {
+      toast.error(result.error.message)
+      return
+    }
+    toast.success('Characteristic added')
     setCharTitle('')
     reChars({ requestPolicy: 'network-only' })
   }
@@ -109,7 +128,11 @@ export default function MemberPage() {
       bio,
       avatarId: null,
     })
-    setMessage(result.error ? result.error.message : 'Profile updated')
+    if (result.error) {
+      toast.error(result.error.message)
+      return
+    }
+    toast.success('Profile updated')
   }
 
   async function onAvatar(file: File | null) {
@@ -122,71 +145,154 @@ export default function MemberPage() {
         bio: null,
         avatarId: uploaded.id,
       })
-      setMessage(result.error ? result.error.message : 'Avatar updated')
+      if (result.error) {
+        toast.error(result.error.message)
+        return
+      }
+      toast.success('Avatar updated')
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Upload failed')
+      toast.error(err instanceof Error ? err.message : 'Upload failed')
     }
   }
 
   if (!member) {
-    return <Layout><p className="muted">Loading member…</p></Layout>
+    return (
+      <Layout>
+        <p className="text-muted">Loading member…</p>
+      </Layout>
+    )
   }
 
   return (
     <Layout>
-      <Link to={`/teams/${member.teamId}`} className="muted">← Back to team</Link>
+      <Link
+        to={`/teams/${member.teamId}`}
+        className="text-sm font-semibold text-muted hover:text-ink"
+      >
+        ← Back to team
+      </Link>
       <h1 className="page-title">{member.nickname}</h1>
-      <p className="muted">{member.bio || 'No bio yet'}</p>
-      {member.avatar?.url && <img src={member.avatar.url} alt="" style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover' }} />}
-      {message && <p className="muted">{message}</p>}
+      <p className="text-muted">{member.bio || 'No bio yet'}</p>
+      {member.avatar?.url && (
+        <img
+          src={member.avatar.url}
+          alt=""
+          className="mt-3 h-24 w-24 rounded-full object-cover"
+        />
+      )}
 
-      <div className="grid-2" style={{ marginTop: '1rem' }}>
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
         <section className="stack">
-          <h2>Tributes</h2>
+          <h2 className="font-display text-xl tracking-tight">Tributes</h2>
           {items.map((t) => (
             <article key={t.id} className="panel">
-              <p>{t.text}</p>
-              <div className="muted">— {t.writer?.nickname}</div>
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <button className="secondary" onClick={() => reportTribute({ tributeId: t.id, reason: 'Inappropriate' })}>Report</button>
-                <button className="secondary" onClick={() => hideTribute({ tributeId: t.id }).then(() => loadTributes(true))}>Hide</button>
+              <p className="whitespace-pre-wrap">{t.text}</p>
+              <div className="mt-2 text-sm text-muted">— {t.writer?.nickname}</div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  variant="secondary"
+                  onClick={() =>
+                    reportTribute({ tributeId: t.id, reason: 'Inappropriate' }).then((r) => {
+                      if (r.error) toast.error(r.error.message)
+                      else toast.success('Reported')
+                    })
+                  }
+                >
+                  Report
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() =>
+                    hideTribute({ tributeId: t.id }).then((r) => {
+                      if (r.error) toast.error(r.error.message)
+                      else {
+                        toast.success('Hidden')
+                        void loadTributes(true)
+                      }
+                    })
+                  }
+                >
+                  Hide
+                </Button>
               </div>
             </article>
           ))}
-          <div ref={sentinelRef} className="infinite-sentinel">{hasNext ? 'Loading more…' : 'End of tributes'}</div>
+          <div ref={sentinelRef} className="infinite-sentinel">
+            {hasNext ? 'Loading more…' : 'End of tributes'}
+          </div>
         </section>
 
         <div className="stack">
-          <form className="panel" onSubmit={onTribute}>
-            <h2>Write about {member.nickname}</h2>
-            <label>Message<textarea value={text} onChange={(e) => setText(e.target.value)} rows={4} required /></label>
-            <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <input type="checkbox" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} /> Anonymous
+          <form className="panel stack" onSubmit={onTribute}>
+            <h2 className="font-display text-xl tracking-tight">
+              Write about {member.nickname}
+            </h2>
+            <Label>
+              Message
+              <Textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                rows={4}
+                required
+              />
+            </Label>
+            <label className="flex items-center gap-2 font-semibold">
+              <input
+                type="checkbox"
+                checked={anonymous}
+                onChange={(e) => setAnonymous(e.target.checked)}
+              />
+              Anonymous
             </label>
-            <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <input type="checkbox" checked={privateTribute} onChange={(e) => setPrivateTribute(e.target.checked)} /> Private
+            <label className="flex items-center gap-2 font-semibold">
+              <input
+                type="checkbox"
+                checked={privateTribute}
+                onChange={(e) => setPrivateTribute(e.target.checked)}
+              />
+              Private
             </label>
-            <button type="submit">Save tribute</button>
+            <Button type="submit">Save tribute</Button>
           </form>
 
-          <form className="panel" onSubmit={onCharacteristic}>
-            <h2>Characteristics</h2>
-            <div>
-              {(charsData?.characteristics ?? []).map((c: any) => (
-                <span key={c.id} className="chip">{c.title} × {c.count}</span>
-              ))}
+          <form className="panel stack" onSubmit={onCharacteristic}>
+            <h2 className="font-display text-xl tracking-tight">Characteristics</h2>
+            <div className="flex flex-wrap gap-2">
+              {(charsData?.characteristics ?? []).map(
+                (c: { id: string; title: string; count: number }) => (
+                  <span key={c.id} className="chip">
+                    {c.title} × {c.count}
+                  </span>
+                ),
+              )}
             </div>
-            <label>Add tag<input value={charTitle} onChange={(e) => setCharTitle(e.target.value)} required /></label>
-            <button type="submit">Add</button>
+            <Label>
+              Add tag
+              <Input value={charTitle} onChange={(e) => setCharTitle(e.target.value)} required />
+            </Label>
+            <Button type="submit">Add</Button>
           </form>
 
-          <form className="panel" onSubmit={onProfile}>
-            <h2>Edit your profile</h2>
-            <p className="muted">Only updates if this member profile is yours.</p>
-            <label>Nickname<input value={nickname} onChange={(e) => setNickname(e.target.value)} /></label>
-            <label>Bio<textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} /></label>
-            <label>Avatar<input type="file" accept="image/*" onChange={(e) => onAvatar(e.target.files?.[0] ?? null)} /></label>
-            <button type="submit">Update profile</button>
+          <form className="panel stack" onSubmit={onProfile}>
+            <h2 className="font-display text-xl tracking-tight">Edit your profile</h2>
+            <p className="text-sm text-muted">Only updates if this member profile is yours.</p>
+            <Label>
+              Nickname
+              <Input value={nickname} onChange={(e) => setNickname(e.target.value)} />
+            </Label>
+            <Label>
+              Bio
+              <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} />
+            </Label>
+            <Label>
+              Avatar
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => onAvatar(e.target.files?.[0] ?? null)}
+              />
+            </Label>
+            <Button type="submit">Update profile</Button>
           </form>
         </div>
       </div>

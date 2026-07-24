@@ -1,10 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-
-export type AuthUser = {
-  userId: string
-  email: string
-  displayName: string
-}
+import { AUTH_STORAGE_KEY, type AuthUser, type StoredAuth } from './authStorage'
 
 type AuthState = {
   accessToken: string | null
@@ -16,15 +11,8 @@ type AuthState = {
 }
 
 const AuthContext = createContext<AuthState | null>(null)
-const STORAGE_KEY = 'yaadbuzz.auth'
 
-type Stored = {
-  accessToken: string
-  refreshToken: string
-  user: AuthUser
-}
-
-async function authRequest(path: string, body: unknown): Promise<Stored> {
+async function authRequest(path: string, body: unknown): Promise<StoredAuth> {
   const res = await fetch(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -47,16 +35,16 @@ async function authRequest(path: string, body: unknown): Promise<Stored> {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [stored, setStored] = useState<Stored | null>(() => {
-    const raw = localStorage.getItem(STORAGE_KEY)
+  const [stored, setStored] = useState<StoredAuth | null>(() => {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY)
     return raw ? JSON.parse(raw) : null
   })
 
   useEffect(() => {
     if (stored) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(stored))
     } else {
-      localStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem(AUTH_STORAGE_KEY)
     }
   }, [stored])
 
@@ -82,14 +70,4 @@ export function useAuth() {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('AuthProvider missing')
   return ctx
-}
-
-export function getAccessToken() {
-  const raw = localStorage.getItem(STORAGE_KEY)
-  if (!raw) return null
-  try {
-    return (JSON.parse(raw) as Stored).accessToken
-  } catch {
-    return null
-  }
 }

@@ -1,8 +1,20 @@
-import { type FormEvent, useState } from 'react'
+import { UsersThree } from '@phosphor-icons/react'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useParams } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { useMutation, useQuery } from 'urql'
+import { z } from 'zod'
 import Layout from '../components/Layout'
+import { Button } from '../components/ui/Button'
+import { FieldError, Input, Label } from '../components/ui/Field'
 import { CREATE_TEAM, TEAMS } from '../api/queries'
+
+const schema = z.object({
+  name: z.string().min(2, 'Team name is required'),
+})
+
+type FormValues = z.infer<typeof schema>
 
 export default function OrgPage() {
   const { orgId = '' } = useParams()
@@ -11,47 +23,72 @@ export default function OrgPage() {
     variables: { organizationId: orgId },
   })
   const [, createTeam] = useMutation(CREATE_TEAM)
-  const [name, setName] = useState('')
-  const [formError, setFormError] = useState<string | null>(null)
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { name: '' },
+  })
 
-  async function onCreate(e: FormEvent) {
-    e.preventDefault()
-    setFormError(null)
-    const result = await createTeam({ organizationId: orgId, name, brandColor: '#0F766E' })
+  const onCreate = handleSubmit(async (values) => {
+    const result = await createTeam({
+      organizationId: orgId,
+      name: values.name,
+      brandColor: '#0F766E',
+    })
     if (result.error) {
-      setFormError(result.error.message)
+      toast.error(result.error.message)
       return
     }
-    setName('')
+    toast.success('Team created')
+    reset()
     reexecute({ requestPolicy: 'network-only' })
-  }
+  })
 
   return (
     <Layout>
-      <Link to="/app" className="muted">← Back to organizations</Link>
+      <Link to="/app" className="text-sm font-semibold text-muted hover:text-ink">
+        ← Back to organizations
+      </Link>
       <h1 className="page-title">Teams</h1>
-      <div className="grid-2">
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
         <section className="panel stack">
-          {fetching && <p className="muted">Loading…</p>}
-          {error && <p className="error">{error.message}</p>}
-          <div className="list">
-            {(data?.teams ?? []).map((team: any) => (
-              <Link key={team.id} to={`/teams/${team.id}`} className="list-item">
-                <div>
-                  <strong>{team.name}</strong>
-                  <div className="muted">{team.tributesRevealed ? 'Tributes revealed' : 'Tributes sealed'}</div>
-                </div>
-                <span className="chip">Open</span>
-              </Link>
-            ))}
+          <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
+            <UsersThree size={22} weight="duotone" className="text-brand" />
+            Your teams
+          </h2>
+          {fetching && <p className="text-muted">Loading…</p>}
+          {error && <p className="text-danger">{error.message}</p>}
+          <div className="stack">
+            {(data?.teams ?? []).map(
+              (team: { id: string; name: string; tributesRevealed: boolean }) => (
+                <Link key={team.id} to={`/teams/${team.id}`} className="list-item">
+                  <div>
+                    <strong>{team.name}</strong>
+                    <div className="text-sm text-muted">
+                      {team.tributesRevealed ? 'Tributes revealed' : 'Tributes sealed'}
+                    </div>
+                  </div>
+                  <span className="chip">Open</span>
+                </Link>
+              ),
+            )}
           </div>
         </section>
         <section className="panel">
-          <h2>Create team</h2>
-          <form onSubmit={onCreate}>
-            <label>Name<input value={name} onChange={(e) => setName(e.target.value)} required /></label>
-            {formError && <p className="error">{formError}</p>}
-            <button type="submit">Create team</button>
+          <h2 className="mb-3 font-display text-xl tracking-tight">Create team</h2>
+          <form className="stack" onSubmit={onCreate}>
+            <Label>
+              Name
+              <Input {...register('name')} />
+              <FieldError message={errors.name?.message} />
+            </Label>
+            <Button type="submit" disabled={isSubmitting}>
+              Create team
+            </Button>
           </form>
         </section>
       </div>

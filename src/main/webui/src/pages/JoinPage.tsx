@@ -1,37 +1,68 @@
-import { type FormEvent, useState } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { useMutation } from 'urql'
+import { z } from 'zod'
 import Layout from '../components/Layout'
+import { Button } from '../components/ui/Button'
+import { FieldError, Input, Label, Textarea } from '../components/ui/Field'
 import { JOIN_TEAM } from '../api/queries'
+
+const schema = z.object({
+  code: z.string().min(4, 'Invite code is required'),
+  nickname: z.string().optional(),
+  bio: z.string().optional(),
+})
+
+type FormValues = z.infer<typeof schema>
 
 export default function JoinPage() {
   const navigate = useNavigate()
   const [, joinTeam] = useMutation(JOIN_TEAM)
-  const [code, setCode] = useState('')
-  const [nickname, setNickname] = useState('')
-  const [bio, setBio] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { code: '', nickname: '', bio: '' },
+  })
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault()
-    setError(null)
-    const result = await joinTeam({ code, nickname: nickname || null, bio: bio || null })
+  const onSubmit = handleSubmit(async (values) => {
+    const result = await joinTeam({
+      code: values.code,
+      nickname: values.nickname || null,
+      bio: values.bio || null,
+    })
     if (result.error) {
-      setError(result.error.message)
+      toast.error(result.error.message)
       return
     }
+    toast.success('Joined team')
     navigate(`/teams/${result.data.joinTeam.teamId}`)
-  }
+  })
 
   return (
     <Layout>
       <h1 className="page-title">Join a team</h1>
-      <form className="panel" style={{ maxWidth: 480 }} onSubmit={onSubmit}>
-        <label>Invite code<input value={code} onChange={(e) => setCode(e.target.value)} required /></label>
-        <label>Nickname<input value={nickname} onChange={(e) => setNickname(e.target.value)} /></label>
-        <label>Bio<textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} /></label>
-        {error && <p className="error">{error}</p>}
-        <button type="submit">Join</button>
+      <form className="panel mt-4 max-w-md stack" onSubmit={onSubmit}>
+        <Label>
+          Invite code
+          <Input {...register('code')} />
+          <FieldError message={errors.code?.message} />
+        </Label>
+        <Label>
+          Nickname
+          <Input {...register('nickname')} />
+        </Label>
+        <Label>
+          Bio
+          <Textarea rows={3} {...register('bio')} />
+        </Label>
+        <Button type="submit" disabled={isSubmitting}>
+          Join
+        </Button>
       </form>
     </Layout>
   )

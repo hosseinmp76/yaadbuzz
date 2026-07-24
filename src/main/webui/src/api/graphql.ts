@@ -1,5 +1,5 @@
 import { Client, cacheExchange, fetchExchange, mapExchange } from 'urql'
-import { getAccessToken } from '../auth'
+import { getAccessToken } from '../authStorage'
 
 export const client = new Client({
   url: '/graphql',

@@ -1,44 +1,77 @@
-import { type FormEvent, useState } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { z } from 'zod'
 import Layout from '../components/Layout'
+import { Button } from '../components/ui/Button'
+import { FieldError, Input, Label } from '../components/ui/Field'
 import { useAuth } from '../auth'
+
+const schema = z.object({
+  email: z.email('Enter a valid email'),
+  password: z.string().min(1, 'Password is required'),
+})
+
+type FormValues = z.infer<typeof schema>
 
 export default function LoginPage() {
   const { login, accessToken } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('alice@yaadbuzz.local')
-  const [password, setPassword] = useState('password123')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      email: 'alice@yaadbuzz.local',
+      password: 'password123',
+    },
+  })
 
   if (accessToken) return <Navigate to="/app" replace />
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+  const onSubmit = handleSubmit(async (values) => {
     try {
-      await login(email, password)
+      await login(values.email, values.password)
+      toast.success('Welcome back')
       navigate('/app')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed')
-    } finally {
-      setLoading(false)
+      const message = err instanceof Error ? err.message : 'Login failed'
+      setError('root', { message })
+      toast.error(message)
     }
-  }
+  })
 
   return (
     <Layout>
-      <div className="hero" style={{ maxWidth: 480 }}>
+      <div className="mx-auto max-w-md py-8">
         <h1 className="page-title">Welcome back</h1>
-        <p className="muted">Log in to continue building your yearbook.</p>
-        <form className="panel" onSubmit={onSubmit}>
-          <label>Email<input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required /></label>
-          <label>Password<input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required /></label>
-          {error && <p className="error">{error}</p>}
-          <button disabled={loading}>{loading ? 'Signing in…' : 'Log in'}</button>
+        <p className="text-muted">Log in to continue building your yearbook.</p>
+        <form className="panel mt-5 stack" onSubmit={onSubmit}>
+          <Label>
+            Email
+            <Input type="email" autoComplete="email" {...register('email')} />
+            <FieldError message={errors.email?.message} />
+          </Label>
+          <Label>
+            Password
+            <Input type="password" autoComplete="current-password" {...register('password')} />
+            <FieldError message={errors.password?.message} />
+          </Label>
+          <FieldError message={errors.root?.message} />
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Signing in…' : 'Log in'}
+          </Button>
         </form>
-        <p className="muted">No account? <Link to="/register">Register</Link></p>
+        <p className="mt-4 text-muted">
+          No account?{' '}
+          <Link to="/register" className="font-semibold text-brand">
+            Register
+          </Link>
+        </p>
       </div>
     </Layout>
   )
