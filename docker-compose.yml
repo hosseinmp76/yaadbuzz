@@ -1,0 +1,93 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: yaadbuzz
+      POSTGRES_USER: yaadbuzz
+      POSTGRES_PASSWORD: yaadbuzz
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yaadbuzz -d yaadbuzz"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.5
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      cluster.routing.allocation.disk.threshold_enabled: "false"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: yaadbuzz
+      MINIO_ROOT_PASSWORD: yaadbuzzsecret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    depends_on:
+      minio:
+        condition: service_started
+    entrypoint: >
+      /bin/sh -c "
+      sleep 3;
+      mc alias set local http://minio:9000 yaadbuzz yaadbuzzsecret;
+      mc mb --ignore-existing local/yaadbuzz;
+      mc anonymous set download local/yaadbuzz/public;
+      exit 0;
+      "
+
+  app:
+    build:
+      context: .
+      dockerfile: src/main/docker/Dockerfile.compose
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/yaadbuzz
+      QUARKUS_DATASOURCE_USERNAME: yaadbuzz
+      QUARKUS_DATASOURCE_PASSWORD: yaadbuzz
+      QUARKUS_HIBERNATE_SEARCH_ORM_ELASTICSEARCH_HOSTS: elasticsearch:9200
+      YAADBUZZ_S3_ENDPOINT: http://minio:9000
+      YAADBUZZ_S3_PUBLIC_ENDPOINT: http://localhost:9000
+      YAADBUZZ_S3_ACCESS_KEY: yaadbuzz
+      YAADBUZZ_S3_SECRET_KEY: yaadbuzzsecret
+      YAADBUZZ_S3_BUCKET: yaadbuzz
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
+  es_data:
+  minio_data:

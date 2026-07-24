@@ -1,0 +1,19 @@
+# Keep context lean for:
+# - Quarkus JVM image-build (Dockerfile.jvm → target/quarkus-app)
+# - Quarkus native image-build (Dockerfile.native → target/*-runner)
+# - docker compose multi-stage (Dockerfile.compose → pom.xml + src)
+.git
+.idea
+.cursor
+.quinoa
+**/node_modules
+src/main/webui/node_modules
+src/main/webui/dist
+target/**
+!target/quarkus-app/
+!target/quarkus-app/**
+!target/*-runner
+!target/*-runner.jar
+*.iml
+*.log
+agent-transcripts
