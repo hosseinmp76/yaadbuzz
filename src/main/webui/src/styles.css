@@ -111,3 +111,25 @@
     @apply py-3 text-center text-sm text-muted;
   }
 }
+
+@media print {
+  body {
+    background: #fff !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .yearbook-doc {
+    box-shadow: none !important;
+  }
+
+  .yearbook-cover {
+    break-after: page;
+  }
+
+  .yearbook-block {
+    break-inside: avoid;
+  }
+}

@@ -10,6 +10,7 @@ import com.yaadbuzz.domain.Team;
 import com.yaadbuzz.domain.TeamMember;
 import com.yaadbuzz.domain.User;
 import com.yaadbuzz.enums.TeamRole;
+import com.yaadbuzz.enums.YearbookTheme;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -76,6 +77,52 @@ public class TeamService {
         }
         if (revealAt != null) {
             team.revealAt = revealAt;
+        }
+        return team;
+    }
+
+    @Transactional
+    public Team updateYearbookSettings(
+            UUID teamId,
+            User user,
+            String title,
+            String subtitle,
+            String dedication,
+            YearbookTheme theme,
+            Boolean showMembers,
+            Boolean showTributes,
+            Boolean showCharacteristics,
+            Boolean showMemories,
+            Boolean showAwards
+    ) {
+        accessService.requireTeamAdmin(teamId, user);
+        Team team = accessService.requireTeam(teamId);
+        if (title != null) {
+            team.yearbookTitle = title.isBlank() ? null : title.trim();
+        }
+        if (subtitle != null) {
+            team.yearbookSubtitle = subtitle.isBlank() ? null : subtitle.trim();
+        }
+        if (dedication != null) {
+            team.yearbookDedication = dedication.isBlank() ? null : dedication.trim();
+        }
+        if (theme != null) {
+            team.yearbookTheme = theme;
+        }
+        if (showMembers != null) {
+            team.yearbookShowMembers = showMembers;
+        }
+        if (showTributes != null) {
+            team.yearbookShowTributes = showTributes;
+        }
+        if (showCharacteristics != null) {
+            team.yearbookShowCharacteristics = showCharacteristics;
+        }
+        if (showMemories != null) {
+            team.yearbookShowMemories = showMemories;
+        }
+        if (showAwards != null) {
+            team.yearbookShowAwards = showAwards;
         }
         return team;
     }

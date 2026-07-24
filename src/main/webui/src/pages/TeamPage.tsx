@@ -1,6 +1,6 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { DownloadSimple, MagnifyingGlass, Sparkle } from '@phosphor-icons/react'
+import { BookOpenText, DownloadSimple, MagnifyingGlass, Printer, Sparkle } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useClient, useMutation, useQuery } from 'urql'
 import Layout from '../components/Layout'
@@ -21,9 +21,13 @@ import {
   TOPICS,
   TOPIC_STANDINGS,
   UPDATE_TEAM_SETTINGS,
+  UPDATE_YEARBOOK_SETTINGS,
   VOTE_TOPIC,
   YEARBOOK_EXPORTS,
 } from '../api/queries'
+
+const YEARBOOK_THEMES = ['CLASSIC', 'MODERN', 'SCRAPBOOK', 'MINIMAL'] as const
+type YearbookThemeOption = (typeof YEARBOOK_THEMES)[number]
 
 type Tab = 'members' | 'memories' | 'topics' | 'search' | 'yearbook' | 'settings'
 
@@ -63,7 +67,7 @@ export default function TeamPage() {
       {tab === 'memories' && <MemoriesTab teamId={teamId} />}
       {tab === 'topics' && <TopicsTab teamId={teamId} />}
       {tab === 'search' && <SearchTab teamId={teamId} />}
-      {tab === 'yearbook' && <YearbookTab teamId={teamId} />}
+      {tab === 'yearbook' && <YearbookTab teamId={teamId} team={team} />}
       {tab === 'settings' && (
         <SettingsTab
           teamId={teamId}
@@ -409,9 +413,51 @@ function SearchTab({ teamId }: { teamId: string }) {
   )
 }
 
-function YearbookTab({ teamId }: { teamId: string }) {
+function YearbookTab({
+  teamId,
+  team,
+}: {
+  teamId: string
+  team?: {
+    yearbookTitle?: string
+    yearbookSubtitle?: string
+    yearbookDedication?: string
+    yearbookTheme?: YearbookThemeOption
+    yearbookShowMembers?: boolean
+    yearbookShowTributes?: boolean
+    yearbookShowCharacteristics?: boolean
+    yearbookShowMemories?: boolean
+    yearbookShowAwards?: boolean
+  }
+}) {
   const [{ data }, reexecute] = useQuery({ query: YEARBOOK_EXPORTS, variables: { teamId } })
   const [, requestExport] = useMutation(REQUEST_EXPORT)
+  const [, updateYearbook] = useMutation(UPDATE_YEARBOOK_SETTINGS)
+  const [, reTeam] = useQuery({ query: TEAM, variables: { id: teamId } })
+
+  const [title, setTitle] = useState(team?.yearbookTitle ?? '')
+  const [subtitle, setSubtitle] = useState(team?.yearbookSubtitle ?? '')
+  const [dedication, setDedication] = useState(team?.yearbookDedication ?? '')
+  const [theme, setTheme] = useState<YearbookThemeOption>(team?.yearbookTheme ?? 'CLASSIC')
+  const [showMembers, setShowMembers] = useState(team?.yearbookShowMembers ?? true)
+  const [showTributes, setShowTributes] = useState(team?.yearbookShowTributes ?? true)
+  const [showCharacteristics, setShowCharacteristics] = useState(
+    team?.yearbookShowCharacteristics ?? true,
+  )
+  const [showMemories, setShowMemories] = useState(team?.yearbookShowMemories ?? true)
+  const [showAwards, setShowAwards] = useState(team?.yearbookShowAwards ?? true)
+
+  useEffect(() => {
+    setTitle(team?.yearbookTitle ?? '')
+    setSubtitle(team?.yearbookSubtitle ?? '')
+    setDedication(team?.yearbookDedication ?? '')
+    setTheme(team?.yearbookTheme ?? 'CLASSIC')
+    setShowMembers(team?.yearbookShowMembers ?? true)
+    setShowTributes(team?.yearbookShowTributes ?? true)
+    setShowCharacteristics(team?.yearbookShowCharacteristics ?? true)
+    setShowMemories(team?.yearbookShowMemories ?? true)
+    setShowAwards(team?.yearbookShowAwards ?? true)
+  }, [team])
 
   useEffect(() => {
     const id = setInterval(() => reexecute({ requestPolicy: 'network-only' }), 5000)
@@ -428,43 +474,167 @@ function YearbookTab({ teamId }: { teamId: string }) {
     reexecute({ requestPolicy: 'network-only' })
   }
 
+  async function onSaveCustomization(e: FormEvent) {
+    e.preventDefault()
+    const result = await updateYearbook({
+      teamId,
+      title,
+      subtitle,
+      dedication,
+      theme,
+      showMembers,
+      showTributes,
+      showCharacteristics,
+      showMemories,
+      showAwards,
+    })
+    if (result.error) {
+      toast.error(result.error.message)
+      return
+    }
+    toast.success('Yearbook customization saved')
+    reTeam({ requestPolicy: 'network-only' })
+  }
+
   return (
-    <section className="panel stack">
-      <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
-        <Sparkle size={22} weight="duotone" className="text-accent" />
-        Yearbook PDF
-      </h2>
-      <p className="text-muted">
-        Generate a printable yearbook from tributes, memories, awards, and characteristics.
-      </p>
-      <Button onClick={onGenerate}>Generate yearbook</Button>
-      <div className="stack">
-        {(data?.yearbookExports ?? []).map(
-          (exp: {
-            id: string
-            status: string
-            createdAt: string
-            errorMessage?: string
-          }) => (
-            <div key={exp.id} className="list-item">
-              <div>
-                <strong>{exp.status}</strong>
-                <div className="text-sm text-muted">
-                  {new Date(exp.createdAt).toLocaleString()}
+    <div className="grid gap-4 lg:grid-cols-2">
+      <section className="panel stack">
+        <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
+          <BookOpenText size={22} weight="duotone" className="text-brand" />
+          View & print online
+        </h2>
+        <p className="text-muted">
+          Open the live yearbook in your browser, then use Print → Save as PDF.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Link to={`/teams/${teamId}/yearbook`}>
+            <Button>
+              <BookOpenText size={18} />
+              Open yearbook
+            </Button>
+          </Link>
+          <Link to={`/teams/${teamId}/yearbook`}>
+            <Button variant="secondary">
+              <Printer size={18} />
+              Print-ready page
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      <section className="panel stack">
+        <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
+          <Sparkle size={22} weight="duotone" className="text-accent" />
+          Server PDF export
+        </h2>
+        <p className="text-muted">
+          Generate a downloadable PDF on the server (uses the same customization).
+        </p>
+        <Button onClick={onGenerate}>Generate yearbook PDF</Button>
+        <div className="stack">
+          {(data?.yearbookExports ?? []).map(
+            (exp: {
+              id: string
+              status: string
+              createdAt: string
+              errorMessage?: string
+            }) => (
+              <div key={exp.id} className="list-item">
+                <div>
+                  <strong>{exp.status}</strong>
+                  <div className="text-sm text-muted">
+                    {new Date(exp.createdAt).toLocaleString()}
+                  </div>
+                  {exp.errorMessage && <div className="text-danger">{exp.errorMessage}</div>}
                 </div>
-                {exp.errorMessage && <div className="text-danger">{exp.errorMessage}</div>}
+                {exp.status === 'READY' && (
+                  <Button variant="secondary" onClick={() => downloadYearbook(exp.id)}>
+                    <DownloadSimple size={18} />
+                    Download
+                  </Button>
+                )}
               </div>
-              {exp.status === 'READY' && (
-                <Button variant="secondary" onClick={() => downloadYearbook(exp.id)}>
-                  <DownloadSimple size={18} />
-                  Download
-                </Button>
-              )}
-            </div>
-          ),
-        )}
-      </div>
-    </section>
+            ),
+          )}
+        </div>
+      </section>
+
+      <form className="panel stack lg:col-span-2" onSubmit={onSaveCustomization}>
+        <h2 className="font-display text-xl tracking-tight">Customize yearbook</h2>
+        <p className="text-muted">
+          Team admins can change cover copy, theme, and which sections appear online and in PDFs.
+        </p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Label>
+            Cover title
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Defaults to team name + Yearbook"
+            />
+          </Label>
+          <Label>
+            Cover subtitle
+            <Input
+              value={subtitle}
+              onChange={(e) => setSubtitle(e.target.value)}
+              placeholder="Defaults to organization name"
+            />
+          </Label>
+        </div>
+        <Label>
+          Dedication / cover message
+          <Textarea
+            value={dedication}
+            onChange={(e) => setDedication(e.target.value)}
+            rows={3}
+            placeholder="Optional message on the cover"
+          />
+        </Label>
+        <Label>
+          Theme
+          <Select
+            value={theme}
+            onChange={(e) => setTheme(e.target.value as YearbookThemeOption)}
+          >
+            {YEARBOOK_THEMES.map((t) => (
+              <option key={t} value={t}>
+                {t.charAt(0) + t.slice(1).toLowerCase()}
+              </option>
+            ))}
+          </Select>
+        </Label>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <Toggle label="Show members" checked={showMembers} onChange={setShowMembers} />
+          <Toggle label="Show tributes" checked={showTributes} onChange={setShowTributes} />
+          <Toggle
+            label="Show characteristics"
+            checked={showCharacteristics}
+            onChange={setShowCharacteristics}
+          />
+          <Toggle label="Show memories" checked={showMemories} onChange={setShowMemories} />
+          <Toggle label="Show awards" checked={showAwards} onChange={setShowAwards} />
+        </div>
+        <Button type="submit">Save yearbook design</Button>
+      </form>
+    </div>
+  )
+}
+
+function Toggle({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string
+  checked: boolean
+  onChange: (value: boolean) => void
+}) {
+  return (
+    <label className="flex items-center gap-2 font-semibold">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      {label}
+    </label>
   )
 }
 

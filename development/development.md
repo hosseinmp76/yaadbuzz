@@ -291,8 +291,9 @@ yaadbuzz/
 ```text
 Browser
   ├─ SPA (Quinoa / Vite) ──REST──► /api/auth, /api/media, /api/yearbooks/*/download
+  ├─ SPA /teams/:id/yearbook ──GraphQL yearbook──► online view → browser Print → PDF
   └─ SPA ──GraphQL──► /graphql ──► services ──► Postgres / ES / MinIO
-                                    └─ scheduler/worker ──► PDF in MinIO
+                                    └─ scheduler/worker ──► server PDF in MinIO
 ```
 
 ---

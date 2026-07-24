@@ -22,6 +22,9 @@ export const TEAM = `
   query Team($id: String!) {
     team(id: $id) {
       id organizationId name brandColor revealTributes revealAt tributesRevealed
+      yearbookTitle yearbookSubtitle yearbookDedication yearbookTheme
+      yearbookShowMembers yearbookShowTributes yearbookShowCharacteristics
+      yearbookShowMemories yearbookShowAwards
     }
   }
 `
@@ -105,6 +108,59 @@ export const YEARBOOK_EXPORTS = `
   query YearbookExports($teamId: String!) {
     yearbookExports(teamId: $teamId) {
       id status fileUrl errorMessage createdAt completedAt
+    }
+  }
+`
+
+export const YEARBOOK = `
+  query Yearbook($teamId: String!) {
+    yearbook(teamId: $teamId) {
+      teamId orgName teamName title subtitle dedication theme brandColor
+      logoUrl coverMediaUrl
+      showMembers showTributes showCharacteristics showMemories showAwards
+      members {
+        nickname bio avatarUrl
+        characteristics { title count }
+        tributes { text writer }
+      }
+      memories { title body writer }
+      topics {
+        title
+        standings { nickname score }
+      }
+    }
+  }
+`
+
+export const UPDATE_YEARBOOK_SETTINGS = `
+  mutation UpdateYearbookSettings(
+    $teamId: String!
+    $title: String
+    $subtitle: String
+    $dedication: String
+    $theme: YearbookTheme
+    $showMembers: Boolean
+    $showTributes: Boolean
+    $showCharacteristics: Boolean
+    $showMemories: Boolean
+    $showAwards: Boolean
+  ) {
+    updateYearbookSettings(
+      teamId: $teamId
+      title: $title
+      subtitle: $subtitle
+      dedication: $dedication
+      theme: $theme
+      showMembers: $showMembers
+      showTributes: $showTributes
+      showCharacteristics: $showCharacteristics
+      showMemories: $showMemories
+      showAwards: $showAwards
+    ) {
+      id
+      yearbookTitle yearbookSubtitle yearbookDedication yearbookTheme
+      yearbookShowMembers yearbookShowTributes yearbookShowCharacteristics
+      yearbookShowMemories yearbookShowAwards
     }
   }
 `

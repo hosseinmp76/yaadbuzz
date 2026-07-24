@@ -8,6 +8,7 @@ import OrgPage from './pages/OrgPage'
 import TeamPage from './pages/TeamPage'
 import MemberPage from './pages/MemberPage'
 import JoinPage from './pages/JoinPage'
+import YearbookPage from './pages/YearbookPage'
 
 function Protected({ children }: { children: React.ReactNode }) {
   const { accessToken } = useAuth()
@@ -25,6 +26,7 @@ export default function App() {
       <Route path="/app" element={<Protected><DashboardPage /></Protected>} />
       <Route path="/orgs/:orgId" element={<Protected><OrgPage /></Protected>} />
       <Route path="/teams/:teamId" element={<Protected><TeamPage /></Protected>} />
+      <Route path="/teams/:teamId/yearbook" element={<Protected><YearbookPage /></Protected>} />
       <Route path="/members/:memberId" element={<Protected><MemberPage /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

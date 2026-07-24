@@ -5,10 +5,14 @@
   <style>
     @page { size: A4; margin: 24mm 18mm; }
     body {
-      font-family: Georgia, 'Times New Roman', serif;
-      color: #1c1917;
       margin: 0;
+      color: #1c1917;
     }
+    body.theme-CLASSIC { font-family: Georgia, 'Times New Roman', serif; }
+    body.theme-MODERN { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    body.theme-SCRAPBOOK { font-family: Georgia, 'Palatino Linotype', serif; }
+    body.theme-MINIMAL { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+
     .cover {
       page-break-after: always;
       min-height: 220mm;
@@ -17,9 +21,22 @@
       justify-content: center;
       align-items: center;
       text-align: center;
-      background: linear-gradient(160deg, {brandColor} 0%, #134e4a 70%);
-      color: #fafaf9;
       padding: 40px;
+      color: #fafaf9;
+    }
+    .theme-CLASSIC .cover,
+    .theme-MODERN .cover {
+      background: linear-gradient(160deg, {brandColor} 0%, #134e4a 70%);
+    }
+    .theme-SCRAPBOOK .cover {
+      background: #faf7f2;
+      color: #1c1917;
+      border: 10px solid {brandColor};
+    }
+    .theme-MINIMAL .cover {
+      background: #ffffff;
+      color: #1c1917;
+      border-top: 12px solid {brandColor};
     }
     .cover h1 {
       font-size: 42px;
@@ -32,19 +49,37 @@
       margin: 0;
       opacity: 0.92;
     }
-    .logo {
+    .dedication {
+      margin-top: 28px;
+      max-width: 420px;
+      font-style: italic;
+      line-height: 1.5;
+    }
+    .logo, .cover-media {
       max-height: 80px;
       margin-bottom: 24px;
     }
+    .cover-media { max-height: 160px; max-width: 70%; }
     h3 {
       color: {brandColor};
       border-bottom: 2px solid {brandColor};
       padding-bottom: 6px;
       margin-top: 28px;
     }
+    .theme-MINIMAL h3 {
+      border-bottom-width: 1px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 14px;
+    }
     .member {
       page-break-inside: avoid;
       margin-bottom: 28px;
+    }
+    .theme-SCRAPBOOK .member {
+      border: 1px solid #e7e5e4;
+      padding: 14px;
+      background: #fffdf8;
     }
     .member-header {
       font-size: 22px;
@@ -56,6 +91,11 @@
       padding: 10px 12px;
       background: #f5f5f4;
       border-left: 3px solid {brandColor};
+    }
+    .theme-MODERN .tribute {
+      background: #f8fafc;
+      border-left-width: 4px;
+      border-radius: 0 8px 8px 0;
     }
     .meta { font-size: 12px; color: #78716c; margin-top: 4px; }
     .chip {
@@ -73,16 +113,22 @@
     }
   </style>
 </head>
-<body>
+<body class="theme-{theme}">
   <section class="cover">
-    {#if logoUrl}
+    {#if coverMediaUrl}
+    <img class="cover-media" src="{coverMediaUrl}" alt="cover"/>
+    {#else if logoUrl}
     <img class="logo" src="{logoUrl}" alt="logo"/>
     {/if}
-    <h1>{orgName}</h1>
-    <h2>{teamName} Yearbook</h2>
+    <h1>{title}</h1>
+    <h2>{subtitle}</h2>
+    {#if dedication}
+    <p class="dedication">{dedication}</p>
+    {/if}
     <p>Yaadbuzz</p>
   </section>
 
+  {#if showMembers}
   <section>
     <h3>Members</h3>
     {#for member in members}
@@ -91,19 +137,25 @@
       {#if member.bio}
       <div class="bio">{member.bio}</div>
       {/if}
+      {#if showCharacteristics}
       {#for c in member.characteristics}
       <span class="chip">{c.title} × {c.count}</span>
       {/for}
+      {/if}
+      {#if showTributes}
       {#for t in member.tributes}
       <div class="tribute">
         <div>{t.text}</div>
         <div class="meta">— {t.writer}</div>
       </div>
       {/for}
+      {/if}
     </div>
     {/for}
   </section>
+  {/if}
 
+  {#if showMemories}
   <section>
     <h3>Memories</h3>
     {#for memory in memories}
@@ -114,7 +166,9 @@
     </div>
     {/for}
   </section>
+  {/if}
 
+  {#if showAwards}
   <section>
     <h3>Awards</h3>
     {#for topic in topics}
@@ -126,5 +180,6 @@
     </div>
     {/for}
   </section>
+  {/if}
 </body>
 </html>

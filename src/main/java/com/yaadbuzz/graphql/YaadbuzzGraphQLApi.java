@@ -3,6 +3,7 @@ package com.yaadbuzz.graphql;
 import com.yaadbuzz.auth.CurrentUserService;
 import com.yaadbuzz.domain.User;
 import com.yaadbuzz.enums.TeamRole;
+import com.yaadbuzz.enums.YearbookTheme;
 import com.yaadbuzz.graphql.types.GqlTypes;
 import com.yaadbuzz.graphql.types.GqlTypes.CharacteristicType;
 import com.yaadbuzz.graphql.types.GqlTypes.CommentType;
@@ -20,6 +21,8 @@ import com.yaadbuzz.graphql.types.GqlTypes.TopicType;
 import com.yaadbuzz.graphql.types.GqlTypes.TributeType;
 import com.yaadbuzz.graphql.types.GqlTypes.UserType;
 import com.yaadbuzz.graphql.types.GqlTypes.YearbookExportType;
+import com.yaadbuzz.graphql.types.GqlTypes.YearbookType;
+import com.yaadbuzz.pdf.YearbookContentService;
 import com.yaadbuzz.pdf.YearbookPdfService;
 import com.yaadbuzz.search.SearchService;
 import com.yaadbuzz.service.CharacteristicService;
@@ -61,6 +64,8 @@ public class YaadbuzzGraphQLApi {
     SearchService searchService;
     @Inject
     YearbookPdfService yearbookPdfService;
+    @Inject
+    YearbookContentService yearbookContentService;
 
     @Query
     @Description("Current authenticated user")
@@ -183,6 +188,12 @@ public class YaadbuzzGraphQLApi {
                 .stream().map(YearbookExportType::from).toList();
     }
 
+    @Query
+    @Description("Assembled yearbook for online viewing and browser print-to-PDF")
+    public YearbookType yearbook(@Name("teamId") UUID teamId) {
+        return YearbookType.from(yearbookContentService.loadForTeam(teamId, currentUserService.requireUser()));
+    }
+
     @Mutation
     public OrganizationType createOrganization(@Name("name") String name, @Name("brandColor") String brandColor) {
         return OrganizationType.from(organizationService.create(currentUserService.requireUser(), name, brandColor));
@@ -216,6 +227,34 @@ public class YaadbuzzGraphQLApi {
     ) {
         return TeamType.from(teamService.updateSettings(
                 teamId, currentUserService.requireUser(), brandColor, coverMediaId, revealTributes, revealAt));
+    }
+
+    @Mutation
+    @Description("Customize online/print yearbook layout and sections")
+    public TeamType updateYearbookSettings(
+            @Name("teamId") UUID teamId,
+            @Name("title") String title,
+            @Name("subtitle") String subtitle,
+            @Name("dedication") String dedication,
+            @Name("theme") YearbookTheme theme,
+            @Name("showMembers") Boolean showMembers,
+            @Name("showTributes") Boolean showTributes,
+            @Name("showCharacteristics") Boolean showCharacteristics,
+            @Name("showMemories") Boolean showMemories,
+            @Name("showAwards") Boolean showAwards
+    ) {
+        return TeamType.from(teamService.updateYearbookSettings(
+                teamId,
+                currentUserService.requireUser(),
+                title,
+                subtitle,
+                dedication,
+                theme,
+                showMembers,
+                showTributes,
+                showCharacteristics,
+                showMemories,
+                showAwards));
     }
 
     @Mutation

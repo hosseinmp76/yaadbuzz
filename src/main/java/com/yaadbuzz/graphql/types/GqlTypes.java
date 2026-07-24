@@ -15,6 +15,8 @@ import com.yaadbuzz.domain.YearbookExport;
 import com.yaadbuzz.enums.ExportStatus;
 import com.yaadbuzz.enums.OrgRole;
 import com.yaadbuzz.enums.TeamRole;
+import com.yaadbuzz.enums.YearbookTheme;
+import com.yaadbuzz.pdf.YearbookContent;
 import com.yaadbuzz.search.SearchService;
 import com.yaadbuzz.service.TopicService;
 import java.time.Instant;
@@ -55,7 +57,16 @@ public final class GqlTypes {
             MediaType coverMedia,
             boolean revealTributes,
             Instant revealAt,
-            boolean tributesRevealed
+            boolean tributesRevealed,
+            String yearbookTitle,
+            String yearbookSubtitle,
+            String yearbookDedication,
+            YearbookTheme yearbookTheme,
+            boolean yearbookShowMembers,
+            boolean yearbookShowTributes,
+            boolean yearbookShowCharacteristics,
+            boolean yearbookShowMemories,
+            boolean yearbookShowAwards
     ) {
         public static TeamType from(Team team) {
             return new TeamType(
@@ -66,7 +77,16 @@ public final class GqlTypes {
                     MediaType.from(team.coverMedia),
                     team.revealTributes,
                     team.revealAt,
-                    team.tributesRevealed()
+                    team.tributesRevealed(),
+                    team.yearbookTitle,
+                    team.yearbookSubtitle,
+                    team.yearbookDedication,
+                    team.yearbookTheme == null ? YearbookTheme.CLASSIC : team.yearbookTheme,
+                    team.yearbookShowMembers,
+                    team.yearbookShowTributes,
+                    team.yearbookShowCharacteristics,
+                    team.yearbookShowMemories,
+                    team.yearbookShowAwards
             );
         }
     }
@@ -214,6 +234,96 @@ public final class GqlTypes {
                     export.createdAt,
                     export.completedAt
             );
+        }
+    }
+
+    public record YearbookCharacteristicType(String title, int count) {
+    }
+
+    public record YearbookTributeType(String text, String writer) {
+    }
+
+    public record YearbookMemberType(
+            String nickname,
+            String bio,
+            String avatarUrl,
+            List<YearbookCharacteristicType> characteristics,
+            List<YearbookTributeType> tributes
+    ) {
+    }
+
+    public record YearbookMemoryType(String title, String body, String writer) {
+    }
+
+    public record YearbookStandingType(String nickname, int score) {
+    }
+
+    public record YearbookTopicType(String title, List<YearbookStandingType> standings) {
+    }
+
+    public record YearbookType(
+            UUID teamId,
+            String orgName,
+            String teamName,
+            String title,
+            String subtitle,
+            String dedication,
+            YearbookTheme theme,
+            String brandColor,
+            String logoUrl,
+            String coverMediaUrl,
+            boolean showMembers,
+            boolean showTributes,
+            boolean showCharacteristics,
+            boolean showMemories,
+            boolean showAwards,
+            List<YearbookMemberType> members,
+            List<YearbookMemoryType> memories,
+            List<YearbookTopicType> topics
+    ) {
+        public static YearbookType from(YearbookContent content) {
+            return new YearbookType(
+                    content.teamId(),
+                    content.orgName(),
+                    content.teamName(),
+                    content.title(),
+                    content.subtitle(),
+                    content.dedication(),
+                    YearbookTheme.valueOf(content.theme()),
+                    content.brandColor(),
+                    emptyToNull(content.logoUrl()),
+                    emptyToNull(content.coverMediaUrl()),
+                    content.showMembers(),
+                    content.showTributes(),
+                    content.showCharacteristics(),
+                    content.showMemories(),
+                    content.showAwards(),
+                    content.members().stream()
+                            .map(m -> new YearbookMemberType(
+                                    m.nickname(),
+                                    m.bio(),
+                                    emptyToNull(m.avatarUrl()),
+                                    m.characteristics().stream()
+                                            .map(c -> new YearbookCharacteristicType(c.title(), c.count()))
+                                            .toList(),
+                                    m.tributes().stream()
+                                            .map(t -> new YearbookTributeType(t.text(), t.writer()))
+                                            .toList()))
+                            .toList(),
+                    content.memories().stream()
+                            .map(m -> new YearbookMemoryType(m.title(), m.body(), m.writer()))
+                            .toList(),
+                    content.topics().stream()
+                            .map(t -> new YearbookTopicType(
+                                    t.title(),
+                                    t.standings().stream()
+                                            .map(s -> new YearbookStandingType(s.nickname(), s.score()))
+                                            .toList()))
+                            .toList());
+        }
+
+        private static String emptyToNull(String value) {
+            return value == null || value.isBlank() ? null : value;
         }
     }
 

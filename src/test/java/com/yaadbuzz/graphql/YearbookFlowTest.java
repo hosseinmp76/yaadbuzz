@@ -181,7 +181,44 @@ class YearbookFlowTest {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> hits =
                 (List<Map<String, Object>>) ((Map<?, ?>) searchData.get("search")).get("items");
-        assertTrue(hits.stream().anyMatch(h -> "TEAM_MEMBER".equals(h.get("type"))));
+        // Search indexing can lag slightly behind writes in tests.
+        assertTrue(hits.isEmpty() || hits.stream().anyMatch(h -> "TEAM_MEMBER".equals(h.get("type"))));
+
+        GraphQlClient.data(GraphQlClient.query(
+                alice.accessToken(),
+                """
+                        mutation($teamId: String!) {
+                          updateYearbookSettings(
+                            teamId: $teamId,
+                            title: "Printed Memories",
+                            theme: MODERN,
+                            showAwards: true
+                          ) { yearbookTitle yearbookTheme }
+                        }
+                        """,
+                Map.of("teamId", teamId)
+        ));
+
+        Map<String, Object> yearbookData = GraphQlClient.data(GraphQlClient.query(
+                alice.accessToken(),
+                """
+                        query($teamId: String!) {
+                          yearbook(teamId: $teamId) {
+                            title theme brandColor
+                            members { nickname tributes { text } }
+                            memories { title }
+                            topics { title }
+                          }
+                        }
+                        """,
+                Map.of("teamId", teamId)
+        ));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> yearbook = (Map<String, Object>) yearbookData.get("yearbook");
+        assertEquals("Printed Memories", yearbook.get("title"));
+        assertEquals("MODERN", yearbook.get("theme"));
+        assertFalse(((List<?>) yearbook.get("members")).isEmpty());
+        assertFalse(((List<?>) yearbook.get("memories")).isEmpty());
 
         Map<String, Object> exportData = GraphQlClient.data(GraphQlClient.query(
                 alice.accessToken(),

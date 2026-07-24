@@ -1,7 +1,10 @@
 package com.yaadbuzz.domain;
 
+import com.yaadbuzz.enums.YearbookTheme;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -33,6 +36,34 @@ public class Team extends BaseEntity {
 
     @Column(name = "reveal_at")
     public Instant revealAt;
+
+    @Column(name = "yearbook_title")
+    public String yearbookTitle;
+
+    @Column(name = "yearbook_subtitle")
+    public String yearbookSubtitle;
+
+    @Column(name = "yearbook_dedication", columnDefinition = "TEXT")
+    public String yearbookDedication;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "yearbook_theme", nullable = false)
+    public YearbookTheme yearbookTheme = YearbookTheme.CLASSIC;
+
+    @Column(name = "yearbook_show_members", nullable = false)
+    public boolean yearbookShowMembers = true;
+
+    @Column(name = "yearbook_show_tributes", nullable = false)
+    public boolean yearbookShowTributes = true;
+
+    @Column(name = "yearbook_show_characteristics", nullable = false)
+    public boolean yearbookShowCharacteristics = true;
+
+    @Column(name = "yearbook_show_memories", nullable = false)
+    public boolean yearbookShowMemories = true;
+
+    @Column(name = "yearbook_show_awards", nullable = false)
+    public boolean yearbookShowAwards = true;
 
     public boolean tributesRevealed() {
         if (revealTributes) {

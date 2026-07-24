@@ -35,7 +35,7 @@ User, Organization, Team, Invite, TeamMember, Tribute, Memory, Comment, Topic, T
 Important product rules:
 
 - Tributes support anonymous / private / reveal modes.
-- Yearbooks are generated asynchronously; clients poll export status and download via REST.
+- Yearbooks support two PDF paths: (1) online view at `/teams/:teamId/yearbook` + browser print, (2) async server PDF via `requestYearbookExport` + REST download. Both use `YearbookContentService` and team yearbook customization (`updateYearbookSettings`).
 - Search is team-scoped and backed by Elasticsearch.
 
 ## Package map (backend)
