@@ -73,6 +73,8 @@ public class Team extends BaseEntity {
     }
 
     public static List<Team> listByOrganization(UUID organizationId) {
-        return list("organization.id = ?1 and deletedAt is null order by createdAt desc", organizationId);
+        return list(
+                "from Team t left join fetch t.coverMedia where t.organization.id = ?1 and t.deletedAt is null order by t.createdAt desc",
+                organizationId);
     }
 }

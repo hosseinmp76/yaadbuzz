@@ -10,10 +10,17 @@ const proxyApi = process.env.VITE_PROXY_API === '1'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    // Bind IPv4 so Quinoa's proxy (127.0.0.1:3000) can reach Vite.
+    // Bind IPv4 so Quinoa's HTTP proxy (127.0.0.1:3000) can reach Vite.
     host: '127.0.0.1',
     port: 3000,
     strictPort: true,
+    // Quinoa websocket proxy is disabled; HMR talks to Vite directly.
+    hmr: {
+      protocol: 'ws',
+      host: '127.0.0.1',
+      port: 3000,
+      clientPort: 3000,
+    },
     ...(proxyApi
       ? {
           proxy: {

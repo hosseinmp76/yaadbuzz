@@ -305,7 +305,8 @@ Browser
 | Symptom | Likely fix |
 |---|---|
 | Port 3000 in use | Stop other Vite/Quinoa processes; or use separate mode with only one owner of 3000 |
+| `WebSocket is closed` / Quinoa HMR proxy errors | Expected race if Quinoa proxied HMR; app uses `%dev.quarkus.quinoa.dev-server.websocket=false` and Vite HMR on `127.0.0.1:3000` directly |
 | ES / Hibernate Search version errors in tests | Keep Dev Services image at `8.15.5` |
 | Compose app can’t reach MinIO from browser | Set `YAADBUZZ_S3_PUBLIC_ENDPOINT` to a host-reachable URL (`http://localhost:9000` in compose) |
 | Native build / AWS Netty issues | Prefer URL-connection S3 client; see native-image args in `application.properties` |
-| Frontend can’t call API on :3000 | Ensure Vite proxy is present and Quarkus is on :8080 |
+| Frontend can’t call API | Use **http://localhost:8080** with Quinoa; do not enable Vite→Quarkus proxy while Quinoa is managing Vite |

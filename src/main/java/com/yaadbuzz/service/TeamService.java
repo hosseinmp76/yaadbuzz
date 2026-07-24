@@ -17,6 +17,7 @@ import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.hibernate.Hibernate;
 
 @ApplicationScoped
 public class TeamService {
@@ -46,15 +47,19 @@ public class TeamService {
         return team;
     }
 
+    @Transactional
     public List<Team> listByOrganization(UUID organizationId, User user) {
         accessService.requireOrgMember(organizationId, user);
-        return Team.listByOrganization(organizationId);
+        List<Team> teams = Team.listByOrganization(organizationId);
+        teams.forEach(this::initializeTeamGraph);
+        return teams;
     }
 
+    @Transactional
     public Team get(UUID teamId, User user) {
         Team team = accessService.requireTeam(teamId);
         accessService.requireTeamMember(teamId, user);
-        return team;
+        return initializeTeamGraph(team);
     }
 
     @Transactional
@@ -78,7 +83,7 @@ public class TeamService {
         if (revealAt != null) {
             team.revealAt = revealAt;
         }
-        return team;
+        return initializeTeamGraph(team);
     }
 
     @Transactional
@@ -124,7 +129,7 @@ public class TeamService {
         if (showAwards != null) {
             team.yearbookShowAwards = showAwards;
         }
-        return team;
+        return initializeTeamGraph(team);
     }
 
     @Transactional
@@ -231,6 +236,13 @@ public class TeamService {
                 .orElseThrow(() -> ApiException.notFound("Team member not found"));
         accessService.requireTeamMember(member.team.id, user);
         return member;
+    }
+
+    private Team initializeTeamGraph(Team team) {
+        // TeamType.from reads coverMedia.url after the persistence context may be closed.
+        Hibernate.initialize(team.coverMedia);
+        Hibernate.initialize(team.organization);
+        return team;
     }
 
     private String uniqueNickname(UUID teamId, String base) {

@@ -24,7 +24,11 @@ public class AccessService {
     }
 
     public Team requireTeam(UUID id) {
-        Team team = Team.findById(id);
+        // Fetch coverMedia so GraphQL mapping can read url/mimeType after the session closes.
+        Team team = Team.find(
+                        "from Team t left join fetch t.coverMedia left join fetch t.organization where t.id = ?1",
+                        id)
+                .firstResult();
         if (team == null || team.isDeleted()) {
             throw ApiException.notFound("Team not found");
         }
