@@ -72,6 +72,15 @@ One-shot:
 Image: `yaadbuzz/yaadbuzz:1.0.0-SNAPSHOT`  
 Binary: `target/yaadbuzz-1.0.0-SNAPSHOT-runner`
 
+## Tests
+
+```bash
+source "$HOME/.sdkman/bin/sdkman-init.sh"
+./mvnw test
+```
+
+Uses Quarkus Dev Services (Postgres + Elasticsearch 8). Quinoa and seed data are disabled in the `%test` profile.
+
 ## API split
 
 | Surface | Purpose |

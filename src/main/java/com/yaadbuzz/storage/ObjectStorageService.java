@@ -1,7 +1,6 @@
 package com.yaadbuzz.storage;
 
 import com.yaadbuzz.common.ApiException;
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -26,19 +25,28 @@ public class ObjectStorageService {
     @Inject
     S3Properties props;
 
-    private S3Client client;
+    private volatile S3Client client;
 
-    @PostConstruct
-    void init() {
-        client = S3Client.builder()
-                .endpointOverride(URI.create(props.endpoint()))
-                .region(Region.of(props.region()))
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(props.accessKey(), props.secretKey())))
-                .httpClientBuilder(UrlConnectionHttpClient.builder())
-                .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
-                .build();
-        ensureBucket();
+    private S3Client client() {
+        S3Client local = client;
+        if (local == null) {
+            synchronized (this) {
+                local = client;
+                if (local == null) {
+                    local = S3Client.builder()
+                            .endpointOverride(URI.create(props.endpoint()))
+                            .region(Region.of(props.region()))
+                            .credentialsProvider(StaticCredentialsProvider.create(
+                                    AwsBasicCredentials.create(props.accessKey(), props.secretKey())))
+                            .httpClientBuilder(UrlConnectionHttpClient.builder())
+                            .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
+                            .build();
+                    client = local;
+                    ensureBucket(local);
+                }
+            }
+        }
+        return local;
     }
 
     @PreDestroy
@@ -48,20 +56,20 @@ public class ObjectStorageService {
         }
     }
 
-    private void ensureBucket() {
+    private void ensureBucket(S3Client s3) {
         try {
-            client.headBucket(HeadBucketRequest.builder().bucket(props.bucket()).build());
+            s3.headBucket(HeadBucketRequest.builder().bucket(props.bucket()).build());
         } catch (NoSuchBucketException e) {
-            client.createBucket(CreateBucketRequest.builder().bucket(props.bucket()).build());
+            s3.createBucket(CreateBucketRequest.builder().bucket(props.bucket()).build());
         } catch (Exception ignored) {
-            // MinIO may not be up yet in early boot; upload will retry/fail clearly later
+            // MinIO may not be up yet; upload will fail clearly later
         }
     }
 
     public StoredObject upload(byte[] bytes, String mimeType, String folder) {
         String key = folder + "/" + UUID.randomUUID();
         try {
-            client.putObject(
+            client().putObject(
                     PutObjectRequest.builder()
                             .bucket(props.bucket())
                             .key(key)
@@ -78,7 +86,7 @@ public class ObjectStorageService {
 
     public byte[] download(String storageKey) {
         try {
-            return client.getObjectAsBytes(GetObjectRequest.builder()
+            return client().getObjectAsBytes(GetObjectRequest.builder()
                     .bucket(props.bucket())
                     .key(storageKey)
                     .build()).asByteArray();
