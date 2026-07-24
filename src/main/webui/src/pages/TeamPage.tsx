@@ -519,7 +519,7 @@ function YearbookTab({
     try {
       const ok = await saveCustomization(false)
       if (!ok) return
-      navigate(`/teams/${teamId}/yearbook`)
+      void navigate(`/teams/${teamId}/yearbook`)
     } finally {
       setSaving(false)
     }

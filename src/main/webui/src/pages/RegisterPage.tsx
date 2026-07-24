@@ -39,7 +39,7 @@ export default function RegisterPage() {
     try {
       await registerUser(values.email, values.password, values.displayName)
       toast.success('Account created')
-      navigate('/app')
+      void navigate('/app')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Registration failed'
       setError('root', { message })

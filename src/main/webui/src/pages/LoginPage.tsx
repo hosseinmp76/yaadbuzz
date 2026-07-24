@@ -37,7 +37,7 @@ export default function LoginPage() {
     try {
       await login(values.email, values.password)
       toast.success('Welcome back')
-      navigate('/app')
+      void navigate('/app')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed'
       setError('root', { message })

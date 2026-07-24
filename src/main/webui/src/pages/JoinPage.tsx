@@ -40,7 +40,7 @@ export default function JoinPage() {
       return
     }
     toast.success('Joined team')
-    navigate(`/teams/${result.data.joinTeam.teamId}`)
+    void navigate(`/teams/${result.data.joinTeam.teamId}`)
   })
 
   return (

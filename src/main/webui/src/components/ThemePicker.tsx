@@ -1,7 +1,6 @@
 import { Check, Palette } from '@phosphor-icons/react'
 import clsx from 'clsx'
 import { useTheme } from '../theme/theme-context'
-import type { ThemeId } from '../theme/themes'
 
 export function ThemePicker({ compact = false }: { compact?: boolean }) {
   const { themeId, themes, setThemeId } = useTheme()
@@ -19,7 +18,7 @@ export function ThemePicker({ compact = false }: { compact?: boolean }) {
             <button
               key={theme.id}
               type="button"
-              onClick={() => setThemeId(theme.id as ThemeId)}
+              onClick={() => setThemeId(theme.id)}
               className={clsx(
                 'rounded-[14px] border p-3 text-left transition',
                 active

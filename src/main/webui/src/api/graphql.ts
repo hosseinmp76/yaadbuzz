@@ -12,21 +12,22 @@ export const client = new Client({
     }),
     fetchExchange,
   ],
-  fetchOptions: () => {
-    const token = getAccessToken()
-    return {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    }
-  },
+  fetchOptions: (): RequestInit => ({
+    headers: authHeaders(),
+  }),
 })
 
-export async function uploadMedia(file: File) {
+function authHeaders(): HeadersInit {
   const token = getAccessToken()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+export async function uploadMedia(file: File) {
   const body = new FormData()
   body.append('file', file)
   const res = await fetch('/api/media', {
     method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    headers: authHeaders(),
     body,
   })
   if (!res.ok) {
@@ -37,9 +38,8 @@ export async function uploadMedia(file: File) {
 }
 
 export async function downloadYearbook(exportId: string) {
-  const token = getAccessToken()
   const res = await fetch(`/api/yearbooks/${exportId}/download`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    headers: authHeaders(),
   })
   if (!res.ok) {
     throw new Error('Download failed')

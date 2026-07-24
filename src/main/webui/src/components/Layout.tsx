@@ -1,12 +1,12 @@
 import { SignOut } from '@phosphor-icons/react'
 import clsx from 'clsx'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
 import { ThemePicker } from './ThemePicker'
 import { Button } from './ui/Button'
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
   const [themeOpen, setThemeOpen] = useState(false)
   const themeRef = useRef<HTMLDivElement>(null)
