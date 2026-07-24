@@ -16,6 +16,9 @@ Online yearbook generator built with **Quarkus**, **React (Quinoa)**, **GraphQL*
 
 ## Quick start (dev)
 
+Full local runbook (together vs separate frontend/backend, build, deploy, tree): [`development/development.md`](development/development.md).  
+Agent context: [`AGENTS.md`](AGENTS.md).
+
 ```bash
 # Java via sdkman
 source "$HOME/.sdkman/bin/sdkman-init.sh"
@@ -26,7 +29,7 @@ nvm use --lts
 # Infrastructure
 docker compose up -d postgres elasticsearch minio minio-init
 
-# App
+# App (Quarkus + Quinoa Vite HMR)
 ./mvnw quarkus:dev
 ```
 
@@ -101,9 +104,13 @@ npm run lint:fix   # auto-fix where possible
 
 ## Project layout
 
+See the full tree in [`development/development.md`](development/development.md#project-file-structure).
+
 ```
 src/main/java/com/yaadbuzz/   # backend
 src/main/webui/               # React + Vite (Quinoa)
 src/main/resources/db/migration
 docker-compose.yml
+development/development.md
+AGENTS.md
 ```
