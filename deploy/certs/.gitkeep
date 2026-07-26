@@ -1,0 +1,3 @@
+# Place TLS files here (gitignored):
+#   origin.crt  — certificate (e.g. Cloudflare Origin Certificate)
+#   origin.key  — private key

@@ -43,6 +43,8 @@ nb-configuration.xml
 /.quarkus/cli/plugins/
 # TLS Certificates
 .certs/
+deploy/certs/*
+!deploy/certs/.gitkeep
 
 # Quinoa
 node_modules/
