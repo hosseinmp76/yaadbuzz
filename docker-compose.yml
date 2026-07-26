@@ -86,7 +86,7 @@ services:
     restart: unless-stopped
 
   nginx:
-    image: nginx:1.27-alpine
+    image: nginx:1.30-alpine
     depends_on:
       - app
       - minio
