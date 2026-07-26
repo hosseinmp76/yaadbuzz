@@ -6,7 +6,7 @@ export function ThemePicker({ compact = false }: { compact?: boolean }) {
   const { themeId, themes, setThemeId } = useTheme()
 
   return (
-    <section className={clsx('stack', compact && 'min-w-64')}>
+    <section className={clsx('stack', compact ? 'min-w-0' : 'min-w-0 sm:min-w-64')}>
       <div className="flex items-center gap-2 text-sm font-semibold text-muted">
         <Palette size={18} weight="duotone" />
         Theme

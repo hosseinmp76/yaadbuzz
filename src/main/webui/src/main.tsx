@@ -16,7 +16,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <AuthProvider>
           <BrowserRouter>
             <App />
-            <Toaster richColors position="top-right" closeButton />
+            <Toaster richColors position="top-center" closeButton />
           </BrowserRouter>
         </AuthProvider>
       </UrqlProvider>

@@ -69,7 +69,7 @@ export default function RegisterPage() {
             <FieldError message={errors.password?.message} />
           </Label>
           <FieldError message={errors.root?.message} />
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? 'Creating…' : 'Create account'}
           </Button>
         </form>

@@ -62,7 +62,7 @@ export default function LoginPage() {
             <FieldError message={errors.password?.message} />
           </Label>
           <FieldError message={errors.root?.message} />
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? 'Signing in…' : 'Log in'}
           </Button>
         </form>

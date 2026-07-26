@@ -9,31 +9,33 @@ export default function LandingPage() {
   const { user } = useAuth()
   return (
     <Layout>
-      <section className="relative min-h-[calc(100vh-6rem)] overflow-hidden pb-16 pt-10">
+      <section className="relative min-h-[calc(100dvh-6rem)] overflow-hidden pb-16 pt-6 sm:pt-10">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           className="relative z-10 max-w-2xl"
         >
-          <h1 className="font-display text-[clamp(3.4rem,10vw,6.2rem)] leading-[0.92] tracking-[-0.05em]">
+          <h1 className="font-display text-[clamp(2.75rem,12vw,6.2rem)] leading-[0.92] tracking-[-0.05em]">
             Yaad<span className="text-brand">buzz</span>
           </h1>
-          <p className="mt-5 max-w-xl text-lg text-muted">
+          <p className="mt-4 max-w-xl text-base text-muted sm:mt-5 sm:text-lg">
             Create an organization, gather your team, collect memories, and print a yearbook worth keeping.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-7 flex w-full flex-col gap-3 sm:mt-8 sm:w-auto sm:flex-row sm:flex-wrap">
             {user ? (
-              <Link to="/app">
-                <Button>Open dashboard</Button>
+              <Link to="/app" className="sm:w-auto">
+                <Button className="w-full sm:w-auto">Open dashboard</Button>
               </Link>
             ) : (
               <>
-                <Link to="/register">
-                  <Button>Start your yearbook</Button>
+                <Link to="/register" className="sm:w-auto">
+                  <Button className="w-full sm:w-auto">Start your yearbook</Button>
                 </Link>
-                <Link to="/login">
-                  <Button variant="secondary">I already have an account</Button>
+                <Link to="/login" className="sm:w-auto">
+                  <Button variant="secondary" className="w-full sm:w-auto">
+                    I already have an account
+                  </Button>
                 </Link>
               </>
             )}

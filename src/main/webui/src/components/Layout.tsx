@@ -1,4 +1,4 @@
-import { SignOut } from '@phosphor-icons/react'
+import { Palette, SignOut } from '@phosphor-icons/react'
 import clsx from 'clsx'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
@@ -30,20 +30,30 @@ export default function Layout({ children }: { children: ReactNode }) {
   }, [themeOpen])
 
   return (
-    <div className="mx-auto w-[min(1100px,calc(100%-2rem))] pb-16">
-      <header className="flex items-center justify-between py-5">
-        <Link to={user ? '/app' : '/'} className="font-display text-[1.6rem] tracking-[-0.03em]">
+    <div className="app-shell">
+      <header className="flex items-center justify-between gap-2 py-4 sm:py-5">
+        <Link
+          to={user ? '/app' : '/'}
+          className="shrink-0 font-display text-[1.35rem] tracking-[-0.03em] sm:text-[1.6rem]"
+        >
           Yaad<span className="text-brand">buzz</span>
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-3">
           <div className="relative" ref={themeRef}>
-            <Button variant="secondary" onClick={() => setThemeOpen((v) => !v)}>
-              Themes
+            <Button
+              variant="secondary"
+              className="px-3 sm:px-5"
+              aria-expanded={themeOpen}
+              aria-label="Themes"
+              onClick={() => setThemeOpen((v) => !v)}
+            >
+              <Palette size={18} weight="duotone" />
+              <span className="hidden sm:inline">Themes</span>
             </Button>
             {themeOpen && (
               <div
                 className={clsx(
-                  'absolute right-0 z-20 mt-2 w-[min(22rem,calc(100vw-2rem))] rounded-[18px] border border-line bg-panel-strong p-3 shadow-panel',
+                  'absolute right-0 z-20 mt-2 max-h-[min(70vh,28rem)] w-[min(22rem,calc(100vw-1.5rem))] overflow-y-auto rounded-[18px] border border-line bg-panel-strong p-3 shadow-panel',
                 )}
               >
                 <ThemePicker compact />
@@ -52,19 +62,26 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
           {user ? (
             <>
-              <span className="hidden text-muted sm:inline">{user.displayName}</span>
-              <Button variant="secondary" onClick={logout}>
+              <span className="hidden max-w-[10rem] truncate text-muted md:inline">
+                {user.displayName}
+              </span>
+              <Button
+                variant="secondary"
+                className="px-3 sm:px-5"
+                aria-label="Log out"
+                onClick={logout}
+              >
                 <SignOut size={18} />
-                Log out
+                <span className="hidden sm:inline">Log out</span>
               </Button>
             </>
           ) : (
             <>
-              <Link to="/login" className="font-semibold text-ink">
+              <Link to="/login" className="px-2 text-sm font-semibold text-ink sm:text-base">
                 Log in
               </Link>
               <Link to="/register">
-                <Button>Get started</Button>
+                <Button className="px-3.5 text-sm sm:px-5 sm:text-base">Get started</Button>
               </Link>
             </>
           )}

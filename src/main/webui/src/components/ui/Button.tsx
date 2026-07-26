@@ -25,7 +25,7 @@ export function Button({
     <button
       type={type}
       className={clsx(
-        'inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 font-bold transition disabled:cursor-not-allowed disabled:opacity-55',
+        'inline-flex min-h-11 touch-manipulation items-center justify-center gap-2 rounded-full px-5 py-3 font-bold transition disabled:cursor-not-allowed disabled:opacity-55',
         variants[variant],
         className,
       )}

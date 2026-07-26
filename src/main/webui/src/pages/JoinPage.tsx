@@ -60,7 +60,7 @@ export default function JoinPage() {
           Bio
           <Textarea rows={3} {...register('bio')} />
         </Label>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
           Join
         </Button>
       </form>

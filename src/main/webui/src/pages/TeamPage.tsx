@@ -574,7 +574,11 @@ function YearbookTab({
                   {exp.errorMessage && <div className="text-danger">{exp.errorMessage}</div>}
                 </div>
                 {exp.status === 'READY' && (
-                  <Button variant="secondary" onClick={() => downloadYearbook(exp.id)}>
+                  <Button
+                    variant="secondary"
+                    className="w-full sm:w-auto"
+                    onClick={() => downloadYearbook(exp.id)}
+                  >
                     <DownloadSimple size={18} />
                     Download
                   </Button>

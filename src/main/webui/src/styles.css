@@ -50,15 +50,29 @@
     min-height: 100%;
   }
 
+  html {
+    overflow-x: clip;
+  }
+
   body {
     margin: 0;
     color: var(--ink);
     font-family: var(--font-body-family);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
     background:
       radial-gradient(circle at 10% 10%, var(--glow-1), transparent 35%),
       radial-gradient(circle at 90% 0%, var(--glow-2), transparent 30%),
       linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
     background-attachment: fixed;
+  }
+
+  @media (max-width: 640px) {
+    body {
+      background-attachment: scroll;
+    }
   }
 
   a {
@@ -76,7 +90,7 @@
 
 @layer components {
   .panel {
-    @apply rounded-panel border border-line bg-panel p-5 shadow-panel backdrop-blur-md;
+    @apply rounded-panel border border-line bg-panel p-4 shadow-panel backdrop-blur-md sm:p-5;
   }
 
   .stack {
@@ -84,23 +98,29 @@
   }
 
   .page-title {
-    @apply mt-2 mb-1 font-display text-[clamp(2rem,4vw,2.8rem)] leading-tight tracking-[-0.03em];
+    @apply mt-2 mb-1 font-display text-[clamp(1.75rem,6vw,2.8rem)] leading-tight tracking-[-0.03em] break-words;
   }
 
   .chip {
-    @apply inline-flex items-center rounded-full border border-line bg-panel-strong px-2.5 py-1 text-xs font-semibold tracking-[0.02em] text-muted;
+    @apply inline-flex max-w-full items-center truncate rounded-full border border-line bg-panel-strong px-2.5 py-1 text-xs font-semibold tracking-[0.02em] text-muted;
   }
 
   .list-item {
-    @apply flex items-center justify-between gap-3 rounded-[14px] border border-line bg-panel px-3.5 py-3 transition hover:border-brand/35;
+    @apply flex flex-col items-stretch gap-3 rounded-[14px] border border-line bg-panel px-3.5 py-3 transition hover:border-brand/35 sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .list-item > :first-child {
+    @apply min-w-0;
   }
 
   .tabs {
-    @apply my-4 flex flex-wrap gap-2;
+    @apply -mx-1 my-4 flex gap-2 overflow-x-auto px-1 pb-1;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
   }
 
   .tabs button {
-    @apply rounded-full border border-line bg-transparent px-3.5 py-2 font-semibold capitalize text-ink transition hover:bg-panel;
+    @apply shrink-0 rounded-full border border-line bg-transparent px-3.5 py-2.5 text-sm font-semibold capitalize text-ink transition hover:bg-panel sm:text-base;
   }
 
   .tabs button.active {
@@ -109,6 +129,10 @@
 
   .infinite-sentinel {
     @apply py-3 text-center text-sm text-muted;
+  }
+
+  .app-shell {
+    @apply mx-auto w-[min(1100px,calc(100%-1.25rem))] pb-[max(4rem,env(safe-area-inset-bottom))] sm:w-[min(1100px,calc(100%-2rem))];
   }
 }
 

@@ -75,7 +75,7 @@ export default function YearbookPage() {
 
   return (
     <div className="yearbook-print-root min-h-screen bg-[#faf7f2] text-[#1c1917]">
-      <div className="no-print mx-auto flex w-[min(1100px,calc(100%-2rem))] items-center justify-between gap-3 py-4">
+      <div className="no-print mx-auto flex w-[min(1100px,calc(100%-1.25rem))] flex-col gap-3 py-4 sm:w-[min(1100px,calc(100%-2rem))] sm:flex-row sm:items-center sm:justify-between">
         <Link
           to={`/teams/${teamId}?tab=yearbook`}
           className="inline-flex items-center gap-2 text-sm font-semibold text-[#57534e] hover:text-[#1c1917]"
@@ -83,11 +83,13 @@ export default function YearbookPage() {
           <ArrowLeft size={18} />
           Back to team
         </Link>
-        <div className="flex flex-wrap gap-2">
-          <Link to={`/teams/${teamId}?tab=yearbook`}>
-            <Button variant="secondary">Customize</Button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <Link to={`/teams/${teamId}?tab=yearbook`} className="sm:w-auto">
+            <Button variant="secondary" className="w-full sm:w-auto">
+              Customize
+            </Button>
           </Link>
-          <Button onClick={() => window.print()}>
+          <Button className="w-full sm:w-auto" onClick={() => window.print()}>
             <Printer size={18} />
             Print / Save as PDF
           </Button>
@@ -134,7 +136,7 @@ function YearbookDocument({ yearbook }: { yearbook: YearbookData }) {
     >
       <section
         className={clsx(
-          'yearbook-cover flex min-h-[70vh] flex-col items-center justify-center px-8 py-16 text-center print:min-h-[100vh]',
+          'yearbook-cover flex min-h-[60vh] flex-col items-center justify-center px-5 py-12 text-center sm:min-h-[70vh] sm:px-8 sm:py-16 print:min-h-[100vh]',
           branded && 'yearbook-cover--branded',
           theme === 'SCRAPBOOK' && 'yearbook-cover--scrapbook',
           theme === 'MINIMAL' && 'yearbook-cover--minimal',
@@ -165,7 +167,7 @@ function YearbookDocument({ yearbook }: { yearbook: YearbookData }) {
         <h1 className="font-display text-[clamp(2.4rem,6vw,3.6rem)] leading-tight tracking-[-0.03em] text-current">
           {yearbook.title}
         </h1>
-        <p className="mt-3 text-xl text-current">{yearbook.subtitle}</p>
+        <p className="mt-3 text-base text-current sm:text-xl">{yearbook.subtitle}</p>
         {yearbook.dedication && (
           <p className="mt-8 max-w-md text-base italic leading-relaxed text-current">
             {yearbook.dedication}
@@ -174,7 +176,7 @@ function YearbookDocument({ yearbook }: { yearbook: YearbookData }) {
         <p className="mt-10 text-sm tracking-[0.2em] uppercase text-current">Yaadbuzz</p>
       </section>
 
-      <div className="yearbook-body space-y-10 bg-white px-6 py-10 print:px-0 sm:px-10">
+      <div className="yearbook-body space-y-10 bg-white px-4 py-8 print:px-0 sm:px-10 sm:py-10">
         {yearbook.showMembers && (
           <section>
             <SectionHeading color={brand} theme={theme}>

@@ -7,7 +7,7 @@ import type {
 } from 'react'
 
 const fieldClass =
-  'w-full rounded-xl border border-line bg-panel-strong px-3.5 py-3 text-ink outline-none transition placeholder:text-muted focus:border-brand'
+  'w-full min-h-11 touch-manipulation rounded-xl border border-line bg-panel-strong px-3.5 py-3 text-base text-ink outline-none transition placeholder:text-muted focus:border-brand'
 
 export function Label({
   children,
