@@ -1,17 +1,18 @@
 import { Check, Palette } from '@phosphor-icons/react'
-import clsx from 'clsx'
+import { cn } from '../lib/cn'
 import { useTheme } from '../theme/theme-context'
+import { Stack } from './ui/Stack'
 
 export function ThemePicker({ compact = false }: { compact?: boolean }) {
   const { themeId, themes, setThemeId } = useTheme()
 
   return (
-    <section className={clsx('stack', compact ? 'min-w-0' : 'min-w-0 sm:min-w-64')}>
+    <Stack className={compact ? 'min-w-0' : 'min-w-0 sm:min-w-64'}>
       <div className="flex items-center gap-2 text-sm font-semibold text-muted">
         <Palette size={18} weight="duotone" />
         Theme
       </div>
-      <div className={clsx('grid gap-2', compact ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3')}>
+      <div className={cn('grid gap-2', compact ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3')}>
         {themes.map((theme) => {
           const active = theme.id === themeId
           return (
@@ -19,7 +20,7 @@ export function ThemePicker({ compact = false }: { compact?: boolean }) {
               key={theme.id}
               type="button"
               onClick={() => setThemeId(theme.id)}
-              className={clsx(
+              className={cn(
                 'rounded-[14px] border p-3 text-left transition',
                 active
                   ? 'border-brand bg-panel-strong shadow-panel'
@@ -44,6 +45,6 @@ export function ThemePicker({ compact = false }: { compact?: boolean }) {
           )
         })}
       </div>
-    </section>
+    </Stack>
   )
 }

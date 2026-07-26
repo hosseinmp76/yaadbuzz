@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/*
+ * Theme tokens: defaults live on :root; ThemeProvider overrides the same
+ * CSS variables. @theme maps them into Tailwind utilities (bg-brand, text-ink, …).
+ */
 @theme {
   --color-ink: var(--ink);
   --color-muted: var(--muted);
@@ -88,56 +92,8 @@
   }
 }
 
-@layer components {
-  .panel {
-    @apply rounded-panel border border-line bg-panel p-4 shadow-panel backdrop-blur-md sm:p-5;
-  }
-
-  .stack {
-    @apply flex flex-col gap-3;
-  }
-
-  .page-title {
-    @apply mt-2 mb-1 font-display text-[clamp(1.75rem,6vw,2.8rem)] leading-tight tracking-[-0.03em] break-words;
-  }
-
-  .chip {
-    @apply inline-flex max-w-full items-center truncate rounded-full border border-line bg-panel-strong px-2.5 py-1 text-xs font-semibold tracking-[0.02em] text-muted;
-  }
-
-  .list-item {
-    @apply flex flex-col items-stretch gap-3 rounded-[14px] border border-line bg-panel px-3.5 py-3 transition hover:border-brand/35 sm:flex-row sm:items-center sm:justify-between;
-  }
-
-  .list-item > :first-child {
-    @apply min-w-0;
-  }
-
-  .tabs {
-    @apply -mx-1 my-4 flex gap-2 overflow-x-auto px-1 pb-1;
-    scrollbar-width: thin;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .tabs button {
-    @apply shrink-0 rounded-full border border-line bg-transparent px-3.5 py-2.5 text-sm font-semibold capitalize text-ink transition hover:bg-panel sm:text-base;
-  }
-
-  .tabs button.active {
-    @apply border-transparent bg-brand text-on-brand;
-  }
-
-  .infinite-sentinel {
-    @apply py-3 text-center text-sm text-muted;
-  }
-
-  .app-shell {
-    @apply mx-auto w-[min(1100px,calc(100%-1.25rem))] pb-[max(4rem,env(safe-area-inset-bottom))] sm:w-[min(1100px,calc(100%-2rem))];
-  }
-}
-
+/* Yearbook print: keep exact colors across theme modes (browsers flatten otherwise). */
 @media print {
-  /* Keep yearbook colors independent of the app UI theme (dark themes were washing print to grey). */
   html,
   body,
   .yearbook-print-root,
@@ -153,10 +109,6 @@
   .yearbook-print-root {
     background: #ffffff !important;
     color: #1c1917 !important;
-  }
-
-  .no-print {
-    display: none !important;
   }
 
   .yearbook-doc {

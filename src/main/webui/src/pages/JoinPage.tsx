@@ -7,6 +7,9 @@ import { z } from 'zod'
 import Layout from '../components/Layout'
 import { Button } from '../components/ui/Button'
 import { FieldError, Input, Label, Textarea } from '../components/ui/Field'
+import { PageTitle } from '../components/ui/PageTitle'
+import { cn } from '../lib/cn'
+import { panelClass, stackClass } from '../components/ui/styles'
 import { JOIN_TEAM } from '../api/queries'
 
 const schema = z.object({
@@ -45,8 +48,8 @@ export default function JoinPage() {
 
   return (
     <Layout>
-      <h1 className="page-title">Join a team</h1>
-      <form className="panel mt-4 max-w-md stack" onSubmit={onSubmit}>
+      <PageTitle>Join a team</PageTitle>
+      <form className={cn(panelClass, stackClass, 'mt-4 max-w-md')} onSubmit={onSubmit}>
         <Label>
           Invite code
           <Input {...register('code')} />

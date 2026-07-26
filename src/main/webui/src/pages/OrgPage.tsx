@@ -7,7 +7,13 @@ import { useMutation, useQuery } from 'urql'
 import { z } from 'zod'
 import Layout from '../components/Layout'
 import { Button } from '../components/ui/Button'
+import { Chip } from '../components/ui/Chip'
 import { FieldError, Input, Label } from '../components/ui/Field'
+import { ListItemLink } from '../components/ui/ListItem'
+import { PageTitle } from '../components/ui/PageTitle'
+import { Panel } from '../components/ui/Panel'
+import { Stack } from '../components/ui/Stack'
+import { stackClass } from '../components/ui/styles'
 import { CREATE_TEAM, TEAMS } from '../api/queries'
 
 const schema = z.object({
@@ -53,34 +59,34 @@ export default function OrgPage() {
       <Link to="/app" className="text-sm font-semibold text-muted hover:text-ink">
         ← Back to organizations
       </Link>
-      <h1 className="page-title">Teams</h1>
+      <PageTitle>Teams</PageTitle>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <section className="panel stack">
+        <Panel className={stackClass}>
           <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
             <UsersThree size={22} weight="duotone" className="text-brand" />
             Your teams
           </h2>
           {fetching && <p className="text-muted">Loading…</p>}
           {error && <p className="text-danger">{error.message}</p>}
-          <div className="stack">
+          <Stack>
             {(data?.teams ?? []).map(
               (team: { id: string; name: string; tributesRevealed: boolean }) => (
-                <Link key={team.id} to={`/teams/${team.id}`} className="list-item">
+                <ListItemLink key={team.id} to={`/teams/${team.id}`}>
                   <div>
                     <strong>{team.name}</strong>
                     <div className="text-sm text-muted">
                       {team.tributesRevealed ? 'Tributes revealed' : 'Tributes sealed'}
                     </div>
                   </div>
-                  <span className="chip">Open</span>
-                </Link>
+                  <Chip>Open</Chip>
+                </ListItemLink>
               ),
             )}
-          </div>
-        </section>
-        <section className="panel">
+          </Stack>
+        </Panel>
+        <Panel>
           <h2 className="mb-3 font-display text-xl tracking-tight">Create team</h2>
-          <form className="stack" onSubmit={onCreate}>
+          <form className={stackClass} onSubmit={onCreate}>
             <Label>
               Name
               <Input {...register('name')} />
@@ -90,7 +96,7 @@ export default function OrgPage() {
               Create team
             </Button>
           </form>
-        </section>
+        </Panel>
       </div>
     </Layout>
   )

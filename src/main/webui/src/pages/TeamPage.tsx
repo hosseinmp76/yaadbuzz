@@ -6,7 +6,14 @@ import { useClient, useMutation, useQuery } from 'urql'
 import Layout from '../components/Layout'
 import { ThemePicker } from '../components/ThemePicker'
 import { Button } from '../components/ui/Button'
+import { Chip } from '../components/ui/Chip'
 import { Input, Label, Select, Textarea } from '../components/ui/Field'
+import { InfiniteSentinel } from '../components/ui/InfiniteSentinel'
+import { ListItem, ListItemLink } from '../components/ui/ListItem'
+import { PageTitle } from '../components/ui/PageTitle'
+import { Tabs, TabButton } from '../components/ui/Tabs'
+import { cn } from '../lib/cn'
+import { panelClass, stackClass } from '../components/ui/styles'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 import { downloadYearbook } from '../api/graphql'
 import {
@@ -49,21 +56,21 @@ export default function TeamPage() {
       >
         ← Back
       </Link>
-      <h1 className="page-title">{team?.name ?? 'Team'}</h1>
+      <PageTitle>{team?.name ?? 'Team'}</PageTitle>
       <p className="text-muted">
         {team?.tributesRevealed
           ? 'Tributes are revealed'
           : 'Tributes stay sealed until reveal day'}
       </p>
-      <div className="tabs">
+      <Tabs>
         {(['members', 'memories', 'topics', 'search', 'yearbook', 'settings'] as Tab[]).map(
           (t) => (
-            <button key={t} className={tab === t ? 'active' : ''} onClick={() => setTab(t)}>
+            <TabButton key={t} active={tab === t} onClick={() => setTab(t)}>
               {t}
-            </button>
+            </TabButton>
           ),
         )}
-      </div>
+      </Tabs>
       {tab === 'members' && <MembersTab teamId={teamId} />}
       {tab === 'memories' && <MemoriesTab teamId={teamId} />}
       {tab === 'topics' && <TopicsTab teamId={teamId} />}
@@ -132,7 +139,7 @@ function MembersTab({ teamId }: { teamId: string }) {
   }, hasNext && !loading)
 
   return (
-    <section className="stack">
+    <section className={stackClass}>
       <Label className="mb-0">
         <span className="sr-only">Search members</span>
         <div className="relative">
@@ -148,20 +155,20 @@ function MembersTab({ teamId }: { teamId: string }) {
           />
         </div>
       </Label>
-      <div className="stack">
+      <div className={stackClass}>
         {items.map((m) => (
-          <Link key={m.id} to={`/members/${m.id}`} className="list-item">
+          <ListItemLink key={m.id} to={`/members/${m.id}`}>
             <div>
               <strong>{m.nickname}</strong>
               <div className="text-sm text-muted">{m.bio || 'No bio yet'}</div>
             </div>
-            <span className="chip">{m.role}</span>
-          </Link>
+            <Chip>{m.role}</Chip>
+          </ListItemLink>
         ))}
       </div>
-      <div ref={sentinelRef} className="infinite-sentinel">
+      <InfiniteSentinel ref={sentinelRef}>
         {loading ? 'Loading…' : hasNext ? 'Scroll for more' : 'End of list'}
-      </div>
+      </InfiniteSentinel>
     </section>
   )
 }
@@ -229,19 +236,19 @@ function MemoriesTab({ teamId }: { teamId: string }) {
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <section className="stack">
+      <section className={stackClass}>
         {items.map((m) => (
-          <article key={m.id} className="panel">
+          <article key={m.id} className={panelClass}>
             <strong>{m.title || 'Untitled memory'}</strong>
             <p className="mt-2 whitespace-pre-wrap">{m.bodyText}</p>
             <div className="mt-2 text-sm text-muted">— {m.writer.nickname}</div>
           </article>
         ))}
-        <div ref={sentinelRef} className="infinite-sentinel">
+        <InfiniteSentinel ref={sentinelRef}>
           {hasNext ? 'Loading more…' : 'No more memories'}
-        </div>
+        </InfiniteSentinel>
       </section>
-      <form className="panel stack" onSubmit={onCreate}>
+      <form className={cn(panelClass, stackClass)} onSubmit={onCreate}>
         <h2 className="font-display text-xl tracking-tight">Share a memory</h2>
         <Label>
           Title
@@ -310,9 +317,9 @@ function TopicsTab({ teamId }: { teamId: string }) {
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <section className="panel stack">
+      <section className={cn(panelClass, stackClass)}>
         <h2 className="font-display text-xl tracking-tight">Award topics</h2>
-        <div className="stack">
+        <div className={stackClass}>
           {(data?.topics ?? []).map((t: { id: string; title: string }) => (
             <Button
               key={t.id}
@@ -323,7 +330,7 @@ function TopicsTab({ teamId }: { teamId: string }) {
             </Button>
           ))}
         </div>
-        <form className="stack" onSubmit={onCreate}>
+        <form className={stackClass} onSubmit={onCreate}>
           <Label>
             New topic
             <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
@@ -331,9 +338,9 @@ function TopicsTab({ teamId }: { teamId: string }) {
           <Button type="submit">Add topic</Button>
         </form>
       </section>
-      <section className="panel stack">
+      <section className={cn(panelClass, stackClass)}>
         <h2 className="font-display text-xl tracking-tight">Vote & standings</h2>
-        <form className="stack" onSubmit={onVote}>
+        <form className={stackClass} onSubmit={onVote}>
           <Label>
             Nominee
             <Select value={nomineeId} onChange={(e) => setNomineeId(e.target.value)} required>
@@ -351,13 +358,13 @@ function TopicsTab({ teamId }: { teamId: string }) {
             Cast vote
           </Button>
         </form>
-        <div className="stack">
+        <div className={stackClass}>
           {(standingsData?.topicStandings ?? []).map(
             (s: { nominee: { id: string; nickname: string }; score: number }) => (
-              <div key={s.nominee.id} className="list-item">
+              <ListItem key={s.nominee.id}>
                 <strong>{s.nominee.nickname}</strong>
-                <span className="chip">{s.score}</span>
-              </div>
+                <Chip>{s.score}</Chip>
+              </ListItem>
             ),
           )}
         </div>
@@ -380,7 +387,7 @@ function SearchTab({ teamId }: { teamId: string }) {
   })
 
   return (
-    <section className="panel stack">
+    <section className={cn(panelClass, stackClass)}>
       <Label className="mb-0">
         <span className="sr-only">Search</span>
         <div className="relative">
@@ -397,16 +404,16 @@ function SearchTab({ teamId }: { teamId: string }) {
         </div>
       </Label>
       {fetching && <p className="text-muted">Searching…</p>}
-      <div className="stack">
+      <div className={stackClass}>
         {(data?.search?.items ?? []).map(
           (hit: { type: string; id: string; title?: string; snippet?: string }) => (
-            <div key={`${hit.type}-${hit.id}`} className="list-item">
+            <ListItem key={`${hit.type}-${hit.id}`}>
               <div>
-                <span className="chip">{hit.type}</span>
+                <Chip>{hit.type}</Chip>
                 <strong className="ml-2">{hit.title || 'Result'}</strong>
                 <div className="text-sm text-muted">{hit.snippet}</div>
               </div>
-            </div>
+            </ListItem>
           ),
         )}
       </div>
@@ -527,7 +534,7 @@ function YearbookTab({
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <section className="panel stack">
+      <section className={cn(panelClass, stackClass)}>
         <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
           <BookOpenText size={22} weight="duotone" className="text-brand" />
           View & print online
@@ -548,7 +555,7 @@ function YearbookTab({
         </div>
       </section>
 
-      <section className="panel stack">
+      <section className={cn(panelClass, stackClass)}>
         <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
           <Sparkle size={22} weight="duotone" className="text-accent" />
           Server PDF export
@@ -557,7 +564,7 @@ function YearbookTab({
           Generate a downloadable PDF on the server (uses the same customization).
         </p>
         <Button onClick={onGenerate}>Generate yearbook PDF</Button>
-        <div className="stack">
+        <div className={stackClass}>
           {(data?.yearbookExports ?? []).map(
             (exp: {
               id: string
@@ -565,7 +572,7 @@ function YearbookTab({
               createdAt: string
               errorMessage?: string
             }) => (
-              <div key={exp.id} className="list-item">
+              <ListItem key={exp.id}>
                 <div>
                   <strong>{exp.status}</strong>
                   <div className="text-sm text-muted">
@@ -583,13 +590,13 @@ function YearbookTab({
                     Download
                   </Button>
                 )}
-              </div>
+              </ListItem>
             ),
           )}
         </div>
       </section>
 
-      <form className="panel stack lg:col-span-2" onSubmit={onSaveCustomization}>
+      <form className={cn(panelClass, stackClass, "lg:col-span-2")} onSubmit={onSaveCustomization}>
         <h2 className="font-display text-xl tracking-tight">Customize yearbook</h2>
         <p className="text-muted">
           Team admins can change cover copy, theme, and which sections appear online and in PDFs.
@@ -714,7 +721,7 @@ function SettingsTab({
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <section className="panel stack">
+      <section className={cn(panelClass, stackClass)}>
         <h2 className="font-display text-xl tracking-tight">Invites</h2>
         <Button onClick={onInvite}>Create invite code</Button>
         {inviteCode && (
@@ -723,7 +730,7 @@ function SettingsTab({
           </p>
         )}
       </section>
-      <form className="panel stack" onSubmit={onSave}>
+      <form className={cn(panelClass, stackClass)} onSubmit={onSave}>
         <h2 className="font-display text-xl tracking-tight">Team settings</h2>
         <Label>
           Brand color
@@ -739,7 +746,7 @@ function SettingsTab({
         </label>
         <Button type="submit">Save</Button>
       </form>
-      <section className="panel md:col-span-2">
+      <section className={cn(panelClass, "md:col-span-2")}>
         <ThemePicker />
       </section>
     </div>

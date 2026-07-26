@@ -6,6 +6,9 @@ import { z } from 'zod'
 import Layout from '../components/Layout'
 import { Button } from '../components/ui/Button'
 import { FieldError, Input, Label } from '../components/ui/Field'
+import { PageTitle } from '../components/ui/PageTitle'
+import { cn } from '../lib/cn'
+import { panelClass, stackClass } from '../components/ui/styles'
 import { useAuth } from '../auth'
 
 const schema = z.object({
@@ -48,9 +51,9 @@ export default function LoginPage() {
   return (
     <Layout>
       <div className="mx-auto max-w-md py-8">
-        <h1 className="page-title">Welcome back</h1>
+        <PageTitle>Welcome back</PageTitle>
         <p className="text-muted">Log in to continue building your yearbook.</p>
-        <form className="panel mt-5 stack" onSubmit={onSubmit}>
+        <form className={cn(panelClass, stackClass, 'mt-5')} onSubmit={onSubmit}>
           <Label>
             Email
             <Input type="email" autoComplete="email" {...register('email')} />

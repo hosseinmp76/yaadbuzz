@@ -1,5 +1,5 @@
-import clsx from 'clsx'
 import type { ButtonHTMLAttributes } from 'react'
+import { cn } from '../../lib/cn'
 
 type Variant = 'primary' | 'secondary' | 'ghost'
 
@@ -24,7 +24,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={clsx(
+      className={cn(
         'inline-flex min-h-11 touch-manipulation items-center justify-center gap-2 rounded-full px-5 py-3 font-bold transition disabled:cursor-not-allowed disabled:opacity-55',
         variants[variant],
         className,

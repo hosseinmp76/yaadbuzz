@@ -1,10 +1,11 @@
 import { Palette, SignOut } from '@phosphor-icons/react'
-import clsx from 'clsx'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
+import { cn } from '../lib/cn'
 import { ThemePicker } from './ThemePicker'
 import { Button } from './ui/Button'
+import { appShellClass } from './ui/styles'
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
@@ -30,7 +31,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   }, [themeOpen])
 
   return (
-    <div className="app-shell">
+    <div className={appShellClass}>
       <header className="flex items-center justify-between gap-2 py-4 sm:py-5">
         <Link
           to={user ? '/app' : '/'}
@@ -52,7 +53,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             </Button>
             {themeOpen && (
               <div
-                className={clsx(
+                className={cn(
                   'absolute right-0 z-20 mt-2 max-h-[min(70vh,28rem)] w-[min(22rem,calc(100vw-1.5rem))] overflow-y-auto rounded-[18px] border border-line bg-panel-strong p-3 shadow-panel',
                 )}
               >

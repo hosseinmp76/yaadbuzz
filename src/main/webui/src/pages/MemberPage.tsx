@@ -4,7 +4,12 @@ import { toast } from 'sonner'
 import { useClient, useMutation, useQuery } from 'urql'
 import Layout from '../components/Layout'
 import { Button } from '../components/ui/Button'
+import { Chip } from '../components/ui/Chip'
 import { Input, Label, Textarea } from '../components/ui/Field'
+import { InfiniteSentinel } from '../components/ui/InfiniteSentinel'
+import { PageTitle } from '../components/ui/PageTitle'
+import { cn } from '../lib/cn'
+import { panelClass, stackClass } from '../components/ui/styles'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 import {
   ADD_CHARACTERISTIC,
@@ -171,7 +176,7 @@ export default function MemberPage() {
       >
         ← Back to team
       </Link>
-      <h1 className="page-title">{member.nickname}</h1>
+      <PageTitle>{member.nickname}</PageTitle>
       <p className="text-muted">{member.bio || 'No bio yet'}</p>
       {member.avatar?.url && (
         <img
@@ -182,10 +187,10 @@ export default function MemberPage() {
       )}
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <section className="stack">
+        <section className={stackClass}>
           <h2 className="font-display text-xl tracking-tight">Tributes</h2>
           {items.map((t) => (
-            <article key={t.id} className="panel">
+            <article key={t.id} className={panelClass}>
               <p className="whitespace-pre-wrap">{t.text}</p>
               <div className="mt-2 text-sm text-muted">— {t.writer?.nickname}</div>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -217,13 +222,13 @@ export default function MemberPage() {
               </div>
             </article>
           ))}
-          <div ref={sentinelRef} className="infinite-sentinel">
+          <InfiniteSentinel ref={sentinelRef}>
             {hasNext ? 'Loading more…' : 'End of tributes'}
-          </div>
+          </InfiniteSentinel>
         </section>
 
-        <div className="stack">
-          <form className="panel stack" onSubmit={onTribute}>
+        <div className={stackClass}>
+          <form className={cn(panelClass, stackClass)} onSubmit={onTribute}>
             <h2 className="font-display text-xl tracking-tight">
               Write about {member.nickname}
             </h2>
@@ -255,14 +260,14 @@ export default function MemberPage() {
             <Button type="submit">Save tribute</Button>
           </form>
 
-          <form className="panel stack" onSubmit={onCharacteristic}>
+          <form className={cn(panelClass, stackClass)} onSubmit={onCharacteristic}>
             <h2 className="font-display text-xl tracking-tight">Characteristics</h2>
             <div className="flex flex-wrap gap-2">
               {(charsData?.characteristics ?? []).map(
                 (c: { id: string; title: string; count: number }) => (
-                  <span key={c.id} className="chip">
+                  <Chip key={c.id}>
                     {c.title} × {c.count}
-                  </span>
+                  </Chip>
                 ),
               )}
             </div>
@@ -273,7 +278,7 @@ export default function MemberPage() {
             <Button type="submit">Add</Button>
           </form>
 
-          <form className="panel stack" onSubmit={onProfile}>
+          <form className={cn(panelClass, stackClass)} onSubmit={onProfile}>
             <h2 className="font-display text-xl tracking-tight">Edit your profile</h2>
             <p className="text-sm text-muted">Only updates if this member profile is yours.</p>
             <Label>

@@ -1,10 +1,10 @@
-import clsx from 'clsx'
 import type {
   InputHTMLAttributes,
   ReactNode,
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from 'react'
+import { cn } from '../../lib/cn'
 
 const fieldClass =
   'w-full min-h-11 touch-manipulation rounded-xl border border-line bg-panel-strong px-3.5 py-3 text-base text-ink outline-none transition placeholder:text-muted focus:border-brand'
@@ -17,25 +17,25 @@ export function Label({
   className?: string
 }) {
   return (
-    <label className={clsx('mb-3 grid gap-1.5 font-semibold text-ink', className)}>
+    <label className={cn('mb-3 grid gap-1.5 font-semibold text-ink', className)}>
       {children}
     </label>
   )
 }
 
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={clsx(fieldClass, className)} {...props} />
+  return <input className={cn(fieldClass, className)} {...props} />
 }
 
 export function Textarea({
   className,
   ...props
 }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea className={clsx(fieldClass, 'min-h-28 resize-y', className)} {...props} />
+  return <textarea className={cn(fieldClass, 'min-h-28 resize-y', className)} {...props} />
 }
 
 export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select className={clsx(fieldClass, className)} {...props} />
+  return <select className={cn(fieldClass, className)} {...props} />
 }
 
 export function FieldError({ message }: { message?: string }) {

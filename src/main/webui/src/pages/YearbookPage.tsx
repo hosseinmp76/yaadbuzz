@@ -75,7 +75,7 @@ export default function YearbookPage() {
 
   return (
     <div className="yearbook-print-root min-h-screen bg-[#faf7f2] text-[#1c1917]">
-      <div className="no-print mx-auto flex w-[min(1100px,calc(100%-1.25rem))] flex-col gap-3 py-4 sm:w-[min(1100px,calc(100%-2rem))] sm:flex-row sm:items-center sm:justify-between">
+      <div className="print:hidden mx-auto flex w-[min(1100px,calc(100%-1.25rem))] flex-col gap-3 py-4 sm:w-[min(1100px,calc(100%-2rem))] sm:flex-row sm:items-center sm:justify-between">
         <Link
           to={`/teams/${teamId}?tab=yearbook`}
           className="inline-flex items-center gap-2 text-sm font-semibold text-[#57534e] hover:text-[#1c1917]"

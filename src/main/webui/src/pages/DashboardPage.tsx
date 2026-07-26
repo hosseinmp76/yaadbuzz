@@ -7,7 +7,13 @@ import { useMutation, useQuery } from 'urql'
 import { z } from 'zod'
 import Layout from '../components/Layout'
 import { Button } from '../components/ui/Button'
+import { Chip } from '../components/ui/Chip'
 import { FieldError, Input, Label } from '../components/ui/Field'
+import { ListItemLink } from '../components/ui/ListItem'
+import { PageTitle } from '../components/ui/PageTitle'
+import { Panel } from '../components/ui/Panel'
+import { Stack } from '../components/ui/Stack'
+import { stackClass } from '../components/ui/styles'
 import { CREATE_ORG, MY_ORGS } from '../api/queries'
 
 const schema = z.object({
@@ -42,37 +48,37 @@ export default function DashboardPage() {
 
   return (
     <Layout>
-      <h1 className="page-title">Your organizations</h1>
+      <PageTitle>Your organizations</PageTitle>
       <p className="text-muted">Start an organization, then create teams for each yearbook.</p>
       <div className="mt-5 grid gap-4 md:grid-cols-2">
-        <section className="panel stack">
+        <Panel className={stackClass}>
           <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
             <Buildings size={22} weight="duotone" className="text-brand" />
             Organizations
           </h2>
           {fetching && <p className="text-muted">Loading…</p>}
           {error && <p className="text-danger">{error.message}</p>}
-          <div className="stack">
+          <Stack>
             {(data?.myOrganizations ?? []).map((org: { id: string; name: string }) => (
-              <Link key={org.id} to={`/orgs/${org.id}`} className="list-item">
+              <ListItemLink key={org.id} to={`/orgs/${org.id}`}>
                 <div>
                   <strong>{org.name}</strong>
                   <div className="text-sm text-muted">Open teams</div>
                 </div>
-                <span className="chip">View</span>
-              </Link>
+                <Chip>View</Chip>
+              </ListItemLink>
             ))}
-          </div>
+          </Stack>
           <Link to="/join">
             <Button variant="secondary">Join a team with invite code</Button>
           </Link>
-        </section>
-        <section className="panel">
+        </Panel>
+        <Panel>
           <h2 className="mb-3 flex items-center gap-2 font-display text-xl tracking-tight">
             <Plus size={22} weight="bold" className="text-brand" />
             Create organization
           </h2>
-          <form className="stack" onSubmit={onCreate}>
+          <form className={stackClass} onSubmit={onCreate}>
             <Label>
               Name
               <Input {...register('name')} />
@@ -82,7 +88,7 @@ export default function DashboardPage() {
               Create
             </Button>
           </form>
-        </section>
+        </Panel>
       </div>
     </Layout>
   )
