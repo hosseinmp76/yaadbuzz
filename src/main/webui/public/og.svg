@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <rect width="1200" height="630" fill="#faf7f2"/>
+  <circle cx="980" cy="80" r="220" fill="#0f766e" fill-opacity="0.16"/>
+  <circle cx="160" cy="520" r="180" fill="#c2410c" fill-opacity="0.12"/>
+  <text x="80" y="300" font-family="Georgia, serif" font-size="96" font-weight="700" fill="#1c1917">Yaad</text>
+  <text x="340" y="300" font-family="Georgia, serif" font-size="96" font-weight="700" fill="#0f766e">buzz</text>
+  <text x="80" y="380" font-family="system-ui, sans-serif" font-size="36" fill="#57534e">Online yearbooks for teams and organizations</text>
+</svg>

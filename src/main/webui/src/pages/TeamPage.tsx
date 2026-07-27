@@ -4,7 +4,6 @@ import { BookOpenText, DownloadSimple, MagnifyingGlass, Printer, Sparkle } from 
 import { toast } from 'sonner'
 import { useClient, useMutation, useQuery } from 'urql'
 import Layout from '../components/Layout'
-import { ThemePicker } from '../components/ThemePicker'
 import { Button } from '../components/ui/Button'
 import { Chip } from '../components/ui/Chip'
 import { Input, Label, Select, Textarea } from '../components/ui/Field'
@@ -15,12 +14,13 @@ import { Tabs, TabButton } from '../components/ui/Tabs'
 import { cn } from '../lib/cn'
 import { panelClass, stackClass } from '../components/ui/styles'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
-import { downloadYearbook } from '../api/graphql'
+import { downloadYearbook, uploadMedia } from '../api/graphql'
 import {
   CREATE_INVITE,
   CREATE_MEMORY,
   CREATE_TOPIC,
   MEMORIES,
+  MY_TEAM_MEMBERSHIP,
   REQUEST_EXPORT,
   SEARCH,
   TEAM,
@@ -29,6 +29,7 @@ import {
   TOPIC_STANDINGS,
   UPDATE_TEAM_SETTINGS,
   UPDATE_YEARBOOK_SETTINGS,
+  UPSERT_PROFILE,
   VOTE_TOPIC,
   YEARBOOK,
   YEARBOOK_EXPORTS,
@@ -37,7 +38,7 @@ import {
 const YEARBOOK_THEMES = ['CLASSIC', 'MODERN', 'SCRAPBOOK', 'MINIMAL'] as const
 type YearbookThemeOption = (typeof YEARBOOK_THEMES)[number]
 
-type Tab = 'members' | 'memories' | 'topics' | 'search' | 'yearbook' | 'settings'
+type Tab = 'members' | 'memories' | 'topics' | 'search' | 'yearbook' | 'preferences' | 'settings'
 
 export default function TeamPage() {
   const { teamId = '' } = useParams()
@@ -63,19 +64,20 @@ export default function TeamPage() {
           : 'Tributes stay sealed until reveal day'}
       </p>
       <Tabs>
-        {(['members', 'memories', 'topics', 'search', 'yearbook', 'settings'] as Tab[]).map(
-          (t) => (
-            <TabButton key={t} active={tab === t} onClick={() => setTab(t)}>
-              {t}
-            </TabButton>
-          ),
-        )}
+        {(
+          ['members', 'memories', 'topics', 'search', 'yearbook', 'preferences', 'settings'] as Tab[]
+        ).map((t) => (
+          <TabButton key={t} active={tab === t} onClick={() => setTab(t)}>
+            {t}
+          </TabButton>
+        ))}
       </Tabs>
       {tab === 'members' && <MembersTab teamId={teamId} />}
       {tab === 'memories' && <MemoriesTab teamId={teamId} />}
       {tab === 'topics' && <TopicsTab teamId={teamId} />}
       {tab === 'search' && <SearchTab teamId={teamId} />}
       {tab === 'yearbook' && <YearbookTab teamId={teamId} team={team} />}
+      {tab === 'preferences' && <PreferencesTab teamId={teamId} />}
       {tab === 'settings' && (
         <SettingsTab
           teamId={teamId}
@@ -677,6 +679,112 @@ function Toggle({
   )
 }
 
+function PreferencesTab({ teamId }: { teamId: string }) {
+  const [{ data, fetching, error }, reexecute] = useQuery({
+    query: MY_TEAM_MEMBERSHIP,
+    variables: { teamId },
+  })
+  const [, upsertProfile] = useMutation(UPSERT_PROFILE)
+  const membership = data?.myTeamMembership
+  const [nickname, setNickname] = useState('')
+  const [bio, setBio] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!membership) return
+    setNickname(membership.nickname ?? '')
+    setBio(membership.bio ?? '')
+  }, [membership])
+
+  async function onSave(e: FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      const result = await upsertProfile({
+        teamId,
+        nickname,
+        bio,
+        avatarId: null,
+      })
+      if (result.error) {
+        toast.error(result.error.message)
+        return
+      }
+      toast.success('Team profile updated')
+      reexecute({ requestPolicy: 'network-only' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function onAvatar(file: File | null) {
+    if (!file) return
+    try {
+      const uploaded = await uploadMedia(file)
+      const result = await upsertProfile({
+        teamId,
+        nickname: null,
+        bio: null,
+        avatarId: uploaded.id,
+      })
+      if (result.error) {
+        toast.error(result.error.message)
+        return
+      }
+      toast.success('Photo updated')
+      reexecute({ requestPolicy: 'network-only' })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Upload failed')
+    }
+  }
+
+  if (fetching && !membership) {
+    return <p className="text-muted">Loading your profile…</p>
+  }
+  if (error) {
+    return <p className="text-danger">{error.message}</p>
+  }
+
+  return (
+    <form className={cn(panelClass, stackClass, 'max-w-lg')} onSubmit={onSave}>
+      <h2 className="font-display text-xl tracking-tight">Your team profile</h2>
+      <p className="text-muted">
+        Nickname and photo shown to teammates in this yearbook. App theme lives in{' '}
+        <Link to="/preferences" className="font-semibold text-brand hover:underline">
+          Preferences
+        </Link>
+        .
+      </p>
+      {membership?.avatar?.url && (
+        <img
+          src={membership.avatar.url}
+          alt=""
+          className="h-24 w-24 rounded-full object-cover"
+        />
+      )}
+      <Label>
+        Display name (nickname)
+        <Input value={nickname} onChange={(e) => setNickname(e.target.value)} required />
+      </Label>
+      <Label>
+        Bio
+        <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} />
+      </Label>
+      <Label>
+        Profile photo
+        <Input
+          type="file"
+          accept="image/*"
+          onChange={(e) => void onAvatar(e.target.files?.[0] ?? null)}
+        />
+      </Label>
+      <Button type="submit" disabled={saving}>
+        {saving ? 'Saving…' : 'Save profile'}
+      </Button>
+    </form>
+  )
+}
+
 function SettingsTab({
   teamId,
   revealTributes,
@@ -746,9 +854,6 @@ function SettingsTab({
         </label>
         <Button type="submit">Save</Button>
       </form>
-      <section className={cn(panelClass, "md:col-span-2")}>
-        <ThemePicker />
-      </section>
     </div>
   )
 }

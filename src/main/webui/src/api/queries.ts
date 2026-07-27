@@ -4,6 +4,20 @@ export const ME = `
   }
 `
 
+export const UPDATE_MY_PROFILE = `
+  mutation UpdateMyProfile($displayName: String!) {
+    updateMyProfile(displayName: $displayName) { id email displayName }
+  }
+`
+
+export const MY_TEAM_MEMBERSHIP = `
+  query MyTeamMembership($teamId: String!) {
+    myTeamMembership(teamId: $teamId) {
+      id nickname bio avatar { id url }
+    }
+  }
+`
+
 export const MY_ORGS = `
   query MyOrganizations {
     myOrganizations { id name brandColor }

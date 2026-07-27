@@ -79,8 +79,8 @@ Use this when you want Vite’s own UI on port 3000, or to iterate on frontend t
 **Terminal 1 — backend** (infra already up):
 
 ```bash
-source "$HOME/.sdkman/bin/sdkman-init.sh"
-./mvnw quarkus:dev -Dquarkus.quinoa.dev-server.enabled=false
+`source "$HOME/.sdkman/bin/sdkman-init.sh"
+./mvnw quarkus:dev -Dquarkus.quinoa.dev-server.enabled=false`
 ```
 
 Quarkus serves APIs on http://localhost:8080 with Java live reload. Disabling Quinoa’s managed Vite server frees port 3000 and avoids two competing frontends.

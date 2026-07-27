@@ -10,6 +10,7 @@ import { PageTitle } from '../components/ui/PageTitle'
 import { cn } from '../lib/cn'
 import { panelClass, stackClass } from '../components/ui/styles'
 import { useAuth } from '../auth'
+import { Seo } from '../seo/Seo'
 
 const schema = z.object({
   displayName: z.string().min(2, 'Display name is required'),
@@ -52,6 +53,11 @@ export default function RegisterPage() {
 
   return (
     <Layout>
+      <Seo
+        title="Create your account"
+        description="Register for Yaadbuzz and start an online yearbook for your team or organization."
+        path="/register"
+      />
       <div className="mx-auto max-w-md py-8">
         <PageTitle>Create your Yaadbuzz</PageTitle>
         <p className="text-muted">One account, many teams, endless memories.</p>

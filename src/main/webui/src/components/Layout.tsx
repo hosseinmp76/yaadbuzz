@@ -1,68 +1,47 @@
-import { Palette, SignOut } from '@phosphor-icons/react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { SignOut, UserCircle } from '@phosphor-icons/react'
+import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
-import { cn } from '../lib/cn'
-import { ThemePicker } from './ThemePicker'
+import { SiteFooter } from './SiteFooter'
 import { Button } from './ui/Button'
 import { appShellClass } from './ui/styles'
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
-  const [themeOpen, setThemeOpen] = useState(false)
-  const themeRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!themeOpen) return
-    function onPointerDown(event: PointerEvent) {
-      if (!themeRef.current?.contains(event.target as Node)) {
-        setThemeOpen(false)
-      }
-    }
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setThemeOpen(false)
-    }
-    document.addEventListener('pointerdown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [themeOpen])
 
   return (
     <div className={appShellClass}>
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-brand focus:px-4 focus:py-2 focus:text-on-brand"
+      >
+        Skip to content
+      </a>
       <header className="flex items-center justify-between gap-2 py-4 sm:py-5">
         <Link
           to={user ? '/app' : '/'}
           className="shrink-0 font-display text-[1.35rem] tracking-[-0.03em] sm:text-[1.6rem]"
+          aria-label="Yaadbuzz home"
         >
           Yaad<span className="text-brand">buzz</span>
         </Link>
-        <div className="flex min-w-0 items-center gap-1.5 sm:gap-3">
-          <div className="relative" ref={themeRef}>
-            <Button
-              variant="secondary"
-              className="px-3 sm:px-5"
-              aria-expanded={themeOpen}
-              aria-label="Themes"
-              onClick={() => setThemeOpen((v) => !v)}
-            >
-              <Palette size={18} weight="duotone" />
-              <span className="hidden sm:inline">Themes</span>
-            </Button>
-            {themeOpen && (
-              <div
-                className={cn(
-                  'absolute right-0 z-20 mt-2 max-h-[min(70vh,28rem)] w-[min(22rem,calc(100vw-1.5rem))] overflow-y-auto rounded-[18px] border border-line bg-panel-strong p-3 shadow-panel',
-                )}
-              >
-                <ThemePicker compact />
-              </div>
-            )}
-          </div>
+        <nav aria-label="Primary" className="flex min-w-0 items-center gap-1.5 sm:gap-3">
+          <Link
+            to="/about"
+            className="px-2 text-sm font-semibold text-muted hover:text-ink sm:text-base"
+          >
+            About
+          </Link>
           {user ? (
             <>
+              <Link
+                to="/preferences"
+                className="inline-flex items-center gap-1.5 px-2 text-sm font-semibold text-muted hover:text-ink sm:text-base"
+                aria-label="Preferences"
+              >
+                <UserCircle size={20} weight="duotone" className="sm:hidden" />
+                <span className="hidden sm:inline">Preferences</span>
+              </Link>
               <span className="hidden max-w-[10rem] truncate text-muted md:inline">
                 {user.displayName}
               </span>
@@ -86,9 +65,10 @@ export default function Layout({ children }: { children: ReactNode }) {
               </Link>
             </>
           )}
-        </div>
+        </nav>
       </header>
-      {children}
+      <main id="main">{children}</main>
+      <SiteFooter />
     </div>
   )
 }

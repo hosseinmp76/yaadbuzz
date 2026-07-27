@@ -5,6 +5,9 @@ services:
       POSTGRES_DB: yaadbuzz
       POSTGRES_USER: yaadbuzz
       POSTGRES_PASSWORD: yaadbuzz
+    # Localhost-only so `./mvnw quarkus:dev` can connect without exposing DB to the internet.
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -21,6 +24,8 @@ services:
       xpack.security.enabled: "false"
       ES_JAVA_OPTS: -Xms512m -Xmx512m
       cluster.routing.allocation.disk.threshold_enabled: "false"
+    ports:
+      - "127.0.0.1:9200:9200"
     volumes:
       - es_data:/usr/share/elasticsearch/data
     healthcheck:
@@ -36,6 +41,9 @@ services:
     environment:
       MINIO_ROOT_USER: yaadbuzz
       MINIO_ROOT_PASSWORD: yaadbuzzsecret
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - minio_data:/data
     healthcheck:

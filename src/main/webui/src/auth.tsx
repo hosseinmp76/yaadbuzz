@@ -7,6 +7,7 @@ type AuthState = {
   user: AuthUser | null
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, displayName: string) => Promise<void>
+  updateUser: (user: AuthUser) => void
   logout: () => void
 }
 
@@ -57,6 +58,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     async register(email, password, displayName) {
       setStored(await authRequest('/api/auth/register', { email, password, displayName }))
+    },
+    updateUser(nextUser) {
+      setStored((prev) => (prev ? { ...prev, user: nextUser } : prev))
     },
     logout() {
       setStored(null)

@@ -62,6 +62,17 @@ public class AuthService {
         }
     }
 
+    @Transactional
+    public User updateDisplayName(User user, String displayName) {
+        if (displayName == null || displayName.isBlank()) {
+            throw ApiException.badRequest("Display name is required");
+        }
+        User managed = User.findActiveById(user.id)
+                .orElseThrow(() -> ApiException.unauthorized("User not found"));
+        managed.displayName = displayName.trim();
+        return managed;
+    }
+
     private AuthTokens tokensFor(User user) {
         return new AuthTokens(
                 tokenService.issueAccessToken(user),

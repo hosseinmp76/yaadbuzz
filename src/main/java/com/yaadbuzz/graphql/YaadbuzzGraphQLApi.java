@@ -1,5 +1,6 @@
 package com.yaadbuzz.graphql;
 
+import com.yaadbuzz.auth.AuthService;
 import com.yaadbuzz.auth.CurrentUserService;
 import com.yaadbuzz.domain.User;
 import com.yaadbuzz.enums.TeamRole;
@@ -49,6 +50,8 @@ public class YaadbuzzGraphQLApi {
     @Inject
     CurrentUserService currentUserService;
     @Inject
+    AuthService authService;
+    @Inject
     OrganizationService organizationService;
     @Inject
     TeamService teamService;
@@ -71,6 +74,12 @@ public class YaadbuzzGraphQLApi {
     @Description("Current authenticated user")
     public UserType me() {
         return UserType.from(currentUserService.requireUser());
+    }
+
+    @Mutation
+    @Description("Update the current user's display name")
+    public UserType updateMyProfile(@Name("displayName") String displayName) {
+        return UserType.from(authService.updateDisplayName(currentUserService.requireUser(), displayName));
     }
 
     @Query
@@ -113,6 +122,12 @@ public class YaadbuzzGraphQLApi {
     @Query
     public TeamMemberType teamMember(@Name("id") UUID id) {
         return TeamMemberType.from(teamService.getMember(id, currentUserService.requireUser()));
+    }
+
+    @Query
+    @Description("Current user's membership in a team")
+    public TeamMemberType myTeamMembership(@Name("teamId") UUID teamId) {
+        return TeamMemberType.from(teamService.myMembership(teamId, currentUserService.requireUser()));
     }
 
     @Query

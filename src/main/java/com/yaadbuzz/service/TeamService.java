@@ -192,6 +192,7 @@ public class TeamService {
             }
             member.avatar = avatar;
         }
+        Hibernate.initialize(member.avatar);
         return member;
     }
 
@@ -235,6 +236,13 @@ public class TeamService {
         TeamMember member = TeamMember.findActiveById(memberId)
                 .orElseThrow(() -> ApiException.notFound("Team member not found"));
         accessService.requireTeamMember(member.team.id, user);
+        return member;
+    }
+
+    @Transactional
+    public TeamMember myMembership(UUID teamId, User user) {
+        TeamMember member = accessService.requireTeamMember(teamId, user);
+        Hibernate.initialize(member.avatar);
         return member;
     }
 

@@ -2,6 +2,8 @@
 
 Online yearbook generator built with **Quarkus**, **React (Quinoa)**, **GraphQL**, **OpenAPI/Swagger**, **PostgreSQL**, **Elasticsearch**, and **MinIO**.
 
+**License:** [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0)
+
 ## Features
 
 - Email/password JWT auth (OIDC-ready boundaries)

@@ -19,9 +19,7 @@ import {
   REPORT_TRIBUTE,
   TEAM_MEMBER,
   TRIBUTES,
-  UPSERT_PROFILE,
 } from '../api/queries'
-import { uploadMedia } from '../api/graphql'
 
 export default function MemberPage() {
   const { memberId = '' } = useParams()
@@ -34,7 +32,6 @@ export default function MemberPage() {
   })
   const [, createTribute] = useMutation(CREATE_TRIBUTE)
   const [, addCharacteristic] = useMutation(ADD_CHARACTERISTIC)
-  const [, upsertProfile] = useMutation(UPSERT_PROFILE)
   const [, hideTribute] = useMutation(HIDE_TRIBUTE)
   const [, reportTribute] = useMutation(REPORT_TRIBUTE)
   const client = useClient()
@@ -43,8 +40,6 @@ export default function MemberPage() {
   const [anonymous, setAnonymous] = useState(false)
   const [privateTribute, setPrivateTribute] = useState(false)
   const [charTitle, setCharTitle] = useState('')
-  const [bio, setBio] = useState('')
-  const [nickname, setNickname] = useState('')
   const [items, setItems] = useState<any[]>([])
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasNext, setHasNext] = useState(false)
@@ -53,13 +48,6 @@ export default function MemberPage() {
   useEffect(() => {
     cursorRef.current = cursor
   }, [cursor])
-
-  useEffect(() => {
-    if (member) {
-      setBio(member.bio || '')
-      setNickname(member.nickname || '')
-    }
-  }, [member])
 
   const loadTributes = useCallback(
     async (reset = false) => {
@@ -122,42 +110,6 @@ export default function MemberPage() {
     toast.success('Characteristic added')
     setCharTitle('')
     reChars({ requestPolicy: 'network-only' })
-  }
-
-  async function onProfile(e: FormEvent) {
-    e.preventDefault()
-    if (!member) return
-    const result = await upsertProfile({
-      teamId: member.teamId,
-      nickname,
-      bio,
-      avatarId: null,
-    })
-    if (result.error) {
-      toast.error(result.error.message)
-      return
-    }
-    toast.success('Profile updated')
-  }
-
-  async function onAvatar(file: File | null) {
-    if (!file || !member) return
-    try {
-      const uploaded = await uploadMedia(file)
-      const result = await upsertProfile({
-        teamId: member.teamId,
-        nickname: null,
-        bio: null,
-        avatarId: uploaded.id,
-      })
-      if (result.error) {
-        toast.error(result.error.message)
-        return
-      }
-      toast.success('Avatar updated')
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Upload failed')
-    }
   }
 
   if (!member) {
@@ -278,27 +230,16 @@ export default function MemberPage() {
             <Button type="submit">Add</Button>
           </form>
 
-          <form className={cn(panelClass, stackClass)} onSubmit={onProfile}>
-            <h2 className="font-display text-xl tracking-tight">Edit your profile</h2>
-            <p className="text-sm text-muted">Only updates if this member profile is yours.</p>
-            <Label>
-              Nickname
-              <Input value={nickname} onChange={(e) => setNickname(e.target.value)} />
-            </Label>
-            <Label>
-              Bio
-              <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} />
-            </Label>
-            <Label>
-              Avatar
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => onAvatar(e.target.files?.[0] ?? null)}
-              />
-            </Label>
-            <Button type="submit">Update profile</Button>
-          </form>
+          <p className="text-sm text-muted">
+            Edit your nickname and photo in the team{' '}
+            <Link
+              to={`/teams/${member.teamId}?tab=preferences`}
+              className="font-semibold text-brand hover:underline"
+            >
+              Preferences
+            </Link>{' '}
+            tab.
+          </p>
         </div>
       </div>
     </Layout>

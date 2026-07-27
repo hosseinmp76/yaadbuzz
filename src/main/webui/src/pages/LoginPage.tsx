@@ -10,6 +10,7 @@ import { PageTitle } from '../components/ui/PageTitle'
 import { cn } from '../lib/cn'
 import { panelClass, stackClass } from '../components/ui/styles'
 import { useAuth } from '../auth'
+import { Seo } from '../seo/Seo'
 
 const schema = z.object({
   email: z.email('Enter a valid email'),
@@ -50,6 +51,11 @@ export default function LoginPage() {
 
   return (
     <Layout>
+      <Seo
+        title="Log in"
+        description="Log in to Yaadbuzz to continue building your team yearbook."
+        path="/login"
+      />
       <div className="mx-auto max-w-md py-8">
         <PageTitle>Welcome back</PageTitle>
         <p className="text-muted">Log in to continue building your yearbook.</p>

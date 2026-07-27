@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /login
+Allow: /register
+Allow: /LICENSE.txt
+
+Disallow: /app
+Disallow: /preferences
+Disallow: /orgs/
+Disallow: /teams/
+Disallow: /members/
+Disallow: /join
+Disallow: /api/
+Disallow: /graphql
+Disallow: /q/
+
+Sitemap: https://yaadbuzz.ir/sitemap.xml
