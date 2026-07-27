@@ -6,6 +6,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useQuery } from 'urql'
 import { YEARBOOK } from '../api/queries'
 import { Button } from '../components/ui/Button'
+import { Avatar } from '../components/ui/Avatar'
 
 type YearbookData = {
   teamId: string
@@ -193,14 +194,12 @@ function YearbookDocument({ yearbook }: { yearbook: YearbookData }) {
                   )}
                 >
                   <div className="flex items-start gap-4">
-                    {member.avatarUrl && (
-                      <img
-                        src={member.avatarUrl}
-                        alt=""
-                        className="h-16 w-16 rounded-full object-cover"
-                        style={{ border: `2px solid ${brand}` }}
-                      />
-                    )}
+                    <Avatar
+                      name={member.nickname}
+                      src={member.avatarUrl}
+                      size="md"
+                      style={{ border: `2px solid ${brand}` }}
+                    />
                     <div className="min-w-0 flex-1">
                       <h3 className="font-display text-2xl tracking-tight text-[#1c1917]">
                         {member.nickname}

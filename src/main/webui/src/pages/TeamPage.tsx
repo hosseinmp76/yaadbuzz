@@ -10,6 +10,7 @@ import { Input, Label, Select, Textarea } from '../components/ui/Field'
 import { InfiniteSentinel } from '../components/ui/InfiniteSentinel'
 import { ListItem, ListItemLink } from '../components/ui/ListItem'
 import { PageTitle } from '../components/ui/PageTitle'
+import { Avatar } from '../components/ui/Avatar'
 import { Tabs, TabButton } from '../components/ui/Tabs'
 import { cn } from '../lib/cn'
 import { panelClass, stackClass } from '../components/ui/styles'
@@ -160,9 +161,12 @@ function MembersTab({ teamId }: { teamId: string }) {
       <div className={stackClass}>
         {items.map((m) => (
           <ListItemLink key={m.id} to={`/members/${m.id}`}>
-            <div>
-              <strong>{m.nickname}</strong>
-              <div className="text-sm text-muted">{m.bio || 'No bio yet'}</div>
+            <div className="flex min-w-0 items-center gap-3">
+              <Avatar name={m.nickname} src={m.avatar?.url} size="sm" />
+              <div className="min-w-0">
+                <strong>{m.nickname}</strong>
+                <div className="text-sm text-muted">{m.bio || 'No bio yet'}</div>
+              </div>
             </div>
             <Chip>{m.role}</Chip>
           </ListItemLink>
@@ -755,13 +759,7 @@ function PreferencesTab({ teamId }: { teamId: string }) {
         </Link>
         .
       </p>
-      {membership?.avatar?.url && (
-        <img
-          src={membership.avatar.url}
-          alt=""
-          className="h-24 w-24 rounded-full object-cover"
-        />
-      )}
+      <Avatar name={membership?.nickname ?? 'M'} src={membership?.avatar?.url} size="lg" />
       <Label>
         Display name (nickname)
         <Input value={nickname} onChange={(e) => setNickname(e.target.value)} required />

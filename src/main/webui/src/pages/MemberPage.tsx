@@ -8,6 +8,7 @@ import { Chip } from '../components/ui/Chip'
 import { Input, Label, Textarea } from '../components/ui/Field'
 import { InfiniteSentinel } from '../components/ui/InfiniteSentinel'
 import { PageTitle } from '../components/ui/PageTitle'
+import { Avatar } from '../components/ui/Avatar'
 import { cn } from '../lib/cn'
 import { panelClass, stackClass } from '../components/ui/styles'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
@@ -130,13 +131,7 @@ export default function MemberPage() {
       </Link>
       <PageTitle>{member.nickname}</PageTitle>
       <p className="text-muted">{member.bio || 'No bio yet'}</p>
-      {member.avatar?.url && (
-        <img
-          src={member.avatar.url}
-          alt=""
-          className="mt-3 h-24 w-24 rounded-full object-cover"
-        />
-      )}
+      <Avatar name={member.nickname} src={member.avatar?.url} size="lg" className="mt-3" />
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <section className={stackClass}>
