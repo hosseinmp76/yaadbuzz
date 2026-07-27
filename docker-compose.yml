@@ -91,24 +91,38 @@ services:
       YAADBUZZ_S3_BUCKET: yaadbuzz
       YAADBUZZ_PUBLIC_URL: ${YAADBUZZ_PUBLIC_URL:-https://yaadbuzz.ir}
       YAADBUZZ_SOURCE_URL: ${YAADBUZZ_SOURCE_URL:-https://github.com/hosseinmp76/yaadbuzz}
-      YAADBUZZ_MAIL_HOST: ${YAADBUZZ_MAIL_HOST:-}
-      YAADBUZZ_MAIL_PORT: ${YAADBUZZ_MAIL_PORT:-587}
+      # Mock mail until real SMTP is configured (empty host previously broke startup)
+      YAADBUZZ_MAIL_MOCK: ${YAADBUZZ_MAIL_MOCK:-true}
+      YAADBUZZ_MAIL_HOST: ${YAADBUZZ_MAIL_HOST:-localhost}
+      YAADBUZZ_MAIL_PORT: ${YAADBUZZ_MAIL_PORT:-1025}
       YAADBUZZ_MAIL_USERNAME: ${YAADBUZZ_MAIL_USERNAME:-}
       YAADBUZZ_MAIL_PASSWORD: ${YAADBUZZ_MAIL_PASSWORD:-}
       YAADBUZZ_MAIL_FROM: ${YAADBUZZ_MAIL_FROM:-Yaadbuzz <noreply@yaadbuzz.ir>}
-      YAADBUZZ_MAIL_START_TLS: ${YAADBUZZ_MAIL_START_TLS:-REQUIRED}
+      YAADBUZZ_MAIL_START_TLS: ${YAADBUZZ_MAIL_START_TLS:-OPTIONAL}
       QUARKUS_LOG_SENTRY_ENABLED: ${QUARKUS_LOG_SENTRY_ENABLED:-false}
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
     expose:
       - "8080"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /q/health/ready HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && timeout 2 cat <&3 | head -1 | grep -q \"200\"'",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 36
+      start_period: 120s
     restart: unless-stopped
 
   nginx:
     image: nginx:1.30-alpine
     depends_on:
-      - app
-      - minio
+      app:
+        condition: service_healthy
+      minio:
+        condition: service_started
     ports:
       - "80:80"
       - "443:443"
