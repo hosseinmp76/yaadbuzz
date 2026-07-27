@@ -1,11 +1,17 @@
 package com.yaadbuzz.rest;
 
 import com.yaadbuzz.auth.AuthService;
+import com.yaadbuzz.auth.CurrentUserService;
 import com.yaadbuzz.rest.dto.AuthDtos.AuthResponse;
+import com.yaadbuzz.rest.dto.AuthDtos.ChangePasswordRequest;
+import com.yaadbuzz.rest.dto.AuthDtos.ForgotPasswordRequest;
 import com.yaadbuzz.rest.dto.AuthDtos.LoginRequest;
+import com.yaadbuzz.rest.dto.AuthDtos.MessageResponse;
 import com.yaadbuzz.rest.dto.AuthDtos.RefreshRequest;
 import com.yaadbuzz.rest.dto.AuthDtos.RegisterRequest;
+import com.yaadbuzz.rest.dto.AuthDtos.ResetPasswordRequest;
 import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
@@ -25,6 +31,9 @@ public class AuthResource {
 
     @Inject
     AuthService authService;
+
+    @Inject
+    CurrentUserService currentUserService;
 
     @POST
     @Path("/register")
@@ -48,6 +57,37 @@ public class AuthResource {
     public AuthResponse refresh(@Valid RefreshRequest request) {
         var tokens = authService.refresh(request.refreshToken());
         return toResponse(tokens);
+    }
+
+    @POST
+    @Path("/forgot-password")
+    @Operation(summary = "Request a password reset email")
+    public MessageResponse forgotPassword(@Valid ForgotPasswordRequest request) {
+        authService.requestPasswordReset(request.email());
+        return new MessageResponse(
+                "If an account exists for that email, a reset link has been sent."
+        );
+    }
+
+    @POST
+    @Path("/reset-password")
+    @Operation(summary = "Reset password using email token")
+    public MessageResponse resetPassword(@Valid ResetPasswordRequest request) {
+        authService.resetPassword(request.token(), request.newPassword());
+        return new MessageResponse("Password updated. You can log in with your new password.");
+    }
+
+    @POST
+    @Path("/change-password")
+    @RolesAllowed("user")
+    @Operation(summary = "Change password while authenticated")
+    public MessageResponse changePassword(@Valid ChangePasswordRequest request) {
+        authService.changePassword(
+                currentUserService.requireUser(),
+                request.currentPassword(),
+                request.newPassword()
+        );
+        return new MessageResponse("Password changed.");
     }
 
     private AuthResponse toResponse(AuthService.AuthTokens tokens) {

@@ -30,6 +30,28 @@ public final class AuthDtos {
     public record RefreshRequest(@NotBlank String refreshToken) {
     }
 
+    @Schema(name = "ForgotPasswordRequest")
+    public record ForgotPasswordRequest(@NotBlank @Email String email) {
+    }
+
+    @Schema(name = "ResetPasswordRequest")
+    public record ResetPasswordRequest(
+            @NotBlank String token,
+            @NotBlank @Size(min = 8) String newPassword
+    ) {
+    }
+
+    @Schema(name = "ChangePasswordRequest")
+    public record ChangePasswordRequest(
+            @NotBlank String currentPassword,
+            @NotBlank @Size(min = 8) String newPassword
+    ) {
+    }
+
+    @Schema(name = "MessageResponse")
+    public record MessageResponse(String message) {
+    }
+
     @Schema(name = "AuthResponse")
     public record AuthResponse(
             String accessToken,

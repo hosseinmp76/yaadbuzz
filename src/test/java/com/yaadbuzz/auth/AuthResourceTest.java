@@ -82,4 +82,70 @@ class AuthResourceTest {
                 .then()
                 .statusCode(400);
     }
+
+    @Test
+    void changePasswordRequiresAuthAndCurrentPassword() {
+        String email = "chg-" + UUID.randomUUID() + "@example.com";
+        AuthSupport.AuthSession session = AuthSupport.register(email, "password123", "Changer");
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(Map.of(
+                        "currentPassword", "password123",
+                        "newPassword", "password456"
+                ))
+                .when()
+                .post("/api/auth/change-password")
+                .then()
+                .statusCode(401);
+
+        given()
+                .auth().oauth2(session.accessToken())
+                .contentType(ContentType.JSON)
+                .body(Map.of(
+                        "currentPassword", "wrong-password",
+                        "newPassword", "password456"
+                ))
+                .when()
+                .post("/api/auth/change-password")
+                .then()
+                .statusCode(401);
+
+        given()
+                .auth().oauth2(session.accessToken())
+                .contentType(ContentType.JSON)
+                .body(Map.of(
+                        "currentPassword", "password123",
+                        "newPassword", "password456"
+                ))
+                .when()
+                .post("/api/auth/change-password")
+                .then()
+                .statusCode(200)
+                .body("message", notNullValue());
+
+        AuthSupport.login(email, "password456");
+    }
+
+    @Test
+    void forgotPasswordAlwaysReturnsOk() {
+        given()
+                .contentType(ContentType.JSON)
+                .body(Map.of("email", "missing-" + UUID.randomUUID() + "@example.com"))
+                .when()
+                .post("/api/auth/forgot-password")
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    void sourceOfferIsPublic() {
+        given()
+                .when()
+                .get("/api/source")
+                .then()
+                .statusCode(200)
+                .body("license", equalTo("AGPL-3.0-only"))
+                .body("sourceUrl", notNullValue());
+    }
 }

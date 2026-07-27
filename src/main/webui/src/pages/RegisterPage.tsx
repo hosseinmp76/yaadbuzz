@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import Layout from '../components/Layout'
 import { Button } from '../components/ui/Button'
@@ -12,17 +13,16 @@ import { panelClass, stackClass } from '../components/ui/styles'
 import { useAuth } from '../auth'
 import { Seo } from '../seo/Seo'
 
-const schema = z.object({
-  displayName: z.string().min(2, 'Display name is required'),
-  email: z.email('Enter a valid email'),
-  password: z.string().min(8, 'Use at least 8 characters'),
-})
-
-type FormValues = z.infer<typeof schema>
-
 export default function RegisterPage() {
+  const { t } = useTranslation()
   const { register: registerUser, accessToken } = useAuth()
   const navigate = useNavigate()
+  const schema = z.object({
+    displayName: z.string().min(2),
+    email: z.email(t('login.emailRequired')),
+    password: z.string().min(8),
+  })
+  type FormValues = z.infer<typeof schema>
   const {
     register,
     handleSubmit,
@@ -42,7 +42,7 @@ export default function RegisterPage() {
   const onSubmit = handleSubmit(async (values) => {
     try {
       await registerUser(values.email, values.password, values.displayName)
-      toast.success('Account created')
+      toast.success(t('register.submit'))
       void navigate('/app')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Registration failed'
@@ -53,39 +53,35 @@ export default function RegisterPage() {
 
   return (
     <Layout>
-      <Seo
-        title="Create your account"
-        description="Register for Yaadbuzz and start an online yearbook for your team or organization."
-        path="/register"
-      />
+      <Seo title={t('register.seoTitle')} path="/register" />
       <div className="mx-auto max-w-md py-8">
-        <PageTitle>Create your Yaadbuzz</PageTitle>
-        <p className="text-muted">One account, many teams, endless memories.</p>
+        <PageTitle>{t('register.title')}</PageTitle>
+        <p className="text-muted">{t('register.subtitle')}</p>
         <form className={cn(panelClass, stackClass, 'mt-5')} onSubmit={onSubmit}>
           <Label>
-            Display name
+            {t('register.displayName')}
             <Input autoComplete="name" {...register('displayName')} />
             <FieldError message={errors.displayName?.message} />
           </Label>
           <Label>
-            Email
+            {t('register.email')}
             <Input type="email" autoComplete="email" {...register('email')} />
             <FieldError message={errors.email?.message} />
           </Label>
           <Label>
-            Password
+            {t('register.password')}
             <Input type="password" autoComplete="new-password" {...register('password')} />
             <FieldError message={errors.password?.message} />
           </Label>
           <FieldError message={errors.root?.message} />
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Creating…' : 'Create account'}
+            {isSubmitting ? t('register.submitting') : t('register.submit')}
           </Button>
         </form>
         <p className="mt-4 text-muted">
-          Already registered?{' '}
+          {t('register.haveAccount')}{' '}
           <Link to="/login" className="font-semibold text-brand">
-            Log in
+            {t('register.login')}
           </Link>
         </p>
       </div>

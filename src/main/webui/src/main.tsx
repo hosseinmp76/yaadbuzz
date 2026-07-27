@@ -7,7 +7,11 @@ import App from './App'
 import { AuthProvider } from './auth'
 import { ThemeProvider } from './theme/ThemeProvider'
 import { client } from './api/graphql'
+import { initSentry } from './sentry'
+import './i18n'
 import './styles.css'
+
+initSentry()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

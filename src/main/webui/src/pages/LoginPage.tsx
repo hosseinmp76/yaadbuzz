@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import Layout from '../components/Layout'
 import { Button } from '../components/ui/Button'
@@ -12,16 +13,15 @@ import { panelClass, stackClass } from '../components/ui/styles'
 import { useAuth } from '../auth'
 import { Seo } from '../seo/Seo'
 
-const schema = z.object({
-  email: z.email('Enter a valid email'),
-  password: z.string().min(1, 'Password is required'),
-})
-
-type FormValues = z.infer<typeof schema>
-
 export default function LoginPage() {
+  const { t } = useTranslation()
   const { login, accessToken } = useAuth()
   const navigate = useNavigate()
+  const schema = z.object({
+    email: z.email(t('login.emailRequired')),
+    password: z.string().min(1, t('login.passwordRequired')),
+  })
+  type FormValues = z.infer<typeof schema>
   const {
     register,
     handleSubmit,
@@ -40,7 +40,7 @@ export default function LoginPage() {
   const onSubmit = handleSubmit(async (values) => {
     try {
       await login(values.email, values.password)
-      toast.success('Welcome back')
+      toast.success(t('login.success'))
       void navigate('/app')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed'
@@ -52,33 +52,38 @@ export default function LoginPage() {
   return (
     <Layout>
       <Seo
-        title="Log in"
-        description="Log in to Yaadbuzz to continue building your team yearbook."
+        title={t('login.seoTitle')}
+        description={t('login.seoDescription')}
         path="/login"
       />
       <div className="mx-auto max-w-md py-8">
-        <PageTitle>Welcome back</PageTitle>
-        <p className="text-muted">Log in to continue building your yearbook.</p>
+        <PageTitle>{t('login.title')}</PageTitle>
+        <p className="text-muted">{t('login.subtitle')}</p>
         <form className={cn(panelClass, stackClass, 'mt-5')} onSubmit={onSubmit}>
           <Label>
-            Email
+            {t('login.email')}
             <Input type="email" autoComplete="email" {...register('email')} />
             <FieldError message={errors.email?.message} />
           </Label>
           <Label>
-            Password
+            {t('login.password')}
             <Input type="password" autoComplete="current-password" {...register('password')} />
             <FieldError message={errors.password?.message} />
           </Label>
           <FieldError message={errors.root?.message} />
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Signing in…' : 'Log in'}
+            {isSubmitting ? t('login.submitting') : t('login.submit')}
           </Button>
         </form>
         <p className="mt-4 text-muted">
-          No account?{' '}
+          <Link to="/forgot-password" className="font-semibold text-brand">
+            {t('login.forgot')}
+          </Link>
+        </p>
+        <p className="mt-2 text-muted">
+          {t('login.noAccount')}{' '}
           <Link to="/register" className="font-semibold text-brand">
-            Register
+            {t('login.register')}
           </Link>
         </p>
       </div>

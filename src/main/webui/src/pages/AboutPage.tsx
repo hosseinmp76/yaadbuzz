@@ -67,6 +67,11 @@ export default function AboutPage() {
               Read the full license
             </Button>
           </a>
+          <Link to="/source">
+            <Button variant="secondary" className="w-full sm:w-auto">
+              Corresponding source
+            </Button>
+          </Link>
           <a
             href="https://www.gnu.org/licenses/agpl-3.0.html"
             rel="noopener noreferrer"

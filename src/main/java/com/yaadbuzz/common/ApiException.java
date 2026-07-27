@@ -28,4 +28,8 @@ public class ApiException extends RuntimeException {
     public static ApiException conflict(String message) {
         return new ApiException(409, message);
     }
+
+    public static ApiException tooManyRequests(String message) {
+        return new ApiException(429, message);
+    }
 }

@@ -44,6 +44,11 @@
     --font-body-family: "Source Sans 3", system-ui, sans-serif;
   }
 
+  html[lang="fa"] {
+    --font-display-family: "Vazirmatn", "Fraunces", Georgia, serif;
+    --font-body-family: "Vazirmatn", "Source Sans 3", system-ui, sans-serif;
+  }
+
   * {
     box-sizing: border-box;
   }

@@ -1,0 +1,101 @@
+{
+  "nav": {
+    "about": "About",
+    "login": "Log in",
+    "getStarted": "Get started",
+    "preferences": "Preferences",
+    "logout": "Log out",
+    "skip": "Skip to content"
+  },
+  "footer": {
+    "copy": "© {{year}} Yaadbuzz · free & open source under the",
+    "licenseName": "GNU Affero GPL v3",
+    "about": "About",
+    "license": "License",
+    "source": "Source",
+    "agpl": "AGPL-3.0"
+  },
+  "login": {
+    "seoTitle": "Log in",
+    "seoDescription": "Log in to Yaadbuzz to continue building your team yearbook.",
+    "title": "Welcome back",
+    "subtitle": "Log in to continue building your yearbook.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Log in",
+    "submitting": "Signing in…",
+    "noAccount": "No account?",
+    "register": "Register",
+    "forgot": "Forgot password?",
+    "success": "Welcome back",
+    "emailRequired": "Enter a valid email",
+    "passwordRequired": "Password is required"
+  },
+  "register": {
+    "seoTitle": "Register",
+    "title": "Create your account",
+    "subtitle": "Start a yearbook for your team.",
+    "displayName": "Display name",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Create account",
+    "submitting": "Creating…",
+    "haveAccount": "Already have an account?",
+    "login": "Log in"
+  },
+  "forgot": {
+    "seoTitle": "Forgot password",
+    "title": "Reset your password",
+    "subtitle": "Enter your email and we will send a reset link if an account exists.",
+    "email": "Email",
+    "submit": "Send reset link",
+    "submitting": "Sending…",
+    "back": "Back to log in",
+    "success": "If an account exists for that email, a reset link has been sent."
+  },
+  "reset": {
+    "seoTitle": "Set new password",
+    "title": "Choose a new password",
+    "subtitle": "Use at least 8 characters.",
+    "password": "New password",
+    "confirm": "Confirm password",
+    "submit": "Update password",
+    "submitting": "Updating…",
+    "mismatch": "Passwords do not match",
+    "missingToken": "This reset link is invalid or incomplete.",
+    "success": "Password updated. You can log in now.",
+    "login": "Log in"
+  },
+  "preferences": {
+    "seoTitle": "Preferences",
+    "title": "Preferences",
+    "subtitle": "Your account appearance and security.",
+    "profile": "Profile",
+    "displayName": "Display name",
+    "signedInAs": "Signed in as",
+    "saveProfile": "Save profile",
+    "saving": "Saving…",
+    "saved": "Preferences saved",
+    "password": "Password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "changePassword": "Change password",
+    "changing": "Changing…",
+    "passwordChanged": "Password changed",
+    "language": "Language",
+    "languageHint": "Interface language for public pages and account screens."
+  },
+  "source": {
+    "seoTitle": "Source code",
+    "title": "Corresponding source",
+    "body": "Yaadbuzz is free software under the GNU Affero General Public License v3. As required for network services, the corresponding source for this deployment is offered here.",
+    "repo": "Open the source repository",
+    "license": "Read the license",
+    "api": "Machine-readable offer"
+  },
+  "lang": {
+    "en": "English",
+    "fa": "Persian"
+  }
+}

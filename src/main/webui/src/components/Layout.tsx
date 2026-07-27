@@ -1,13 +1,16 @@
 import { SignOut, UserCircle } from '@phosphor-icons/react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth'
+import { LanguageSwitcher } from './LanguageSwitcher'
 import { SiteFooter } from './SiteFooter'
 import { Button } from './ui/Button'
 import { appShellClass } from './ui/styles'
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
+  const { t } = useTranslation()
 
   return (
     <div className={appShellClass}>
@@ -15,7 +18,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-brand focus:px-4 focus:py-2 focus:text-on-brand"
       >
-        Skip to content
+        {t('nav.skip')}
       </a>
       <header className="flex items-center justify-between gap-2 py-4 sm:py-5">
         <Link
@@ -26,21 +29,22 @@ export default function Layout({ children }: { children: ReactNode }) {
           Yaad<span className="text-brand">buzz</span>
         </Link>
         <nav aria-label="Primary" className="flex min-w-0 items-center gap-1.5 sm:gap-3">
+          <LanguageSwitcher className="hidden sm:inline-flex" />
           <Link
             to="/about"
             className="px-2 text-sm font-semibold text-muted hover:text-ink sm:text-base"
           >
-            About
+            {t('nav.about')}
           </Link>
           {user ? (
             <>
               <Link
                 to="/preferences"
                 className="inline-flex items-center gap-1.5 px-2 text-sm font-semibold text-muted hover:text-ink sm:text-base"
-                aria-label="Preferences"
+                aria-label={t('nav.preferences')}
               >
                 <UserCircle size={20} weight="duotone" className="sm:hidden" />
-                <span className="hidden sm:inline">Preferences</span>
+                <span className="hidden sm:inline">{t('nav.preferences')}</span>
               </Link>
               <span className="hidden max-w-[10rem] truncate text-muted md:inline">
                 {user.displayName}
@@ -48,20 +52,20 @@ export default function Layout({ children }: { children: ReactNode }) {
               <Button
                 variant="secondary"
                 className="px-3 sm:px-5"
-                aria-label="Log out"
+                aria-label={t('nav.logout')}
                 onClick={logout}
               >
                 <SignOut size={18} />
-                <span className="hidden sm:inline">Log out</span>
+                <span className="hidden sm:inline">{t('nav.logout')}</span>
               </Button>
             </>
           ) : (
             <>
               <Link to="/login" className="px-2 text-sm font-semibold text-ink sm:text-base">
-                Log in
+                {t('nav.login')}
               </Link>
               <Link to="/register">
-                <Button className="px-3.5 text-sm sm:px-5 sm:text-base">Get started</Button>
+                <Button className="px-3.5 text-sm sm:px-5 sm:text-base">{t('nav.getStarted')}</Button>
               </Link>
             </>
           )}
