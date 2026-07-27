@@ -283,6 +283,15 @@ public class YaadbuzzGraphQLApi {
     }
 
     @Mutation
+    public InviteType inviteByEmail(
+            @Name("teamId") UUID teamId,
+            @Name("email") String email,
+            @Name("role") TeamRole role
+    ) {
+        return InviteType.from(teamService.inviteByEmail(teamId, currentUserService.requireUser(), email, role));
+    }
+
+    @Mutation
     public TeamMemberType joinTeam(
             @Name("code") String code,
             @Name("nickname") String nickname,
@@ -331,10 +340,11 @@ public class YaadbuzzGraphQLApi {
             @Name("title") String title,
             @Name("bodyText") String bodyText,
             @Name("privateMemory") boolean privateMemory,
-            @Name("taggedIds") List<UUID> taggedIds
+            @Name("taggedIds") List<UUID> taggedIds,
+            @Name("mediaIds") List<UUID> mediaIds
     ) {
         return MemoryType.from(memoryService.create(
-                teamId, currentUserService.requireUser(), title, bodyText, privateMemory, taggedIds));
+                teamId, currentUserService.requireUser(), title, bodyText, privateMemory, taggedIds, mediaIds));
     }
 
     @Mutation

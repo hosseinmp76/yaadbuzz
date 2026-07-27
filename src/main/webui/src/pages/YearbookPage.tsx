@@ -31,7 +31,7 @@ type YearbookData = {
     characteristics: Array<{ title: string; count: number }>
     tributes: Array<{ text: string; writer: string }>
   }>
-  memories: Array<{ title?: string; body: string; writer: string }>
+  memories: Array<{ title?: string; body: string; writer: string; imageUrls?: string[] }>
   topics: Array<{
     title: string
     standings: Array<{ nickname: string; score: number }>
@@ -256,6 +256,18 @@ function YearbookDocument({ yearbook }: { yearbook: YearbookData }) {
                     <strong className="text-lg text-[#1c1917]">{memory.title}</strong>
                   )}
                   <p className="mt-1 whitespace-pre-wrap text-[#1c1917]">{memory.body}</p>
+                  {memory.imageUrls && memory.imageUrls.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {memory.imageUrls.map((url) => (
+                        <img
+                          key={url}
+                          src={url}
+                          alt=""
+                          className="h-28 max-w-[10rem] rounded-lg object-cover"
+                        />
+                      ))}
+                    </div>
+                  )}
                   <p className="mt-2 text-sm text-[#57534e]">— {memory.writer}</p>
                 </article>
               ))}

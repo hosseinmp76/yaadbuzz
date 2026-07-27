@@ -20,6 +20,7 @@ import {
   CREATE_INVITE,
   CREATE_MEMORY,
   CREATE_TOPIC,
+  INVITE_BY_EMAIL,
   MEMORIES,
   MY_TEAM_MEMBERSHIP,
   REQUEST_EXPORT,
@@ -187,6 +188,8 @@ function MemoriesTab({ teamId }: { teamId: string }) {
   const [hasNext, setHasNext] = useState(false)
   const [title, setTitle] = useState('')
   const [bodyText, setBodyText] = useState('')
+  const [files, setFiles] = useState<File[]>([])
+  const [posting, setPosting] = useState(false)
   const cursorRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -222,22 +225,36 @@ function MemoriesTab({ teamId }: { teamId: string }) {
 
   async function onCreate(e: FormEvent) {
     e.preventDefault()
-    const result = await createMemory({
-      teamId,
-      title: title || null,
-      bodyText,
-      privateMemory: false,
-      taggedIds: [],
-    })
-    if (result.error) {
-      toast.error(result.error.message)
-      return
+    setPosting(true)
+    try {
+      const mediaIds: string[] = []
+      for (const file of files.slice(0, 6)) {
+        const uploaded = await uploadMedia(file)
+        mediaIds.push(uploaded.id)
+      }
+      const result = await createMemory({
+        teamId,
+        title: title || null,
+        bodyText,
+        privateMemory: false,
+        taggedIds: [],
+        mediaIds,
+      })
+      if (result.error) {
+        toast.error(result.error.message)
+        return
+      }
+      toast.success('Memory posted')
+      setTitle('')
+      setBodyText('')
+      setFiles([])
+      setCursor(null)
+      await load(true)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to post memory')
+    } finally {
+      setPosting(false)
     }
-    toast.success('Memory posted')
-    setTitle('')
-    setBodyText('')
-    setCursor(null)
-    await load(true)
   }
 
   return (
@@ -247,6 +264,19 @@ function MemoriesTab({ teamId }: { teamId: string }) {
           <article key={m.id} className={panelClass}>
             <strong>{m.title || 'Untitled memory'}</strong>
             <p className="mt-2 whitespace-pre-wrap">{m.bodyText}</p>
+            {m.pictures?.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {m.pictures.map((pic: { id: string; url: string }) => (
+                  <a key={pic.id} href={pic.url} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={pic.url}
+                      alt=""
+                      className="h-28 w-28 rounded-xl border border-line object-cover"
+                    />
+                  </a>
+                ))}
+              </div>
+            )}
             <div className="mt-2 text-sm text-muted">— {m.writer.nickname}</div>
           </article>
         ))}
@@ -269,7 +299,21 @@ function MemoriesTab({ teamId }: { teamId: string }) {
             required
           />
         </Label>
-        <Button type="submit">Post</Button>
+        <Label>
+          Photos
+          <Input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            multiple
+            onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 6))}
+          />
+        </Label>
+        {files.length > 0 && (
+          <p className="text-sm text-muted">{files.length} photo(s) selected (max 6)</p>
+        )}
+        <Button type="submit" disabled={posting}>
+          {posting ? 'Posting…' : 'Post'}
+        </Button>
       </form>
     </div>
   )
@@ -793,8 +837,11 @@ function SettingsTab({
   brandColor: string
 }) {
   const [, createInvite] = useMutation(CREATE_INVITE)
+  const [, inviteByEmail] = useMutation(INVITE_BY_EMAIL)
   const [, updateSettings] = useMutation(UPDATE_TEAM_SETTINGS)
   const [inviteCode, setInviteCode] = useState<string | null>(null)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [sendingEmail, setSendingEmail] = useState(false)
   const [reveal, setReveal] = useState(revealTributes)
   const [color, setColor] = useState(brandColor)
 
@@ -815,6 +862,29 @@ function SettingsTab({
     }
   }
 
+  async function onInviteEmail(e: FormEvent) {
+    e.preventDefault()
+    setSendingEmail(true)
+    try {
+      const result = await inviteByEmail({
+        teamId,
+        email: inviteEmail.trim(),
+        role: 'MEMBER',
+      })
+      if (result.error) {
+        toast.error(result.error.message)
+        return
+      }
+      toast.success(`Invitation sent to ${inviteEmail.trim()}`)
+      setInviteEmail('')
+      if (result.data?.inviteByEmail?.code) {
+        setInviteCode(result.data.inviteByEmail.code)
+      }
+    } finally {
+      setSendingEmail(false)
+    }
+  }
+
   async function onSave(e: FormEvent) {
     e.preventDefault()
     const result = await updateSettings({ teamId, brandColor: color, revealTributes: reveal })
@@ -829,12 +899,32 @@ function SettingsTab({
     <div className="grid gap-4 md:grid-cols-2">
       <section className={cn(panelClass, stackClass)}>
         <h2 className="font-display text-xl tracking-tight">Invites</h2>
+        <p className="text-sm text-muted">
+          Share a reusable code, or email a one-time invitation link.
+        </p>
         <Button onClick={onInvite}>Create invite code</Button>
         {inviteCode && (
           <p>
-            Share code: <strong>{inviteCode}</strong>
+            Latest code: <strong>{inviteCode}</strong>
+            <br />
+            <span className="text-sm text-muted">Join link: /join?code={inviteCode}</span>
           </p>
         )}
+        <form className={stackClass} onSubmit={onInviteEmail}>
+          <Label>
+            Invite by email
+            <Input
+              type="email"
+              required
+              placeholder="teammate@example.com"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+            />
+          </Label>
+          <Button type="submit" disabled={sendingEmail}>
+            {sendingEmail ? 'Sending…' : 'Send invitation email'}
+          </Button>
+        </form>
       </section>
       <form className={cn(panelClass, stackClass)} onSubmit={onSave}>
         <h2 className="font-display text-xl tracking-tight">Team settings</h2>

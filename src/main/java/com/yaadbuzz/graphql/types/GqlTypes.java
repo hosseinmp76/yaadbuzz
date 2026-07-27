@@ -113,7 +113,16 @@ public final class GqlTypes {
         }
     }
 
-    public record InviteType(UUID id, UUID teamId, String code, TeamRole role, Integer maxUses, int useCount, Instant expiresAt) {
+    public record InviteType(
+            UUID id,
+            UUID teamId,
+            String code,
+            TeamRole role,
+            Integer maxUses,
+            int useCount,
+            Instant expiresAt,
+            String email
+    ) {
         public static InviteType from(Invite invite) {
             return new InviteType(
                     invite.id,
@@ -122,7 +131,8 @@ public final class GqlTypes {
                     invite.role,
                     invite.maxUses,
                     invite.useCount,
-                    invite.expiresAt
+                    invite.expiresAt,
+                    invite.email
             );
         }
     }
@@ -164,6 +174,7 @@ public final class GqlTypes {
             String bodyText,
             boolean privateMemory,
             List<TeamMemberType> tagged,
+            List<MediaType> pictures,
             Instant createdAt
     ) {
         public static MemoryType from(Memory memory) {
@@ -175,6 +186,9 @@ public final class GqlTypes {
                     memory.bodyText,
                     memory.privateMemory,
                     memory.tagged.stream().map(TeamMemberType::from).toList(),
+                    memory.pictures == null
+                            ? List.of()
+                            : memory.pictures.stream().map(MediaType::from).toList(),
                     memory.createdAt
             );
         }
@@ -252,7 +266,7 @@ public final class GqlTypes {
     ) {
     }
 
-    public record YearbookMemoryType(String title, String body, String writer) {
+    public record YearbookMemoryType(String title, String body, String writer, List<String> imageUrls) {
     }
 
     public record YearbookStandingType(String nickname, int score) {
@@ -311,7 +325,7 @@ public final class GqlTypes {
                                             .toList()))
                             .toList(),
                     content.memories().stream()
-                            .map(m -> new YearbookMemoryType(m.title(), m.body(), m.writer()))
+                            .map(m -> new YearbookMemoryType(m.title(), m.body(), m.writer(), m.imageUrls()))
                             .toList(),
                     content.topics().stream()
                             .map(t -> new YearbookTopicType(

@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.hibernate.Hibernate;
 
 @ApplicationScoped
 public class YearbookContentService {
@@ -81,10 +82,17 @@ public class YearbookContentService {
 
         List<YearbookContent.Memory> memoryViews = memories.stream()
                 .sorted(Comparator.comparing((Memory m) -> m.createdAt))
-                .map(m -> new YearbookContent.Memory(
-                        m.title == null ? "" : m.title,
-                        m.bodyText,
-                        m.writer.nickname))
+                .map(m -> {
+                    Hibernate.initialize(m.pictures);
+                    List<String> imageUrls = m.pictures == null
+                            ? List.of()
+                            : m.pictures.stream().map(a -> a.url).toList();
+                    return new YearbookContent.Memory(
+                            m.title == null ? "" : m.title,
+                            m.bodyText,
+                            m.writer.nickname,
+                            imageUrls);
+                })
                 .toList();
 
         String brand = team.brandColor == null

@@ -16,15 +16,26 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.hibernate.Hibernate;
 
 @ApplicationScoped
 public class MemoryService {
+
+    private static final int MAX_MEMORY_IMAGES = 6;
 
     @Inject
     AccessService accessService;
 
     @Transactional
-    public Memory create(UUID teamId, User user, String title, String bodyText, boolean privateMemory, List<UUID> taggedIds) {
+    public Memory create(
+            UUID teamId,
+            User user,
+            String title,
+            String bodyText,
+            boolean privateMemory,
+            List<UUID> taggedIds,
+            List<UUID> mediaIds
+    ) {
         TeamMember writer = accessService.requireTeamMember(teamId, user);
         if (bodyText == null || bodyText.isBlank()) {
             throw ApiException.badRequest("Memory body is required");
@@ -36,10 +47,12 @@ public class MemoryService {
         memory.bodyText = bodyText.trim();
         memory.privateMemory = privateMemory;
         memory.tagged = resolveTags(teamId, taggedIds);
+        memory.pictures = resolveMedia(mediaIds);
         memory.persist();
         return memory;
     }
 
+    @Transactional
     public CursorPage<Memory> list(UUID teamId, User user, Integer first, String after) {
         TeamMember viewer = accessService.requireTeamMember(teamId, user);
         int limit = first == null || first < 1 || first > 50 ? 20 : first;
@@ -66,6 +79,10 @@ public class MemoryService {
                 .toList();
         boolean hasNext = visible.size() > limit;
         List<Memory> page = hasNext ? visible.subList(0, limit) : visible;
+        for (Memory memory : page) {
+            Hibernate.initialize(memory.pictures);
+            Hibernate.initialize(memory.tagged);
+        }
         String next = null;
         if (hasNext && !page.isEmpty()) {
             Memory last = page.get(page.size() - 1);
@@ -95,14 +112,7 @@ public class MemoryService {
             }
             comment.parent = parent;
         }
-        if (mediaIds != null) {
-            for (UUID mediaId : mediaIds) {
-                MediaAsset asset = MediaAsset.findById(mediaId);
-                if (asset != null) {
-                    comment.pictures.add(asset);
-                }
-            }
-        }
+        comment.pictures = resolveMedia(mediaIds);
         comment.persist();
         return comment;
     }
@@ -130,5 +140,23 @@ public class MemoryService {
             tagged.add(member);
         }
         return tagged;
+    }
+
+    private Set<MediaAsset> resolveMedia(List<UUID> mediaIds) {
+        Set<MediaAsset> pictures = new HashSet<>();
+        if (mediaIds == null || mediaIds.isEmpty()) {
+            return pictures;
+        }
+        if (mediaIds.size() > MAX_MEMORY_IMAGES) {
+            throw ApiException.badRequest("At most " + MAX_MEMORY_IMAGES + " images are allowed");
+        }
+        for (UUID mediaId : mediaIds) {
+            MediaAsset asset = MediaAsset.findById(mediaId);
+            if (asset == null) {
+                throw ApiException.notFound("Media not found: " + mediaId);
+            }
+            pictures.add(asset);
+        }
+        return pictures;
     }
 }

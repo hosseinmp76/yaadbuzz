@@ -36,7 +36,8 @@ git clone https://github.com/hosseinmp76/yaadbuzz.git
 
 docker compose up -d postgres elasticsearch minio minio-init
 
-sudo apt install -y maven
+docker compose up -d --build app
+
 
 sudo ufw allow OpenSSH
 sudo ufw allow 80/tcp

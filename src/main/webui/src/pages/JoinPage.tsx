@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { useMutation } from 'urql'
@@ -22,6 +22,7 @@ type FormValues = z.infer<typeof schema>
 
 export default function JoinPage() {
   const navigate = useNavigate()
+  const [params] = useSearchParams()
   const [, joinTeam] = useMutation(JOIN_TEAM)
   const {
     register,
@@ -29,7 +30,11 @@ export default function JoinPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { code: '', nickname: '', bio: '' },
+    defaultValues: {
+      code: params.get('code') ?? '',
+      nickname: '',
+      bio: '',
+    },
   })
 
   const onSubmit = handleSubmit(async (values) => {

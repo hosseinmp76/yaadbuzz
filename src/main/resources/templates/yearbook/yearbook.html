@@ -204,6 +204,13 @@
     <div class="memory">
       {#if memory.title}<strong>{memory.title}</strong>{/if}
       <div>{memory.body}</div>
+      {#if memory.imageUrls}
+      <div class="memory-images" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;">
+        {#for url in memory.imageUrls}
+        <img src="{url}" alt="" style="max-width:180px;max-height:140px;object-fit:cover;border-radius:8px;"/>
+        {/for}
+      </div>
+      {/if}
       <div class="meta">— {memory.writer}</div>
     </div>
     {/for}

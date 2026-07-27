@@ -21,6 +21,10 @@ public class EmailService {
     @Location("mail/password-reset")
     Template passwordResetTemplate;
 
+    @Inject
+    @Location("mail/team-invite")
+    Template teamInviteTemplate;
+
     @ConfigProperty(name = "yaadbuzz.public-url", defaultValue = "http://localhost:8080")
     String publicUrl;
 
@@ -37,14 +41,37 @@ public class EmailService {
                 .data("resetUrl", resetUrl)
                 .data("publicUrl", publicUrl)
                 .render();
-        Mail mail = Mail.withHtml(toEmail, "Reset your Yaadbuzz password", html).setFrom(from);
+        send(toEmail, "Reset your Yaadbuzz password", html, "password-reset", resetUrl);
+    }
+
+    public void sendTeamInvite(
+            String toEmail,
+            String inviterName,
+            String teamName,
+            String orgName,
+            String inviteCode
+    ) {
+        String joinUrl = publicUrl.replaceAll("/$", "") + "/join?code=" + inviteCode;
+        String html = teamInviteTemplate
+                .data("inviterName", inviterName)
+                .data("teamName", teamName)
+                .data("orgName", orgName)
+                .data("inviteCode", inviteCode)
+                .data("joinUrl", joinUrl)
+                .data("publicUrl", publicUrl)
+                .render();
+        send(toEmail, "You're invited to " + teamName + " on Yaadbuzz", html, "team-invite", joinUrl);
+    }
+
+    private void send(String toEmail, String subject, String html, String kind, String linkForLog) {
+        Mail mail = Mail.withHtml(toEmail, subject, html).setFrom(from);
         try {
             mailer.send(mail);
             if (mock) {
-                LOG.infof("Mock mail password-reset to %s link=%s", toEmail, resetUrl);
+                LOG.infof("Mock mail %s to %s link=%s", kind, toEmail, linkForLog);
             }
         } catch (RuntimeException e) {
-            LOG.errorf(e, "Failed to send password reset email to %s", toEmail);
+            LOG.errorf(e, "Failed to send %s email to %s", kind, toEmail);
             throw e;
         }
     }

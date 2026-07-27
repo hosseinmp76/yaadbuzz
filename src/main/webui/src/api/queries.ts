@@ -80,6 +80,7 @@ export const MEMORIES = `
         id title bodyText privateMemory createdAt
         writer { id nickname }
         tagged { id nickname }
+        pictures { id url mimeType }
       }
       nextCursor
       hasNext
@@ -137,7 +138,7 @@ export const YEARBOOK = `
         characteristics { title count }
         tributes { text writer }
       }
-      memories { title body writer }
+      memories { title body writer imageUrls }
       topics {
         title
         standings { nickname score }
@@ -193,7 +194,13 @@ export const CREATE_TEAM = `
 
 export const CREATE_INVITE = `
   mutation CreateInvite($teamId: String!, $role: TeamRole, $maxUses: Int) {
-    createInvite(teamId: $teamId, role: $role, maxUses: $maxUses) { id code role maxUses }
+    createInvite(teamId: $teamId, role: $role, maxUses: $maxUses) { id code role maxUses email }
+  }
+`
+
+export const INVITE_BY_EMAIL = `
+  mutation InviteByEmail($teamId: String!, $email: String!, $role: TeamRole) {
+    inviteByEmail(teamId: $teamId, email: $email, role: $role) { id code role email maxUses }
   }
 `
 
@@ -220,9 +227,23 @@ export const CREATE_TRIBUTE = `
 `
 
 export const CREATE_MEMORY = `
-  mutation CreateMemory($teamId: String!, $title: String, $bodyText: String!, $privateMemory: Boolean!, $taggedIds: [String]) {
-    createMemory(teamId: $teamId, title: $title, bodyText: $bodyText, privateMemory: $privateMemory, taggedIds: $taggedIds) {
-      id title
+  mutation CreateMemory(
+    $teamId: String!
+    $title: String
+    $bodyText: String!
+    $privateMemory: Boolean!
+    $taggedIds: [String]
+    $mediaIds: [String]
+  ) {
+    createMemory(
+      teamId: $teamId
+      title: $title
+      bodyText: $bodyText
+      privateMemory: $privateMemory
+      taggedIds: $taggedIds
+      mediaIds: $mediaIds
+    ) {
+      id title pictures { id url }
     }
   }
 `

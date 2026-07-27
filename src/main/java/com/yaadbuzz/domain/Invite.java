@@ -42,6 +42,9 @@ public class Invite extends io.quarkus.hibernate.orm.panache.PanacheEntityBase {
     @Column(name = "expires_at")
     public Instant expiresAt;
 
+    @Column(length = 320)
+    public String email;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id", nullable = false)
     public User createdBy;

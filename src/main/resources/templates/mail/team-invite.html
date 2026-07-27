@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>You're invited to Yaadbuzz</title>
+</head>
+<body style="font-family: system-ui, sans-serif; line-height: 1.5; color: #1c1917;">
+  <p>Hi,</p>
+  <p>
+    <strong>{inviterName}</strong> invited you to join
+    <strong>{teamName}</strong>
+    {#if orgName} at {orgName}{/if}
+    on Yaadbuzz — an online yearbook for your team.
+  </p>
+  <p>
+    <a href="{joinUrl}" style="display:inline-block;background:#0f766e;color:#fff;padding:12px 18px;border-radius:999px;text-decoration:none;font-weight:700;">
+      Accept invitation
+    </a>
+  </p>
+  <p style="color:#57534e;font-size:14px;">
+    Or open <a href="{joinUrl}">{joinUrl}</a> and use invite code:
+    <strong>{inviteCode}</strong>
+  </p>
+  <p style="color:#57534e;font-size:14px;">
+    If you do not have an account yet, register first, then open the link while signed in.
+  </p>
+  <p style="color:#57534e;font-size:12px;"><a href="{publicUrl}">Yaadbuzz</a></p>
+</body>
+</html>

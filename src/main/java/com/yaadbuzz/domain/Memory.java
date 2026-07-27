@@ -48,4 +48,12 @@ public class Memory extends BaseEntity {
             inverseJoinColumns = @JoinColumn(name = "team_member_id")
     )
     public Set<TeamMember> tagged = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "memory_media",
+            joinColumns = @JoinColumn(name = "memory_id"),
+            inverseJoinColumns = @JoinColumn(name = "media_asset_id")
+    )
+    public Set<MediaAsset> pictures = new HashSet<>();
 }

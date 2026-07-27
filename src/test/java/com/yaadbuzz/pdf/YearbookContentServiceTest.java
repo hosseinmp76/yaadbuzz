@@ -41,7 +41,7 @@ class YearbookContentServiceTest {
 
         var org = organizationService.create(user, "Yb Org", "#0F766E");
         var team = teamService.create(user, org.id, "Yb Team", "#B45309");
-        memoryService.create(team.id, user, "Campfire", "We stayed up late.", false, List.of());
+        memoryService.create(team.id, user, "Campfire", "We stayed up late.", false, List.of(), List.of());
 
         teamService.updateYearbookSettings(
                 team.id,

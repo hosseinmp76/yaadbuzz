@@ -11,6 +11,7 @@ import com.yaadbuzz.domain.TeamMember;
 import com.yaadbuzz.domain.User;
 import com.yaadbuzz.enums.TeamRole;
 import com.yaadbuzz.enums.YearbookTheme;
+import com.yaadbuzz.mail.EmailService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -24,6 +25,9 @@ public class TeamService {
 
     @Inject
     AccessService accessService;
+
+    @Inject
+    EmailService emailService;
 
     @Transactional
     public Team create(User user, UUID organizationId, String name, String brandColor) {
@@ -144,6 +148,48 @@ public class TeamService {
         invite.expiresAt = expiresAt;
         invite.createdBy = user;
         invite.persist();
+        return invite;
+    }
+
+    /**
+     * Create a single-use invite and email it to the invitee.
+     */
+    @Transactional
+    public Invite inviteByEmail(UUID teamId, User user, String email, TeamRole role) {
+        accessService.requireTeamAdmin(teamId, user);
+        if (email == null || email.isBlank() || !email.contains("@")) {
+            throw ApiException.badRequest("A valid email is required");
+        }
+        String normalized = email.trim().toLowerCase();
+        Team team = accessService.requireTeam(teamId);
+        Hibernate.initialize(team.organization);
+
+        User.findByEmail(normalized).ifPresent(existing -> {
+            if (TeamMember.findByTeamAndUser(teamId, existing.id).isPresent()) {
+                throw ApiException.conflict("That person is already a member of this team");
+            }
+        });
+
+        Invite invite = new Invite();
+        invite.team = team;
+        invite.code = generateCode();
+        invite.role = role == null ? TeamRole.MEMBER : role;
+        invite.maxUses = 1;
+        invite.email = normalized;
+        invite.createdBy = user;
+        invite.persist();
+
+        try {
+            emailService.sendTeamInvite(
+                    normalized,
+                    user.displayName,
+                    team.name,
+                    team.organization.name,
+                    invite.code
+            );
+        } catch (RuntimeException e) {
+            throw ApiException.badRequest("Could not send invitation email. Try again later.");
+        }
         return invite;
     }
 
