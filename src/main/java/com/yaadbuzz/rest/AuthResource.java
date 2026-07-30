@@ -2,6 +2,7 @@ package com.yaadbuzz.rest;
 
 import com.yaadbuzz.auth.AuthService;
 import com.yaadbuzz.auth.CurrentUserService;
+import com.yaadbuzz.auth.OidcCookieClearer;
 import com.yaadbuzz.rest.dto.AuthDtos.AuthResponse;
 import com.yaadbuzz.rest.dto.AuthDtos.ChangePasswordRequest;
 import com.yaadbuzz.rest.dto.AuthDtos.ForgotPasswordRequest;
@@ -19,6 +20,7 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
@@ -34,6 +36,9 @@ public class AuthResource {
 
     @Inject
     CurrentUserService currentUserService;
+
+    @Inject
+    OidcCookieClearer oidcCookieClearer;
 
     @POST
     @Path("/register")
@@ -75,6 +80,13 @@ public class AuthResource {
     public MessageResponse resetPassword(@Valid ResetPasswordRequest request) {
         authService.resetPassword(request.token(), request.newPassword());
         return new MessageResponse("Password updated. You can log in with your new password.");
+    }
+
+    @POST
+    @Path("/logout")
+    @Operation(summary = "Clear local session and OIDC cookies")
+    public Response logout() {
+        return Response.noContent().cookie(oidcCookieClearer.expiredCookies()).build();
     }
 
     @POST

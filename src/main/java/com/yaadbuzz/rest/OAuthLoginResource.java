@@ -2,6 +2,7 @@ package com.yaadbuzz.rest;
 
 import com.yaadbuzz.auth.AuthService;
 import com.yaadbuzz.auth.OAuthCodeStore;
+import com.yaadbuzz.auth.OidcCookieClearer;
 import com.yaadbuzz.common.ApiException;
 import io.quarkus.oidc.OidcSession;
 import io.quarkus.oidc.UserInfo;
@@ -46,6 +47,9 @@ public class OAuthLoginResource {
     @Inject
     OidcSession oidcSession;
 
+    @Inject
+    OidcCookieClearer oidcCookieClearer;
+
     @ConfigProperty(name = "yaadbuzz.public-url")
     String publicUrl;
 
@@ -86,7 +90,8 @@ public class OAuthLoginResource {
         }
 
         URI redirect = URI.create(trimSlash(publicUrl) + "/oauth/callback?code=" + code);
-        return Response.seeOther(redirect).build();
+        // Explicitly expire OIDC cookies on this redirect — local logout alone can leave them.
+        return Response.seeOther(redirect).cookie(oidcCookieClearer.expiredCookies()).build();
     }
 
     private OAuthIdentity extractIdentity(String provider) {

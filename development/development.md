@@ -205,6 +205,20 @@ Binary: `target/yaadbuzz-1.0.0-SNAPSHOT-runner`.
 
 Starts Postgres, Elasticsearch, MinIO, nginx, and the app.
 
+**Secrets (`.env`)** — Compose auto-loads a file named `.env` in the project root for `${VAR}` substitution (file is gitignored):
+
+```bash
+./development/gen-secrets.sh          # writes .env (use --force to overwrite)
+# edit .env for YAADBUZZ_PUBLIC_URL, OAuth, mail, etc.
+docker compose up -d --build
+```
+
+Explicit env file (optional; default is already `.env`):
+
+```bash
+docker compose --env-file .env up -d
+```
+
 **Build the app image locally** (default):
 
 ```bash
@@ -404,6 +418,31 @@ Browser
   └─ SPA ──GraphQL──► /graphql ──► services ──► Postgres / ES / MinIO
                                     └─ scheduler/worker ──► server PDF in MinIO
 ```
+
+---
+
+## DNS-AID (agent discovery via DNS)
+
+`yaadbuzz.ir` is on Cloudflare. Publish the DNS for AI Discovery entrypoint so scanners can find agent endpoints before an HTTP round-trip ([draft-mozleywilliams-dnsop-dnsaid](https://datatracker.ietf.org/doc/draft-mozleywilliams-dnsop-dnsaid/), [RFC 9460](https://www.rfc-editor.org/rfc/rfc9460)):
+
+```dns
+_index._agents.yaadbuzz.ir. 3600 IN HTTPS 1 yaadbuzz.ir. alpn="h3,h2" port=443
+```
+
+Do **not** publish `_mcp._agents` / `_a2a._agents` until those transports exist.
+
+```bash
+# Token: Zone → DNS → Edit on yaadbuzz.ir
+CLOUDFLARE_API_TOKEN=... ./development/publish-dns-aid.sh
+
+# Also enable DNSSEC (required for authenticated discovery). If the domain
+# is not on Cloudflare Registrar, paste the printed DS record at the registrar.
+CLOUDFLARE_API_TOKEN=... ENABLE_DNSSEC=1 ./development/publish-dns-aid.sh
+```
+
+Dashboard alternative: DNS → Add record → type **HTTPS**, name `_index._agents`, priority `1`, target `yaadbuzz.ir`, value `alpn="h3,h2" port=443`. Then DNS → Settings → Enable DNSSEC.
+
+Verify: `dig +short HTTPS _index._agents.yaadbuzz.ir` and that `checks.discoverability.dnsAid` passes on [isitagentready.com](https://isitagentready.com/).
 
 ---
 

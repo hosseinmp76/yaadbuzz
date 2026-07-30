@@ -9,7 +9,7 @@ type AuthState = {
   register: (email: string, password: string, displayName: string) => Promise<void>
   completeOAuth: (code: string) => Promise<void>
   updateUser: (user: AuthUser) => void
-  logout: () => void
+  logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -66,8 +66,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     updateUser(nextUser) {
       setStored((prev) => (prev ? { ...prev, user: nextUser } : prev))
     },
-    logout() {
+    async logout() {
       setStored(null)
+      try {
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+      } catch {
+        // Local JWT already cleared; cookie clear is best-effort.
+      }
     },
   }), [stored])
 

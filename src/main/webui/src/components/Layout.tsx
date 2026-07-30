@@ -54,7 +54,9 @@ export default function Layout({ children }: { children: ReactNode }) {
                 variant="secondary"
                 className="px-3 sm:px-5"
                 aria-label={t('nav.logout')}
-                onClick={logout}
+                onClick={() => {
+                  void logout()
+                }}
               >
                 <SignOut size={18} />
                 <span className="hidden sm:inline">{t('nav.logout')}</span>
