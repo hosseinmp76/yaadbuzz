@@ -77,7 +77,7 @@ services:
     # Build locally:
     #   APP_PULL_POLICY=build docker compose up -d --build
     #   # or simply: docker compose up -d --build
-    image: ${APP_IMAGE:-hosseinmp762/yaadbuzz:2026.07.30.2}
+    image: ${APP_IMAGE:-hosseinmp762/yaadbuzz:2026.07.30.3}
     pull_policy: ${APP_PULL_POLICY:-missing}
     build:
       context: .

@@ -100,10 +100,14 @@ export YAADBUZZ_OAUTH_GITHUB_CLIENT_SECRET=...
 export YAADBUZZ_PUBLIC_URL=http://localhost:8080   # must match browser origin
 ```
 
-Authorized redirect URIs:
+Authorized redirect URIs (must match **exactly**, including `http` vs `https`):
 
-- Google: `http://localhost:8080/api/auth/oauth/google`
-- GitHub: `http://localhost:8080/api/auth/oauth/github`
+- Local Google: `http://localhost:8080/api/auth/oauth/google`
+- Local GitHub: `http://localhost:8080/api/auth/oauth/github`
+- Prod Google: `https://yaadbuzz.ir/api/auth/oauth/google`
+- Prod GitHub: `https://yaadbuzz.ir/api/auth/oauth/github`
+
+Production forces HTTPS in the OIDC `redirect_uri` (`force-redirect-https-scheme`). Set `YAADBUZZ_PUBLIC_URL=https://yaadbuzz.ir` in `.env`.
 
 Flow: provider → app issues a one-time code → SPA `/oauth/callback` exchanges it for the same JWTs as email login.
 

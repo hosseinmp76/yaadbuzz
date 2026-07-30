@@ -16,8 +16,8 @@ echo "${ROOT}"
 
 DOCKERHUB_USER="${DOCKERHUB_USER:-hosseinmp762}"
 IMAGE_NAME="${IMAGE_NAME:-yaadbuzz}"
-IMAGE_TAG="${IMAGE_TAG:-2026.07.30.2}"
-LOCAL_IMAGE="yaadbuzz/${IMAGE_NAME}:${IMAGE_TAG}"
+IMAGE_TAG="${IMAGE_TAG:-2026.07.30.3}"
+LOCAL_IMAGE="hosseinmp762/${IMAGE_NAME}:${IMAGE_TAG}"
 
 if [[ -z "${DOCKERHUB_USER}" ]]; then
   echo "Set DOCKERHUB_USER to your Docker Hub username or organization." >&2
@@ -44,9 +44,7 @@ docker login
 
 
 echo "==> Pushing"
-docker push "${IMAGE_TAG}"
 docker push "${LOCAL_IMAGE}"
 
 echo "Done."
-echo "  ${IMAGE_TAG}"
 echo "  ${LOCAL_IMAGE}"
