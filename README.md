@@ -54,7 +54,11 @@ Seed invite code for Class of 2026: `welcome2026`
 ## Full stack with Docker Compose
 
 ```bash
-docker compose up --build
+# Build app image locally
+docker compose up -d --build
+
+# Or use a Docker Hub image (no local build)
+APP_IMAGE=youruser/yaadbuzz:latest APP_PULL_POLICY=always docker compose up -d
 ```
 
 ## Native image + Docker

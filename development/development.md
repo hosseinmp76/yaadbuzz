@@ -203,13 +203,30 @@ Binary: `target/yaadbuzz-1.0.0-SNAPSHOT-runner`.
 
 ### Full stack with Docker Compose (simplest)
 
-Builds the app image with `src/main/docker/Dockerfile.compose` and starts Postgres, Elasticsearch, MinIO, and the app:
+Starts Postgres, Elasticsearch, MinIO, nginx, and the app.
+
+**Build the app image locally** (default):
 
 ```bash
-docker compose up --build
+docker compose up -d --build
+# or explicitly:
+APP_PULL_POLICY=build docker compose up -d --build
 ```
 
-App: http://localhost:8080
+**Use a pre-pushed Docker Hub image** (no local build):
+
+```bash
+export APP_IMAGE=youruser/yaadbuzz:latest   # image you pushed
+export APP_PULL_POLICY=always               # pull from Hub
+docker compose up -d
+```
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `APP_IMAGE` | `yaadbuzz/yaadbuzz:local` | Image name/tag Compose runs (and tags builds as) |
+| `APP_PULL_POLICY` | `missing` | `missing` = use local or pull if absent; `always` = always pull; `build` / use `--build` = build from Dockerfile |
+
+App (via nginx): http://localhost or https if certs are present.
 
 Tear down (keeps volumes unless `-v`):
 

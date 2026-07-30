@@ -14,7 +14,7 @@ cd "$ROOT"
 
 DOCKERHUB_USER="${DOCKERHUB_USER:-}"
 IMAGE_NAME="${IMAGE_NAME:-yaadbuzz}"
-IMAGE_TAG="${IMAGE_TAG:-1.0.0-SNAPSHOT}"
+IMAGE_TAG="${IMAGE_TAG:-2026.07.30}"
 LOCAL_IMAGE="yaadbuzz/${IMAGE_NAME}:${IMAGE_TAG}"
 REMOTE_IMAGE="${DOCKERHUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}"
 REMOTE_LATEST="${DOCKERHUB_USER}/${IMAGE_NAME}:latest"
@@ -28,7 +28,7 @@ if [[ "${SKIP_BUILD:-0}" != "1" ]]; then
   echo "==> Building ${LOCAL_IMAGE}"
   ./mvnw -DskipTests package
   ./mvnw quarkus:image-build \
-    -Dquarkus.container-image.group=yaadbuzz \
+    -Dquarkus.container-image.group=hosseinmp762 \
     -Dquarkus.container-image.name="${IMAGE_NAME}" \
     -Dquarkus.container-image.tag="${IMAGE_TAG}"
 fi

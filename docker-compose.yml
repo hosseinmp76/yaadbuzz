@@ -68,9 +68,19 @@ services:
       "
 
   app:
+    # Default: build locally and tag as yaadbuzz/yaadbuzz:local.
+    # Use a Hub image instead (no --build):
+    #   APP_IMAGE=youruser/yaadbuzz:latest APP_PULL_POLICY=always docker compose up -d
+    # Build locally:
+    #   APP_PULL_POLICY=build docker compose up -d --build
+    #   # or simply: docker compose up -d --build
+    image: ${APP_IMAGE:-hosseinmp762/yaadbuzz:2026.07.30}
+    pull_policy: ${APP_PULL_POLICY:-missing}
     build:
       context: .
       dockerfile: src/main/docker/Dockerfile.compose
+      tags:
+        - ${APP_IMAGE:-yaadbuzz/yaadbuzz:local}
     depends_on:
       postgres:
         condition: service_healthy
