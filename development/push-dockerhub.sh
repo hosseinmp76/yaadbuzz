@@ -12,12 +12,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-DOCKERHUB_USER="${DOCKERHUB_USER:-}"
+echo "${ROOT}"
+
+DOCKERHUB_USER="${DOCKERHUB_USER:-hosseinmp762}"
 IMAGE_NAME="${IMAGE_NAME:-yaadbuzz}"
-IMAGE_TAG="${IMAGE_TAG:-2026.07.30}"
+IMAGE_TAG="${IMAGE_TAG:-2026.07.30.2}"
 LOCAL_IMAGE="yaadbuzz/${IMAGE_NAME}:${IMAGE_TAG}"
-REMOTE_IMAGE="${DOCKERHUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}"
-REMOTE_LATEST="${DOCKERHUB_USER}/${IMAGE_NAME}:latest"
 
 if [[ -z "${DOCKERHUB_USER}" ]]; then
   echo "Set DOCKERHUB_USER to your Docker Hub username or organization." >&2
@@ -42,14 +42,11 @@ fi
 echo "==> Logging in to Docker Hub (skip if already logged in)"
 docker login
 
-echo "==> Tagging ${LOCAL_IMAGE} -> ${REMOTE_IMAGE} and ${REMOTE_LATEST}"
-docker tag "${LOCAL_IMAGE}" "${REMOTE_IMAGE}"
-docker tag "${LOCAL_IMAGE}" "${REMOTE_LATEST}"
 
 echo "==> Pushing"
-docker push "${REMOTE_IMAGE}"
-docker push "${REMOTE_LATEST}"
+docker push "${IMAGE_TAG}"
+docker push "${LOCAL_IMAGE}"
 
 echo "Done."
-echo "  ${REMOTE_IMAGE}"
-echo "  ${REMOTE_LATEST}"
+echo "  ${IMAGE_TAG}"
+echo "  ${LOCAL_IMAGE}"
