@@ -1,6 +1,8 @@
 import { BookOpenText, Printer, UsersThree } from '@phosphor-icons/react'
 import { motion } from 'motion/react'
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { registerWebMcpTools } from '../agent/webmcp'
 import Layout from '../components/Layout'
 import { Button } from '../components/ui/Button'
 import { Stack } from '../components/ui/Stack'
@@ -10,6 +12,9 @@ import { DEFAULT_DESCRIPTION } from '../seo/site'
 
 export default function LandingPage() {
   const { user } = useAuth()
+  useEffect(() => {
+    registerWebMcpTools()
+  }, [])
   return (
     <Layout>
       <Seo

@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Allow: /about
+Allow: /source
 Allow: /login
 Allow: /register
 Allow: /LICENSE.txt
@@ -11,6 +12,7 @@ Disallow: /orgs/
 Disallow: /teams/
 Disallow: /members/
 Disallow: /join
+Disallow: /y/
 Disallow: /api/
 Disallow: /graphql
 Disallow: /q/
