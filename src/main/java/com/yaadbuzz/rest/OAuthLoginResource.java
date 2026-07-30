@@ -15,7 +15,6 @@ import jakarta.ws.rs.core.Response;
 import java.net.URI;
 import java.util.Set;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.logging.Logger;
@@ -23,6 +22,10 @@ import org.jboss.logging.Logger;
 /**
  * OIDC-protected entrypoints. Visiting {@code /api/auth/oauth/google} (or github)
  * starts the provider login; after redirect back, issues a one-time code for the SPA.
+ * <p>
+ * Identity comes from {@link UserInfo} only — do not inject {@code JsonWebToken} here.
+ * GitHub (and other OAuth2 providers) return opaque access tokens that cannot be
+ * converted to JWTs.
  */
 @Path("/api/auth/oauth")
 @Tag(name = "Auth")
@@ -37,9 +40,6 @@ public class OAuthLoginResource {
 
     @Inject
     OAuthCodeStore oAuthCodeStore;
-
-    @Inject
-    JsonWebToken idToken;
 
     @Inject
     UserInfo userInfo;
@@ -95,19 +95,14 @@ public class OAuthLoginResource {
     }
 
     private OAuthIdentity extractIdentity(String provider) {
-        String email = firstNonBlank(
-                claim(userInfo, "email"),
-                stringClaim(idToken, "email")
-        );
+        String email = claim(userInfo, "email");
         String subject = firstNonBlank(
                 claim(userInfo, "id"),
-                claim(userInfo, "sub"),
-                idToken.getSubject()
+                claim(userInfo, "sub")
         );
         String displayName = firstNonBlank(
                 claim(userInfo, "name"),
                 claim(userInfo, "login"),
-                stringClaim(idToken, "name"),
                 email != null ? email.split("@")[0] : null
         );
         if ("github".equals(provider) && (email == null || email.isBlank())) {
@@ -115,6 +110,12 @@ public class OAuthLoginResource {
             if (login != null && !login.isBlank()) {
                 email = login + "@users.noreply.github.com";
             }
+        }
+        if (subject == null || subject.isBlank()) {
+            throw ApiException.unauthorized("OAuth provider did not return a user id");
+        }
+        if (email == null || email.isBlank()) {
+            throw ApiException.unauthorized("OAuth provider did not return an email");
         }
         return new OAuthIdentity(subject, email, displayName);
     }
@@ -124,14 +125,6 @@ public class OAuthLoginResource {
             return null;
         }
         return String.valueOf(info.get(name));
-    }
-
-    private static String stringClaim(JsonWebToken token, String name) {
-        if (token == null) {
-            return null;
-        }
-        Object value = token.getClaim(name);
-        return value == null ? null : String.valueOf(value);
     }
 
     private static String firstNonBlank(String... values) {
