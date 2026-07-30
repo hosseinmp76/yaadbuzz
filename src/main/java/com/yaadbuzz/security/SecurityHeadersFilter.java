@@ -15,7 +15,7 @@ public class SecurityHeadersFilter implements ContainerResponseFilter {
         headers.putSingle("X-Frame-Options", "DENY");
         headers.putSingle("Referrer-Policy", "strict-origin-when-cross-origin");
         headers.putSingle("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-        headers.putSingle("Cross-Origin-Opener-Policy", "same-origin");
+        headers.putSingle("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
         headers.putSingle("Cross-Origin-Resource-Policy", "same-origin");
         if (!headers.containsKey("Content-Security-Policy")) {
             headers.putSingle(

@@ -110,7 +110,7 @@ Authorized redirect URIs (must match **exactly**, including `http` vs `https`):
 - Prod Google: `https://yaadbuzz.ir/api/auth/oauth/google`
 - Prod GitHub: `https://yaadbuzz.ir/api/auth/oauth/github`
 
-**Telegram** uses the [Login Widget](https://core.telegram.org/widgets/login) (not OIDC). In [@BotFather](https://t.me/BotFather): create a bot, then `/setdomain` to your site host (`yaadbuzz.ir` or `localhost` for local HTTPS tunnels). Widget posts to `/api/auth/oauth/telegram`.
+**Telegram** uses the [Login Widget](https://core.telegram.org/widgets/login) (not OIDC). In [@BotFather](https://t.me/BotFather): create a bot, then `/setdomain` to your site host (`yaadbuzz.ir`). The SPA uses `data-onauth` → `POST /api/auth/oauth/telegram` (avoids finishing login inside a popup that closes). Use COOP `same-origin-allow-popups` so the Telegram popup can talk to the opener.
 
 Production forces HTTPS in the OIDC `redirect_uri` (`force-redirect-https-scheme`). Set `YAADBUZZ_PUBLIC_URL=https://yaadbuzz.ir` in `.env`.
 
