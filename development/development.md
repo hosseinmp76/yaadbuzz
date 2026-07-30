@@ -64,6 +64,24 @@ Open:
 | http://localhost:8080/q/swagger-ui | REST / OpenAPI |
 | http://localhost:8080/graphql-ui | GraphQL UI (Bearer JWT in Headers) |
 
+### Typed GraphQL client (codegen)
+
+After changing backend GraphQL APIs, regenerate TypeScript documents (requires Quarkus running for schema fetch):
+
+```bash
+./mvnw -Pgraphql-codegen generate-sources
+# or from webui:
+cd src/main/webui && npm run graphql:generate
+```
+
+- Schema snapshot: `src/main/webui/graphql/schema.graphql`
+- Operations you edit: `src/main/webui/graphql/operations/*.graphql`
+- Generated types/docs: `src/main/webui/src/api/generated/graphql.ts`
+- App imports stay via `src/api/queries.ts`
+
+Optional: `YAADBUZZ_GRAPHQL_URL=https://… ./mvnw -Pgraphql-codegen generate-sources`
+
+
 Vite’s managed port is **3000** (`quarkus.quinoa.dev-server.port`). Prefer using **8080** so auth and GraphQL share one origin.
 
 **Seed users** (dev seed enabled; password `password123`):

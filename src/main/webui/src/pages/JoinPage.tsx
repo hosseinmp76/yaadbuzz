@@ -52,8 +52,13 @@ export default function JoinPage() {
       toast.error(result.error.message)
       return
     }
+    const teamId = result.data?.joinTeam?.teamId
+    if (!teamId) {
+      toast.error(t('common.requestFailed'))
+      return
+    }
     toast.success(t('join.success'))
-    void navigate(`/teams/${result.data.joinTeam.teamId}`)
+    void navigate(`/teams/${teamId}`)
   })
 
   return (

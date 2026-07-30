@@ -40,6 +40,7 @@ Open:
 - App: http://localhost:8080
 - Swagger: http://localhost:8080/q/swagger-ui
 - GraphQL UI: http://localhost:8080/graphql-ui — paste `{"Authorization":"Bearer <accessToken>"}` in Headers after login
+- Regenerate typed GraphQL client (Quarkus must be running): `./mvnw -Pgraphql-codegen generate-sources`
 
 Seed users (password `password123`):
 

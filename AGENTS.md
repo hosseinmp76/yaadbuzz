@@ -66,7 +66,9 @@ Frontend lives in `src/main/webui/src/` (pages, components, theme, urql client).
 | `GET /api/yearbooks/{id}/download` | PDF download |
 | `/graphql` | Yearbook domain operations |
 
-Swagger: `/q/swagger-ui` · GraphQL UI: `/graphql-ui` (add `Authorization: Bearer <accessToken>` in GraphiQL Headers)
+Swagger: `/q/swagger-ui` · GraphQL UI: `/graphql-ui` (Bearer JWT in Headers)
+
+After GraphQL API changes: `./mvnw -Pgraphql-codegen generate-sources` (Quarkus must be up; writes typed TS under `src/main/webui/src/api/generated/`).
 
 ## Dev / test conventions agents must respect
 

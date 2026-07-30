@@ -10,7 +10,10 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "lint": "npm run typecheck && eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "graphql:schema": "node scripts/fetch-graphql-schema.mjs",
+    "graphql:codegen": "graphql-codegen --config codegen.ts",
+    "graphql:generate": "npm run graphql:schema && npm run graphql:codegen"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -33,6 +36,10 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@graphql-codegen/cli": "^5.0.7",
+    "@graphql-codegen/typed-document-node": "^5.1.2",
+    "@graphql-codegen/typescript": "^4.1.6",
+    "@graphql-codegen/typescript-operations": "^4.6.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.1.1",
     "@types/react": "^19.1.6",

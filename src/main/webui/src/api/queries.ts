@@ -1,293 +1,41 @@
-export const ME = `
-  query Me {
-    me { id email displayName }
-  }
-`
+/**
+ * Stable import path for app code.
+ * Documents are generated from graphql/operations + graphql/schema.graphql —
+ * run `./mvnw -Pgraphql-codegen generate-sources` (or `npm run graphql:generate`).
+ */
+export {
+  MeDocument as ME,
+  UpdateMyProfileDocument as UPDATE_MY_PROFILE,
+  MyTeamMembershipDocument as MY_TEAM_MEMBERSHIP,
+  MyOrganizationsDocument as MY_ORGS,
+  TeamsDocument as TEAMS,
+  TeamDocument as TEAM,
+  TeamMembersDocument as TEAM_MEMBERS,
+  TeamMemberDocument as TEAM_MEMBER,
+  TributesDocument as TRIBUTES,
+  MemoriesDocument as MEMORIES,
+  TopicsDocument as TOPICS,
+  TopicStandingsDocument as TOPIC_STANDINGS,
+  CharacteristicsDocument as CHARACTERISTICS,
+  SearchDocument as SEARCH,
+  YearbookExportsDocument as YEARBOOK_EXPORTS,
+  YearbookDocument as YEARBOOK,
+  UpdateYearbookSettingsDocument as UPDATE_YEARBOOK_SETTINGS,
+  CreateOrganizationDocument as CREATE_ORG,
+  CreateTeamDocument as CREATE_TEAM,
+  CreateInviteDocument as CREATE_INVITE,
+  InviteByEmailDocument as INVITE_BY_EMAIL,
+  JoinTeamDocument as JOIN_TEAM,
+  UpsertProfileDocument as UPSERT_PROFILE,
+  CreateTributeDocument as CREATE_TRIBUTE,
+  CreateMemoryDocument as CREATE_MEMORY,
+  CreateTopicDocument as CREATE_TOPIC,
+  VoteTopicDocument as VOTE_TOPIC,
+  AddCharacteristicDocument as ADD_CHARACTERISTIC,
+  UpdateTeamSettingsDocument as UPDATE_TEAM_SETTINGS,
+  RequestYearbookExportDocument as REQUEST_EXPORT,
+  HideTributeDocument as HIDE_TRIBUTE,
+  ReportTributeDocument as REPORT_TRIBUTE,
+} from './generated/graphql'
 
-export const UPDATE_MY_PROFILE = `
-  mutation UpdateMyProfile($displayName: String!) {
-    updateMyProfile(displayName: $displayName) { id email displayName }
-  }
-`
-
-export const MY_TEAM_MEMBERSHIP = `
-  query MyTeamMembership($teamId: String!) {
-    myTeamMembership(teamId: $teamId) {
-      id nickname bio avatar { id url }
-    }
-  }
-`
-
-export const MY_ORGS = `
-  query MyOrganizations {
-    myOrganizations { id name brandColor }
-  }
-`
-
-export const TEAMS = `
-  query Teams($organizationId: String!) {
-    teams(organizationId: $organizationId) {
-      id name brandColor revealTributes tributesRevealed
-    }
-  }
-`
-
-export const TEAM = `
-  query Team($id: String!) {
-    team(id: $id) {
-      id organizationId name brandColor revealTributes revealAt tributesRevealed
-      yearbookTitle yearbookSubtitle yearbookDedication yearbookTheme
-      yearbookShowMembers yearbookShowTributes yearbookShowCharacteristics
-      yearbookShowMemories yearbookShowAwards
-    }
-  }
-`
-
-export const TEAM_MEMBERS = `
-  query TeamMembers($teamId: String!, $first: Int, $after: String, $query: String) {
-    teamMembers(teamId: $teamId, first: $first, after: $after, query: $query) {
-      items { id nickname bio role avatar { url } }
-      nextCursor
-      hasNext
-    }
-  }
-`
-
-export const TEAM_MEMBER = `
-  query TeamMember($id: String!) {
-    teamMember(id: $id) { id teamId nickname bio role avatar { url } }
-  }
-`
-
-export const TRIBUTES = `
-  query Tributes($teamId: String!, $recipientId: String, $first: Int, $after: String) {
-    tributes(teamId: $teamId, recipientId: $recipientId, first: $first, after: $after) {
-      items {
-        id text anonymous privateTribute createdAt
-        writer { id nickname }
-        recipient { id nickname }
-      }
-      nextCursor
-      hasNext
-    }
-  }
-`
-
-export const MEMORIES = `
-  query Memories($teamId: String!, $first: Int, $after: String) {
-    memories(teamId: $teamId, first: $first, after: $after) {
-      items {
-        id title bodyText privateMemory createdAt
-        writer { id nickname }
-        tagged { id nickname }
-        pictures { id url mimeType }
-      }
-      nextCursor
-      hasNext
-    }
-  }
-`
-
-export const TOPICS = `
-  query Topics($teamId: String!) {
-    topics(teamId: $teamId) { id title }
-  }
-`
-
-export const TOPIC_STANDINGS = `
-  query TopicStandings($topicId: String!) {
-    topicStandings(topicId: $topicId) {
-      score
-      nominee { id nickname }
-    }
-  }
-`
-
-export const CHARACTERISTICS = `
-  query Characteristics($teamMemberId: String!) {
-    characteristics(teamMemberId: $teamMemberId) { id title count }
-  }
-`
-
-export const SEARCH = `
-  query Search($teamId: String!, $q: String!, $first: Int, $after: String) {
-    search(teamId: $teamId, q: $q, first: $first, after: $after) {
-      items { type id title snippet }
-      nextCursor
-      hasNext
-    }
-  }
-`
-
-export const YEARBOOK_EXPORTS = `
-  query YearbookExports($teamId: String!) {
-    yearbookExports(teamId: $teamId) {
-      id status fileUrl errorMessage createdAt completedAt
-    }
-  }
-`
-
-export const YEARBOOK = `
-  query Yearbook($teamId: String!) {
-    yearbook(teamId: $teamId) {
-      teamId orgName teamName title subtitle dedication theme brandColor
-      logoUrl coverMediaUrl
-      showMembers showTributes showCharacteristics showMemories showAwards
-      members {
-        nickname bio avatarUrl
-        characteristics { title count }
-        tributes { text writer }
-      }
-      memories { title body writer imageUrls }
-      topics {
-        title
-        standings { nickname score }
-      }
-    }
-  }
-`
-
-export const UPDATE_YEARBOOK_SETTINGS = `
-  mutation UpdateYearbookSettings(
-    $teamId: String!
-    $title: String
-    $subtitle: String
-    $dedication: String
-    $theme: YearbookTheme
-    $showMembers: Boolean
-    $showTributes: Boolean
-    $showCharacteristics: Boolean
-    $showMemories: Boolean
-    $showAwards: Boolean
-  ) {
-    updateYearbookSettings(
-      teamId: $teamId
-      title: $title
-      subtitle: $subtitle
-      dedication: $dedication
-      theme: $theme
-      showMembers: $showMembers
-      showTributes: $showTributes
-      showCharacteristics: $showCharacteristics
-      showMemories: $showMemories
-      showAwards: $showAwards
-    ) {
-      id
-      yearbookTitle yearbookSubtitle yearbookDedication yearbookTheme
-      yearbookShowMembers yearbookShowTributes yearbookShowCharacteristics
-      yearbookShowMemories yearbookShowAwards
-    }
-  }
-`
-
-export const CREATE_ORG = `
-  mutation CreateOrganization($name: String!, $brandColor: String) {
-    createOrganization(name: $name, brandColor: $brandColor) { id name }
-  }
-`
-
-export const CREATE_TEAM = `
-  mutation CreateTeam($organizationId: String!, $name: String!, $brandColor: String) {
-    createTeam(organizationId: $organizationId, name: $name, brandColor: $brandColor) { id name }
-  }
-`
-
-export const CREATE_INVITE = `
-  mutation CreateInvite($teamId: String!, $role: TeamRole, $maxUses: Int) {
-    createInvite(teamId: $teamId, role: $role, maxUses: $maxUses) { id code role maxUses email }
-  }
-`
-
-export const INVITE_BY_EMAIL = `
-  mutation InviteByEmail($teamId: String!, $email: String!, $role: TeamRole) {
-    inviteByEmail(teamId: $teamId, email: $email, role: $role) { id code role email maxUses }
-  }
-`
-
-export const JOIN_TEAM = `
-  mutation JoinTeam($code: String!, $nickname: String, $bio: String) {
-    joinTeam(code: $code, nickname: $nickname, bio: $bio) { id teamId nickname }
-  }
-`
-
-export const UPSERT_PROFILE = `
-  mutation UpsertProfile($teamId: String!, $nickname: String, $bio: String, $avatarId: String) {
-    upsertTeamMemberProfile(teamId: $teamId, nickname: $nickname, bio: $bio, avatarId: $avatarId) {
-      id nickname bio avatar { url }
-    }
-  }
-`
-
-export const CREATE_TRIBUTE = `
-  mutation CreateTribute($teamId: String!, $recipientId: String!, $text: String!, $anonymous: Boolean!, $privateTribute: Boolean!) {
-    createTribute(teamId: $teamId, recipientId: $recipientId, text: $text, anonymous: $anonymous, privateTribute: $privateTribute) {
-      id text
-    }
-  }
-`
-
-export const CREATE_MEMORY = `
-  mutation CreateMemory(
-    $teamId: String!
-    $title: String
-    $bodyText: String!
-    $privateMemory: Boolean!
-    $taggedIds: [String]
-    $mediaIds: [String]
-  ) {
-    createMemory(
-      teamId: $teamId
-      title: $title
-      bodyText: $bodyText
-      privateMemory: $privateMemory
-      taggedIds: $taggedIds
-      mediaIds: $mediaIds
-    ) {
-      id title pictures { id url }
-    }
-  }
-`
-
-export const CREATE_TOPIC = `
-  mutation CreateTopic($teamId: String!, $title: String!) {
-    createTopic(teamId: $teamId, title: $title) { id title }
-  }
-`
-
-export const VOTE_TOPIC = `
-  mutation VoteTopic($topicId: String!, $nomineeId: String!, $repetitions: Int) {
-    voteTopic(topicId: $topicId, nomineeId: $nomineeId, repetitions: $repetitions)
-  }
-`
-
-export const ADD_CHARACTERISTIC = `
-  mutation AddCharacteristic($teamMemberId: String!, $title: String!) {
-    addCharacteristic(teamMemberId: $teamMemberId, title: $title) { id title count }
-  }
-`
-
-export const UPDATE_TEAM_SETTINGS = `
-  mutation UpdateTeamSettings($teamId: String!, $brandColor: String, $revealTributes: Boolean) {
-    updateTeamSettings(teamId: $teamId, brandColor: $brandColor, revealTributes: $revealTributes) {
-      id revealTributes brandColor
-    }
-  }
-`
-
-export const REQUEST_EXPORT = `
-  mutation RequestYearbookExport($teamId: String!) {
-    requestYearbookExport(teamId: $teamId) { id status }
-  }
-`
-
-export const HIDE_TRIBUTE = `
-  mutation HideTribute($tributeId: String!) {
-    hideTribute(tributeId: $tributeId) { id hidden }
-  }
-`
-
-export const REPORT_TRIBUTE = `
-  mutation ReportTribute($tributeId: String!, $reason: String!) {
-    reportTribute(tributeId: $tributeId, reason: $reason)
-  }
-`
+export type * from './generated/graphql'
