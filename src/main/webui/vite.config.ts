@@ -25,6 +25,7 @@ export default defineConfig({
       ? {
           proxy: {
             '/graphql': 'http://127.0.0.1:8080',
+            '/graphql-ui': 'http://127.0.0.1:8080',
             '/api': 'http://127.0.0.1:8080',
             '/q': 'http://127.0.0.1:8080',
           },

@@ -62,7 +62,7 @@ Open:
 |---|---|
 | http://localhost:8080 | App (UI + API) |
 | http://localhost:8080/q/swagger-ui | REST / OpenAPI |
-| http://localhost:8080/graphql-ui | GraphQL UI |
+| http://localhost:8080/graphql-ui | GraphQL UI (Bearer JWT in Headers) |
 
 Vite’s managed port is **3000** (`quarkus.quinoa.dev-server.port`). Prefer using **8080** so auth and GraphQL share one origin.
 

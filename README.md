@@ -39,7 +39,7 @@ Open:
 
 - App: http://localhost:8080
 - Swagger: http://localhost:8080/q/swagger-ui
-- GraphQL UI: http://localhost:8080/graphql-ui
+- GraphQL UI: http://localhost:8080/graphql-ui — paste `{"Authorization":"Bearer <accessToken>"}` in Headers after login
 
 Seed users (password `password123`):
 
