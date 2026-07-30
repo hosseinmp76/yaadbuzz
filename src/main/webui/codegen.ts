@@ -14,19 +14,19 @@ const config: CodegenConfig = {
   ignoreNoDocuments: false,
   generates: {
     'src/api/generated/graphql.ts': {
-      plugins: ['typescript', 'typescript-operations', 'typed-document-node'],
+      // typescript-operations v6+ owns schema Input/Enum + operation types in one file
+      plugins: ['typescript-operations', 'typed-document-node'],
       config: {
         maybeValue: 'T',
         inputMaybeValue: 'T | null | undefined',
-        avoidOptionals: {
-          field: true,
-          inputValue: false,
-          object: false,
-          defaultValue: false,
-        },
-        enumsAsTypes: true,
+        enumType: 'string-literal',
         skipTypename: true,
         useTypeImports: true,
+        avoidOptionals: {
+          inputValue: false,
+          variableValue: false,
+          defaultValue: false,
+        },
         scalars: {
           DateTime: 'string',
         },

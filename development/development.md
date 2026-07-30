@@ -86,6 +86,27 @@ Vite’s managed port is **3000** (`quarkus.quinoa.dev-server.port`). Prefer usi
 
 **Seed users** (dev seed enabled; password `password123`):
 
+### Social login (Google / GitHub)
+
+Buttons appear on Login/Register only when enabled. Create OAuth apps and set:
+
+```bash
+export YAADBUZZ_OAUTH_GOOGLE_ENABLED=true
+export YAADBUZZ_OAUTH_GOOGLE_CLIENT_ID=...
+export YAADBUZZ_OAUTH_GOOGLE_CLIENT_SECRET=...
+export YAADBUZZ_OAUTH_GITHUB_ENABLED=true
+export YAADBUZZ_OAUTH_GITHUB_CLIENT_ID=...
+export YAADBUZZ_OAUTH_GITHUB_CLIENT_SECRET=...
+export YAADBUZZ_PUBLIC_URL=http://localhost:8080   # must match browser origin
+```
+
+Authorized redirect URIs:
+
+- Google: `http://localhost:8080/api/auth/oauth/google`
+- GitHub: `http://localhost:8080/api/auth/oauth/github`
+
+Flow: provider → app issues a one-time code → SPA `/oauth/callback` exchanges it for the same JWTs as email login.
+
 - `alice@yaadbuzz.local` — org owner / team admin
 - `bob@yaadbuzz.local`
 - `cara@yaadbuzz.local`
@@ -232,6 +253,57 @@ On Linux, replace `host.docker.internal` with the host gateway IP or attach the 
 ```
 
 Uses `src/main/docker/Dockerfile.native`. Same image coordinates as JVM unless you retag.
+
+### Push app image to Docker Hub
+
+Local Quarkus image name is `yaadbuzz/yaadbuzz:1.0.0-SNAPSHOT` (`quarkus.container-image.*` in `application.properties`).
+
+Set your Docker Hub user/org (defaults to `yaadbuzz` if that is your Hub namespace):
+
+```bash
+export DOCKERHUB_USER=yaadbuzz          # your Docker Hub username or org
+export IMAGE_TAG=1.0.0-SNAPSHOT         # or a release tag, e.g. 1.0.0
+```
+
+**Option A — build, tag, push (Compose Dockerfile or Quarkus image):**
+
+```bash
+# JVM image via Quarkus
+./mvnw -DskipTests package
+./mvnw quarkus:image-build
+
+docker login
+docker tag "yaadbuzz/yaadbuzz:${IMAGE_TAG}" "${DOCKERHUB_USER}/yaadbuzz:${IMAGE_TAG}"
+docker tag "yaadbuzz/yaadbuzz:${IMAGE_TAG}" "${DOCKERHUB_USER}/yaadbuzz:latest"
+docker push "${DOCKERHUB_USER}/yaadbuzz:${IMAGE_TAG}"
+docker push "${DOCKERHUB_USER}/yaadbuzz:latest"
+```
+
+**Option B — Quarkus builds and pushes in one step:**
+
+```bash
+docker login
+./mvnw -DskipTests package quarkus:image-build \
+  -Dquarkus.container-image.group="${DOCKERHUB_USER}" \
+  -Dquarkus.container-image.tag="${IMAGE_TAG}" \
+  -Dquarkus.container-image.registry=docker.io \
+  -Dquarkus.container-image.push=true
+```
+
+**Option C — helper script** (from repo root):
+
+```bash
+export DOCKERHUB_USER=yaadbuzz
+export IMAGE_TAG=1.0.0-SNAPSHOT
+./development/push-dockerhub.sh
+```
+
+Pull on a server:
+
+```bash
+docker pull "${DOCKERHUB_USER}/yaadbuzz:${IMAGE_TAG}"
+# or: docker pull "${DOCKERHUB_USER}/yaadbuzz:latest"
+```
 
 ### Production environment variables
 

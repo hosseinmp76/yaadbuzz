@@ -83,7 +83,18 @@
     "success": "Welcome back",
     "emailRequired": "Enter a valid email",
     "passwordRequired": "Password is required",
-    "failed": "Login failed"
+    "failed": "Login failed",
+    "orContinueWith": "Or continue with",
+    "google": "Continue with Google",
+    "github": "Continue with GitHub"
+  },
+  "oauth": {
+    "seoTitle": "Signing in",
+    "title": "Finishing sign-in",
+    "working": "Completing your social login…",
+    "missingCode": "Missing login code. Please try again.",
+    "failed": "Social login failed",
+    "backToLogin": "Back to log in"
   },
   "register": {
     "seoTitle": "Register",

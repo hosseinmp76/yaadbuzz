@@ -13,6 +13,7 @@ import MemberPage from './pages/MemberPage'
 import JoinPage from './pages/JoinPage'
 import YearbookPage from './pages/YearbookPage'
 import AboutPage from './pages/AboutPage'
+import OAuthCallbackPage from './pages/OAuthCallbackPage'
 import PreferencesPage from './pages/PreferencesPage'
 import SourcePage from './pages/SourcePage'
 import { Seo } from './seo/Seo'
@@ -38,6 +39,7 @@ export default function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
       <Route path="/join" element={<Protected><JoinPage /></Protected>} />
       <Route path="/app" element={<Protected><DashboardPage /></Protected>} />
       <Route path="/preferences" element={<Protected><PreferencesPage /></Protected>} />

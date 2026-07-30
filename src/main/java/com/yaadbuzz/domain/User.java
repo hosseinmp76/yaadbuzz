@@ -14,7 +14,7 @@ public class User extends BaseEntity {
     @Column(nullable = false, unique = true)
     public String email;
 
-    @Column(name = "password_hash", nullable = false)
+    @Column(name = "password_hash")
     public String passwordHash;
 
     @Column(name = "display_name", nullable = false)
@@ -25,6 +25,12 @@ public class User extends BaseEntity {
 
     @Column(name = "password_reset_expires_at")
     public Instant passwordResetExpiresAt;
+
+    @Column(name = "oauth_provider")
+    public String oauthProvider;
+
+    @Column(name = "oauth_subject")
+    public String oauthSubject;
 
     public static Optional<User> findByEmail(String email) {
         return find("email = ?1 and deletedAt is null", email.toLowerCase()).firstResultOptional();
@@ -40,5 +46,17 @@ public class User extends BaseEntity {
                 tokenHash,
                 Instant.now()
         ).firstResultOptional();
+    }
+
+    public static Optional<User> findByOAuth(String provider, String subject) {
+        return find(
+                "oauthProvider = ?1 and oauthSubject = ?2 and deletedAt is null",
+                provider,
+                subject
+        ).firstResultOptional();
+    }
+
+    public boolean hasPassword() {
+        return passwordHash != null && !passwordHash.isBlank();
     }
 }

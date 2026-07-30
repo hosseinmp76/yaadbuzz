@@ -11,6 +11,7 @@ import { PageTitle } from '../components/ui/PageTitle'
 import { cn } from '../lib/cn'
 import { panelClass, stackClass } from '../components/ui/styles'
 import { useAuth } from '../auth'
+import { SocialLoginButtons } from '../components/SocialLoginButtons'
 import { Seo } from '../seo/Seo'
 
 export default function RegisterPage() {
@@ -77,6 +78,7 @@ export default function RegisterPage() {
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? t('register.submitting') : t('register.submit')}
           </Button>
+          <SocialLoginButtons />
         </form>
         <p className="mt-4 text-muted">
           {t('register.haveAccount')}{' '}

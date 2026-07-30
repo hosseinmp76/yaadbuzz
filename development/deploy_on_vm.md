@@ -38,6 +38,13 @@ docker compose up -d postgres elasticsearch minio minio-init
 
 docker compose up -d --build app
 
+# Optional: push a pre-built app image to Docker Hub (from a build machine), then pull on the VM:
+#   export DOCKERHUB_USER=youruser
+#   ./development/push-dockerhub.sh
+# On the VM:
+#   docker pull youruser/yaadbuzz:latest
+#   # point compose/deploy at that image instead of --build
+
 
 sudo ufw allow OpenSSH
 sudo ufw allow 80/tcp

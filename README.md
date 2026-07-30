@@ -6,7 +6,7 @@ Online yearbook generator built with **Quarkus**, **React (Quinoa)**, **GraphQL*
 
 ## Features
 
-- Email/password JWT auth (OIDC-ready boundaries)
+- Email/password JWT auth, plus optional Google / GitHub OAuth
 - Organizations → Teams → members via invite codes
 - Tributes about teammates (anonymous / private / reveal mode)
 - Shared memories with comments
@@ -103,7 +103,9 @@ npm run lint:fix   # auto-fix where possible
 
 | Surface | Purpose |
 |---|---|
-| `POST /api/auth/*` | Register, login, refresh |
+| `POST /api/auth/*` | Register, login, refresh, password reset |
+| `GET /api/auth/oauth/{google\|github}` | Social login (OIDC redirect) |
+| `POST /api/auth/oauth/exchange` | Exchange one-time OAuth code for JWTs |
 | `POST /api/media` | Image upload |
 | `GET /api/yearbooks/{id}/download` | PDF download |
 | `/graphql` | All yearbook domain operations |

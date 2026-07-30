@@ -15,6 +15,7 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HexFormat;
+import java.util.Optional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
@@ -60,9 +61,72 @@ public class AuthService {
     public AuthTokens login(String email, String password) {
         User user = User.findByEmail(email.trim().toLowerCase())
                 .orElseThrow(() -> ApiException.unauthorized("Invalid email or password"));
-        if (!BcryptUtil.matches(password, user.passwordHash)) {
+        if (!user.hasPassword() || !BcryptUtil.matches(password, user.passwordHash)) {
             throw ApiException.unauthorized("Invalid email or password");
         }
+        return tokensFor(user);
+    }
+
+    /**
+     * Find or create a local user from a verified Google/GitHub identity, then issue app JWTs.
+     */
+    @Transactional
+    public AuthTokens loginOrRegisterOAuth(
+            String provider,
+            String subject,
+            String email,
+            String displayName
+    ) {
+        if (provider == null || provider.isBlank() || subject == null || subject.isBlank()) {
+            throw ApiException.badRequest("OAuth identity is incomplete");
+        }
+        if (email == null || email.isBlank()) {
+            throw ApiException.badRequest(
+                    "Email permission is required. Allow email access from " + provider + " and try again."
+            );
+        }
+        String normalizedProvider = provider.trim().toLowerCase();
+        String normalizedEmail = email.trim().toLowerCase();
+        String name = (displayName == null || displayName.isBlank())
+                ? normalizedEmail.split("@")[0]
+                : displayName.trim();
+
+        Optional<User> byOauth = User.findByOAuth(normalizedProvider, subject);
+        if (byOauth.isPresent()) {
+            User user = byOauth.get();
+            if (!normalizedEmail.equals(user.email)) {
+                // Provider email changed; keep account if free, else keep existing email.
+                if (User.findByEmail(normalizedEmail).filter(u -> !u.id.equals(user.id)).isEmpty()) {
+                    user.email = normalizedEmail;
+                }
+            }
+            if (user.displayName == null || user.displayName.isBlank()) {
+                user.displayName = name;
+            }
+            return tokensFor(user);
+        }
+
+        Optional<User> byEmail = User.findByEmail(normalizedEmail);
+        if (byEmail.isPresent()) {
+            User user = byEmail.get();
+            if (user.oauthProvider != null
+                    && !user.oauthProvider.equals(normalizedProvider)) {
+                throw ApiException.conflict(
+                        "This email is already linked to another sign-in method. Log in with that method."
+                );
+            }
+            user.oauthProvider = normalizedProvider;
+            user.oauthSubject = subject;
+            return tokensFor(user);
+        }
+
+        User user = new User();
+        user.email = normalizedEmail;
+        user.passwordHash = null;
+        user.displayName = name;
+        user.oauthProvider = normalizedProvider;
+        user.oauthSubject = subject;
+        user.persist();
         return tokensFor(user);
     }
 
@@ -130,16 +194,18 @@ public class AuthService {
 
     @Transactional
     public void changePassword(User user, String currentPassword, String newPassword) {
-        if (currentPassword == null || currentPassword.isBlank()) {
-            throw ApiException.badRequest("Current password is required");
-        }
         if (newPassword == null || newPassword.length() < 8) {
             throw ApiException.badRequest("New password must be at least 8 characters");
         }
         User managed = User.findActiveById(user.id)
                 .orElseThrow(() -> ApiException.unauthorized("User not found"));
-        if (!BcryptUtil.matches(currentPassword, managed.passwordHash)) {
-            throw ApiException.unauthorized("Current password is incorrect");
+        if (managed.hasPassword()) {
+            if (currentPassword == null || currentPassword.isBlank()) {
+                throw ApiException.badRequest("Current password is required");
+            }
+            if (!BcryptUtil.matches(currentPassword, managed.passwordHash)) {
+                throw ApiException.unauthorized("Current password is incorrect");
+            }
         }
         managed.passwordHash = BcryptUtil.bcryptHash(newPassword);
         managed.passwordResetTokenHash = null;

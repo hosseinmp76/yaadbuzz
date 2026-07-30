@@ -22,7 +22,7 @@ Naming: use **Team** (not Department).
 | Search | Elasticsearch 8 via Hibernate Search |
 | Object storage | MinIO / S3-compatible |
 | PDF | OpenHTMLToPDF + Qute template |
-| Auth | Local email/password JWT now; keep boundaries OIDC-ready |
+| Auth | Local email/password JWT + optional Google/GitHub OAuth (OIDC); keep boundaries OIDC-ready |
 
 Frontend UI libs in use: Tailwind CSS v4, Motion, React Hook Form, Zod, Phosphor icons, Sonner, clsx, urql. Themes are user-selectable CSS-variable presets (`src/main/webui/src/theme/`).
 

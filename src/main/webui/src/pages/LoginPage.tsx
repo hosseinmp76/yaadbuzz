@@ -11,6 +11,7 @@ import { PageTitle } from '../components/ui/PageTitle'
 import { cn } from '../lib/cn'
 import { panelClass, stackClass } from '../components/ui/styles'
 import { useAuth } from '../auth'
+import { SocialLoginButtons } from '../components/SocialLoginButtons'
 import { Seo } from '../seo/Seo'
 
 export default function LoginPage() {
@@ -74,6 +75,7 @@ export default function LoginPage() {
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? t('login.submitting') : t('login.submit')}
           </Button>
+          <SocialLoginButtons />
         </form>
         <p className="mt-4 text-muted">
           <Link to="/forgot-password" className="font-semibold text-brand">

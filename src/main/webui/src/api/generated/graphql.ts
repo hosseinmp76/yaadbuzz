@@ -1,527 +1,17 @@
-import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
-export type Maybe<T> = T;
-export type InputMaybe<T> = T | null | undefined;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
+/** Internal type. DO NOT USE DIRECTLY. */
+type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
+/** Internal type. DO NOT USE DIRECTLY. */
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
-/** All built-in and custom scalars, mapped to their actual values */
-export type Scalars = {
-  ID: { input: string; output: string; }
-  String: { input: string; output: string; }
-  Boolean: { input: boolean; output: boolean; }
-  Int: { input: number; output: number; }
-  Float: { input: number; output: number; }
-  /** Scalar for BigDecimal */
-  BigDecimal: { input: any; output: any; }
-  /** Scalar for BigInteger */
-  BigInteger: { input: any; output: any; }
-  /** Scalar for DateTime */
-  DateTime: { input: string; output: string; }
-};
-
-export type CharacteristicType = {
-  count: Scalars['Int']['output'];
-  id: Maybe<Scalars['String']['output']>;
-  teamMemberId: Maybe<Scalars['String']['output']>;
-  title: Maybe<Scalars['String']['output']>;
-};
-
-export type CommentType = {
-  /** ISO-8601 */
-  createdAt: Maybe<Scalars['DateTime']['output']>;
-  id: Maybe<Scalars['String']['output']>;
-  memoryId: Maybe<Scalars['String']['output']>;
-  text: Maybe<Scalars['String']['output']>;
-  writer: Maybe<TeamMemberType>;
-};
-
-export type ConnectionMemory = {
-  hasNext: Scalars['Boolean']['output'];
-  items: Maybe<Array<Maybe<MemoryType>>>;
-  nextCursor: Maybe<Scalars['String']['output']>;
-};
-
-export type ConnectionSearch = {
-  hasNext: Scalars['Boolean']['output'];
-  items: Maybe<Array<Maybe<SearchHitType>>>;
-  nextCursor: Maybe<Scalars['String']['output']>;
-};
-
-export type ConnectionTeamMember = {
-  hasNext: Scalars['Boolean']['output'];
-  items: Maybe<Array<Maybe<TeamMemberType>>>;
-  nextCursor: Maybe<Scalars['String']['output']>;
-};
-
-export type ConnectionTribute = {
-  hasNext: Scalars['Boolean']['output'];
-  items: Maybe<Array<Maybe<TributeType>>>;
-  nextCursor: Maybe<Scalars['String']['output']>;
-};
-
+import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type ExportStatus =
   | 'FAILED'
   | 'PENDING'
   | 'PROCESSING'
   | 'READY';
 
-export type InviteType = {
-  code: Maybe<Scalars['String']['output']>;
-  email: Maybe<Scalars['String']['output']>;
-  /** ISO-8601 */
-  expiresAt: Maybe<Scalars['DateTime']['output']>;
-  id: Maybe<Scalars['String']['output']>;
-  maxUses: Maybe<Scalars['Int']['output']>;
-  role: Maybe<TeamRole>;
-  teamId: Maybe<Scalars['String']['output']>;
-  useCount: Scalars['Int']['output'];
-};
-
-export type MediaType = {
-  id: Maybe<Scalars['String']['output']>;
-  mimeType: Maybe<Scalars['String']['output']>;
-  url: Maybe<Scalars['String']['output']>;
-};
-
-export type MemoryType = {
-  bodyText: Maybe<Scalars['String']['output']>;
-  /** ISO-8601 */
-  createdAt: Maybe<Scalars['DateTime']['output']>;
-  id: Maybe<Scalars['String']['output']>;
-  pictures: Maybe<Array<Maybe<MediaType>>>;
-  privateMemory: Scalars['Boolean']['output'];
-  tagged: Maybe<Array<Maybe<TeamMemberType>>>;
-  teamId: Maybe<Scalars['String']['output']>;
-  title: Maybe<Scalars['String']['output']>;
-  writer: Maybe<TeamMemberType>;
-};
-
-/** Mutation root */
-export type Mutation = {
-  addCharacteristic: Maybe<CharacteristicType>;
-  addComment: Maybe<CommentType>;
-  createInvite: Maybe<InviteType>;
-  createMemory: Maybe<MemoryType>;
-  createOrganization: Maybe<OrganizationType>;
-  createTeam: Maybe<TeamType>;
-  createTopic: Maybe<TopicType>;
-  createTribute: Maybe<TributeType>;
-  hideTribute: Maybe<TributeType>;
-  inviteByEmail: Maybe<InviteType>;
-  joinTeam: Maybe<TeamMemberType>;
-  reportTribute: Maybe<Scalars['Boolean']['output']>;
-  requestYearbookExport: Maybe<YearbookExportType>;
-  /** Update the current user's display name */
-  updateMyProfile: Maybe<UserType>;
-  updateOrganizationBranding: Maybe<OrganizationType>;
-  updateTeamSettings: Maybe<TeamType>;
-  /** Customize online/print yearbook layout and sections */
-  updateYearbookSettings: Maybe<TeamType>;
-  upsertTeamMemberProfile: Maybe<TeamMemberType>;
-  voteTopic: Maybe<Scalars['Boolean']['output']>;
-};
-
-
-/** Mutation root */
-export type MutationAddCharacteristicArgs = {
-  teamMemberId?: InputMaybe<Scalars['String']['input']>;
-  title?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationAddCommentArgs = {
-  mediaIds?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  memoryId?: InputMaybe<Scalars['String']['input']>;
-  parentId?: InputMaybe<Scalars['String']['input']>;
-  text?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationCreateInviteArgs = {
-  expiresAt?: InputMaybe<Scalars['DateTime']['input']>;
-  maxUses?: InputMaybe<Scalars['Int']['input']>;
-  role?: InputMaybe<TeamRole>;
-  teamId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationCreateMemoryArgs = {
-  bodyText?: InputMaybe<Scalars['String']['input']>;
-  mediaIds?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  privateMemory: Scalars['Boolean']['input'];
-  taggedIds?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  teamId?: InputMaybe<Scalars['String']['input']>;
-  title?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationCreateOrganizationArgs = {
-  brandColor?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationCreateTeamArgs = {
-  brandColor?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  organizationId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationCreateTopicArgs = {
-  teamId?: InputMaybe<Scalars['String']['input']>;
-  title?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationCreateTributeArgs = {
-  anonymous: Scalars['Boolean']['input'];
-  privateTribute: Scalars['Boolean']['input'];
-  recipientId?: InputMaybe<Scalars['String']['input']>;
-  teamId?: InputMaybe<Scalars['String']['input']>;
-  text?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationHideTributeArgs = {
-  tributeId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationInviteByEmailArgs = {
-  email?: InputMaybe<Scalars['String']['input']>;
-  role?: InputMaybe<TeamRole>;
-  teamId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationJoinTeamArgs = {
-  bio?: InputMaybe<Scalars['String']['input']>;
-  code?: InputMaybe<Scalars['String']['input']>;
-  nickname?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationReportTributeArgs = {
-  reason?: InputMaybe<Scalars['String']['input']>;
-  tributeId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationRequestYearbookExportArgs = {
-  teamId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationUpdateMyProfileArgs = {
-  displayName?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationUpdateOrganizationBrandingArgs = {
-  brandColor?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<Scalars['String']['input']>;
-  logoId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationUpdateTeamSettingsArgs = {
-  brandColor?: InputMaybe<Scalars['String']['input']>;
-  coverMediaId?: InputMaybe<Scalars['String']['input']>;
-  revealAt?: InputMaybe<Scalars['DateTime']['input']>;
-  revealTributes?: InputMaybe<Scalars['Boolean']['input']>;
-  teamId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationUpdateYearbookSettingsArgs = {
-  dedication?: InputMaybe<Scalars['String']['input']>;
-  showAwards?: InputMaybe<Scalars['Boolean']['input']>;
-  showCharacteristics?: InputMaybe<Scalars['Boolean']['input']>;
-  showMembers?: InputMaybe<Scalars['Boolean']['input']>;
-  showMemories?: InputMaybe<Scalars['Boolean']['input']>;
-  showTributes?: InputMaybe<Scalars['Boolean']['input']>;
-  subtitle?: InputMaybe<Scalars['String']['input']>;
-  teamId?: InputMaybe<Scalars['String']['input']>;
-  theme?: InputMaybe<YearbookTheme>;
-  title?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationUpsertTeamMemberProfileArgs = {
-  avatarId?: InputMaybe<Scalars['String']['input']>;
-  bio?: InputMaybe<Scalars['String']['input']>;
-  nickname?: InputMaybe<Scalars['String']['input']>;
-  teamId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Mutation root */
-export type MutationVoteTopicArgs = {
-  nomineeId?: InputMaybe<Scalars['String']['input']>;
-  repetitions?: InputMaybe<Scalars['Int']['input']>;
-  topicId?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type OrganizationType = {
-  brandColor: Maybe<Scalars['String']['output']>;
-  id: Maybe<Scalars['String']['output']>;
-  logo: Maybe<MediaType>;
-  name: Maybe<Scalars['String']['output']>;
-};
-
-/** Query root */
-export type Query = {
-  characteristics: Maybe<Array<Maybe<CharacteristicType>>>;
-  comments: Maybe<Array<Maybe<CommentType>>>;
-  /** Current authenticated user */
-  me: Maybe<UserType>;
-  memories: Maybe<ConnectionMemory>;
-  myOrganizations: Maybe<Array<Maybe<OrganizationType>>>;
-  /** Current user's membership in a team */
-  myTeamMembership: Maybe<TeamMemberType>;
-  organization: Maybe<OrganizationType>;
-  search: Maybe<ConnectionSearch>;
-  team: Maybe<TeamType>;
-  teamMember: Maybe<TeamMemberType>;
-  teamMembers: Maybe<ConnectionTeamMember>;
-  teams: Maybe<Array<Maybe<TeamType>>>;
-  topicStandings: Maybe<Array<Maybe<TopicStandingType>>>;
-  topics: Maybe<Array<Maybe<TopicType>>>;
-  tributes: Maybe<ConnectionTribute>;
-  /** Assembled yearbook for online viewing and browser print-to-PDF */
-  yearbook: Maybe<YearbookType>;
-  yearbookExports: Maybe<Array<Maybe<YearbookExportType>>>;
-};
-
-
-/** Query root */
-export type QueryCharacteristicsArgs = {
-  teamMemberId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Query root */
-export type QueryCommentsArgs = {
-  memoryId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Query root */
-export type QueryMemoriesArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  teamId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Query root */
-export type QueryMyTeamMembershipArgs = {
-  teamId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Query root */
-export type QueryOrganizationArgs = {
-  id?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Query root */
-export type QuerySearchArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  q?: InputMaybe<Scalars['String']['input']>;
-  teamId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Query root */
-export type QueryTeamArgs = {
-  id?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Query root */
-export type QueryTeamMemberArgs = {
-  id?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Query root */
-export type QueryTeamMembersArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  query?: InputMaybe<Scalars['String']['input']>;
-  teamId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Query root */
-export type QueryTeamsArgs = {
-  organizationId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Query root */
-export type QueryTopicStandingsArgs = {
-  topicId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Query root */
-export type QueryTopicsArgs = {
-  teamId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Query root */
-export type QueryTributesArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  recipientId?: InputMaybe<Scalars['String']['input']>;
-  teamId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Query root */
-export type QueryYearbookArgs = {
-  teamId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** Query root */
-export type QueryYearbookExportsArgs = {
-  teamId?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type SearchHitType = {
-  id: Maybe<Scalars['String']['output']>;
-  snippet: Maybe<Scalars['String']['output']>;
-  title: Maybe<Scalars['String']['output']>;
-  type: Maybe<Scalars['String']['output']>;
-};
-
-export type TeamMemberType = {
-  avatar: Maybe<MediaType>;
-  bio: Maybe<Scalars['String']['output']>;
-  id: Maybe<Scalars['String']['output']>;
-  nickname: Maybe<Scalars['String']['output']>;
-  role: Maybe<TeamRole>;
-  teamId: Maybe<Scalars['String']['output']>;
-  userId: Maybe<Scalars['String']['output']>;
-};
-
 export type TeamRole =
   | 'ADMIN'
   | 'MEMBER';
-
-export type TeamType = {
-  brandColor: Maybe<Scalars['String']['output']>;
-  coverMedia: Maybe<MediaType>;
-  id: Maybe<Scalars['String']['output']>;
-  name: Maybe<Scalars['String']['output']>;
-  organizationId: Maybe<Scalars['String']['output']>;
-  /** ISO-8601 */
-  revealAt: Maybe<Scalars['DateTime']['output']>;
-  revealTributes: Scalars['Boolean']['output'];
-  tributesRevealed: Scalars['Boolean']['output'];
-  yearbookDedication: Maybe<Scalars['String']['output']>;
-  yearbookShowAwards: Scalars['Boolean']['output'];
-  yearbookShowCharacteristics: Scalars['Boolean']['output'];
-  yearbookShowMembers: Scalars['Boolean']['output'];
-  yearbookShowMemories: Scalars['Boolean']['output'];
-  yearbookShowTributes: Scalars['Boolean']['output'];
-  yearbookSubtitle: Maybe<Scalars['String']['output']>;
-  yearbookTheme: Maybe<YearbookTheme>;
-  yearbookTitle: Maybe<Scalars['String']['output']>;
-};
-
-export type TopicStandingType = {
-  nominee: Maybe<TeamMemberType>;
-  score: Scalars['Int']['output'];
-};
-
-export type TopicType = {
-  id: Maybe<Scalars['String']['output']>;
-  teamId: Maybe<Scalars['String']['output']>;
-  title: Maybe<Scalars['String']['output']>;
-};
-
-export type TributeType = {
-  anonymous: Scalars['Boolean']['output'];
-  /** ISO-8601 */
-  createdAt: Maybe<Scalars['DateTime']['output']>;
-  hidden: Scalars['Boolean']['output'];
-  id: Maybe<Scalars['String']['output']>;
-  privateTribute: Scalars['Boolean']['output'];
-  recipient: Maybe<TeamMemberType>;
-  teamId: Maybe<Scalars['String']['output']>;
-  text: Maybe<Scalars['String']['output']>;
-  writer: Maybe<TeamMemberType>;
-};
-
-export type UserType = {
-  displayName: Maybe<Scalars['String']['output']>;
-  email: Maybe<Scalars['String']['output']>;
-  id: Maybe<Scalars['String']['output']>;
-};
-
-export type YearbookCharacteristicType = {
-  count: Scalars['Int']['output'];
-  title: Maybe<Scalars['String']['output']>;
-};
-
-export type YearbookExportType = {
-  /** ISO-8601 */
-  completedAt: Maybe<Scalars['DateTime']['output']>;
-  /** ISO-8601 */
-  createdAt: Maybe<Scalars['DateTime']['output']>;
-  errorMessage: Maybe<Scalars['String']['output']>;
-  fileUrl: Maybe<Scalars['String']['output']>;
-  id: Maybe<Scalars['String']['output']>;
-  status: Maybe<ExportStatus>;
-  teamId: Maybe<Scalars['String']['output']>;
-};
-
-export type YearbookMemberType = {
-  avatarUrl: Maybe<Scalars['String']['output']>;
-  bio: Maybe<Scalars['String']['output']>;
-  characteristics: Maybe<Array<Maybe<YearbookCharacteristicType>>>;
-  nickname: Maybe<Scalars['String']['output']>;
-  tributes: Maybe<Array<Maybe<YearbookTributeType>>>;
-};
-
-export type YearbookMemoryType = {
-  body: Maybe<Scalars['String']['output']>;
-  imageUrls: Maybe<Array<Maybe<Scalars['String']['output']>>>;
-  title: Maybe<Scalars['String']['output']>;
-  writer: Maybe<Scalars['String']['output']>;
-};
-
-export type YearbookStandingType = {
-  nickname: Maybe<Scalars['String']['output']>;
-  score: Scalars['Int']['output'];
-};
 
 export type YearbookTheme =
   | 'CLASSIC'
@@ -529,51 +19,20 @@ export type YearbookTheme =
   | 'MODERN'
   | 'SCRAPBOOK';
 
-export type YearbookTopicType = {
-  standings: Maybe<Array<Maybe<YearbookStandingType>>>;
-  title: Maybe<Scalars['String']['output']>;
-};
-
-export type YearbookTributeType = {
-  text: Maybe<Scalars['String']['output']>;
-  writer: Maybe<Scalars['String']['output']>;
-};
-
-export type YearbookType = {
-  brandColor: Maybe<Scalars['String']['output']>;
-  coverMediaUrl: Maybe<Scalars['String']['output']>;
-  dedication: Maybe<Scalars['String']['output']>;
-  logoUrl: Maybe<Scalars['String']['output']>;
-  members: Maybe<Array<Maybe<YearbookMemberType>>>;
-  memories: Maybe<Array<Maybe<YearbookMemoryType>>>;
-  orgName: Maybe<Scalars['String']['output']>;
-  showAwards: Scalars['Boolean']['output'];
-  showCharacteristics: Scalars['Boolean']['output'];
-  showMembers: Scalars['Boolean']['output'];
-  showMemories: Scalars['Boolean']['output'];
-  showTributes: Scalars['Boolean']['output'];
-  subtitle: Maybe<Scalars['String']['output']>;
-  teamId: Maybe<Scalars['String']['output']>;
-  teamName: Maybe<Scalars['String']['output']>;
-  theme: Maybe<YearbookTheme>;
-  title: Maybe<Scalars['String']['output']>;
-  topics: Maybe<Array<Maybe<YearbookTopicType>>>;
-};
-
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type MeQuery = { me: { id: string, email: string, displayName: string } };
 
 export type UpdateMyProfileMutationVariables = Exact<{
-  displayName: Scalars['String']['input'];
+  displayName: string;
 }>;
 
 
 export type UpdateMyProfileMutation = { updateMyProfile: { id: string, email: string, displayName: string } };
 
 export type MyTeamMembershipQueryVariables = Exact<{
-  teamId: Scalars['String']['input'];
+  teamId: string;
 }>;
 
 
@@ -585,244 +44,244 @@ export type MyOrganizationsQueryVariables = Exact<{ [key: string]: never; }>;
 export type MyOrganizationsQuery = { myOrganizations: Array<{ id: string, name: string, brandColor: string }> };
 
 export type TeamsQueryVariables = Exact<{
-  organizationId: Scalars['String']['input'];
+  organizationId: string;
 }>;
 
 
 export type TeamsQuery = { teams: Array<{ id: string, name: string, brandColor: string, revealTributes: boolean, tributesRevealed: boolean }> };
 
 export type TeamQueryVariables = Exact<{
-  id: Scalars['String']['input'];
+  id: string;
 }>;
 
 
 export type TeamQuery = { team: { id: string, organizationId: string, name: string, brandColor: string, revealTributes: boolean, revealAt: string, tributesRevealed: boolean, yearbookTitle: string, yearbookSubtitle: string, yearbookDedication: string, yearbookTheme: YearbookTheme, yearbookShowMembers: boolean, yearbookShowTributes: boolean, yearbookShowCharacteristics: boolean, yearbookShowMemories: boolean, yearbookShowAwards: boolean } };
 
 export type TeamMembersQueryVariables = Exact<{
-  teamId: Scalars['String']['input'];
-  first?: InputMaybe<Scalars['Int']['input']>;
-  after?: InputMaybe<Scalars['String']['input']>;
-  query?: InputMaybe<Scalars['String']['input']>;
+  teamId: string;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+  query?: string | null | undefined;
 }>;
 
 
 export type TeamMembersQuery = { teamMembers: { nextCursor: string, hasNext: boolean, items: Array<{ id: string, nickname: string, bio: string, role: TeamRole, avatar: { url: string } }> } };
 
 export type TeamMemberQueryVariables = Exact<{
-  id: Scalars['String']['input'];
+  id: string;
 }>;
 
 
 export type TeamMemberQuery = { teamMember: { id: string, teamId: string, nickname: string, bio: string, role: TeamRole, avatar: { url: string } } };
 
 export type TributesQueryVariables = Exact<{
-  teamId: Scalars['String']['input'];
-  recipientId?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  after?: InputMaybe<Scalars['String']['input']>;
+  teamId: string;
+  recipientId?: string | null | undefined;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
 }>;
 
 
 export type TributesQuery = { tributes: { nextCursor: string, hasNext: boolean, items: Array<{ id: string, text: string, anonymous: boolean, privateTribute: boolean, createdAt: string, writer: { id: string, nickname: string }, recipient: { id: string, nickname: string } }> } };
 
 export type MemoriesQueryVariables = Exact<{
-  teamId: Scalars['String']['input'];
-  first?: InputMaybe<Scalars['Int']['input']>;
-  after?: InputMaybe<Scalars['String']['input']>;
+  teamId: string;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
 }>;
 
 
 export type MemoriesQuery = { memories: { nextCursor: string, hasNext: boolean, items: Array<{ id: string, title: string, bodyText: string, privateMemory: boolean, createdAt: string, writer: { id: string, nickname: string }, tagged: Array<{ id: string, nickname: string }>, pictures: Array<{ id: string, url: string, mimeType: string }> }> } };
 
 export type TopicsQueryVariables = Exact<{
-  teamId: Scalars['String']['input'];
+  teamId: string;
 }>;
 
 
 export type TopicsQuery = { topics: Array<{ id: string, title: string }> };
 
 export type TopicStandingsQueryVariables = Exact<{
-  topicId: Scalars['String']['input'];
+  topicId: string;
 }>;
 
 
 export type TopicStandingsQuery = { topicStandings: Array<{ score: number, nominee: { id: string, nickname: string } }> };
 
 export type CharacteristicsQueryVariables = Exact<{
-  teamMemberId: Scalars['String']['input'];
+  teamMemberId: string;
 }>;
 
 
 export type CharacteristicsQuery = { characteristics: Array<{ id: string, title: string, count: number }> };
 
 export type SearchQueryVariables = Exact<{
-  teamId: Scalars['String']['input'];
-  q: Scalars['String']['input'];
-  first?: InputMaybe<Scalars['Int']['input']>;
-  after?: InputMaybe<Scalars['String']['input']>;
+  teamId: string;
+  q: string;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
 }>;
 
 
 export type SearchQuery = { search: { nextCursor: string, hasNext: boolean, items: Array<{ type: string, id: string, title: string, snippet: string }> } };
 
 export type YearbookExportsQueryVariables = Exact<{
-  teamId: Scalars['String']['input'];
+  teamId: string;
 }>;
 
 
 export type YearbookExportsQuery = { yearbookExports: Array<{ id: string, status: ExportStatus, fileUrl: string, errorMessage: string, createdAt: string, completedAt: string }> };
 
 export type YearbookQueryVariables = Exact<{
-  teamId: Scalars['String']['input'];
+  teamId: string;
 }>;
 
 
 export type YearbookQuery = { yearbook: { teamId: string, orgName: string, teamName: string, title: string, subtitle: string, dedication: string, theme: YearbookTheme, brandColor: string, logoUrl: string, coverMediaUrl: string, showMembers: boolean, showTributes: boolean, showCharacteristics: boolean, showMemories: boolean, showAwards: boolean, members: Array<{ nickname: string, bio: string, avatarUrl: string, characteristics: Array<{ title: string, count: number }>, tributes: Array<{ text: string, writer: string }> }>, memories: Array<{ title: string, body: string, writer: string, imageUrls: Array<string> }>, topics: Array<{ title: string, standings: Array<{ nickname: string, score: number }> }> } };
 
 export type UpdateYearbookSettingsMutationVariables = Exact<{
-  teamId: Scalars['String']['input'];
-  title?: InputMaybe<Scalars['String']['input']>;
-  subtitle?: InputMaybe<Scalars['String']['input']>;
-  dedication?: InputMaybe<Scalars['String']['input']>;
-  theme?: InputMaybe<YearbookTheme>;
-  showMembers?: InputMaybe<Scalars['Boolean']['input']>;
-  showTributes?: InputMaybe<Scalars['Boolean']['input']>;
-  showCharacteristics?: InputMaybe<Scalars['Boolean']['input']>;
-  showMemories?: InputMaybe<Scalars['Boolean']['input']>;
-  showAwards?: InputMaybe<Scalars['Boolean']['input']>;
+  teamId: string;
+  title?: string | null | undefined;
+  subtitle?: string | null | undefined;
+  dedication?: string | null | undefined;
+  theme?: YearbookTheme | null | undefined;
+  showMembers?: boolean | null | undefined;
+  showTributes?: boolean | null | undefined;
+  showCharacteristics?: boolean | null | undefined;
+  showMemories?: boolean | null | undefined;
+  showAwards?: boolean | null | undefined;
 }>;
 
 
 export type UpdateYearbookSettingsMutation = { updateYearbookSettings: { id: string, yearbookTitle: string, yearbookSubtitle: string, yearbookDedication: string, yearbookTheme: YearbookTheme, yearbookShowMembers: boolean, yearbookShowTributes: boolean, yearbookShowCharacteristics: boolean, yearbookShowMemories: boolean, yearbookShowAwards: boolean } };
 
 export type CreateOrganizationMutationVariables = Exact<{
-  name: Scalars['String']['input'];
-  brandColor?: InputMaybe<Scalars['String']['input']>;
+  name: string;
+  brandColor?: string | null | undefined;
 }>;
 
 
 export type CreateOrganizationMutation = { createOrganization: { id: string, name: string } };
 
 export type CreateTeamMutationVariables = Exact<{
-  organizationId: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-  brandColor?: InputMaybe<Scalars['String']['input']>;
+  organizationId: string;
+  name: string;
+  brandColor?: string | null | undefined;
 }>;
 
 
 export type CreateTeamMutation = { createTeam: { id: string, name: string } };
 
 export type CreateInviteMutationVariables = Exact<{
-  teamId: Scalars['String']['input'];
-  role?: InputMaybe<TeamRole>;
-  maxUses?: InputMaybe<Scalars['Int']['input']>;
+  teamId: string;
+  role?: TeamRole | null | undefined;
+  maxUses?: number | null | undefined;
 }>;
 
 
 export type CreateInviteMutation = { createInvite: { id: string, code: string, role: TeamRole, maxUses: number, email: string } };
 
 export type InviteByEmailMutationVariables = Exact<{
-  teamId: Scalars['String']['input'];
-  email: Scalars['String']['input'];
-  role?: InputMaybe<TeamRole>;
+  teamId: string;
+  email: string;
+  role?: TeamRole | null | undefined;
 }>;
 
 
 export type InviteByEmailMutation = { inviteByEmail: { id: string, code: string, role: TeamRole, email: string, maxUses: number } };
 
 export type JoinTeamMutationVariables = Exact<{
-  code: Scalars['String']['input'];
-  nickname?: InputMaybe<Scalars['String']['input']>;
-  bio?: InputMaybe<Scalars['String']['input']>;
+  code: string;
+  nickname?: string | null | undefined;
+  bio?: string | null | undefined;
 }>;
 
 
 export type JoinTeamMutation = { joinTeam: { id: string, teamId: string, nickname: string } };
 
 export type UpsertProfileMutationVariables = Exact<{
-  teamId: Scalars['String']['input'];
-  nickname?: InputMaybe<Scalars['String']['input']>;
-  bio?: InputMaybe<Scalars['String']['input']>;
-  avatarId?: InputMaybe<Scalars['String']['input']>;
+  teamId: string;
+  nickname?: string | null | undefined;
+  bio?: string | null | undefined;
+  avatarId?: string | null | undefined;
 }>;
 
 
 export type UpsertProfileMutation = { upsertTeamMemberProfile: { id: string, nickname: string, bio: string, avatar: { url: string } } };
 
 export type CreateTributeMutationVariables = Exact<{
-  teamId: Scalars['String']['input'];
-  recipientId: Scalars['String']['input'];
-  text: Scalars['String']['input'];
-  anonymous: Scalars['Boolean']['input'];
-  privateTribute: Scalars['Boolean']['input'];
+  teamId: string;
+  recipientId: string;
+  text: string;
+  anonymous: boolean;
+  privateTribute: boolean;
 }>;
 
 
 export type CreateTributeMutation = { createTribute: { id: string, text: string } };
 
 export type CreateMemoryMutationVariables = Exact<{
-  teamId: Scalars['String']['input'];
-  title?: InputMaybe<Scalars['String']['input']>;
-  bodyText: Scalars['String']['input'];
-  privateMemory: Scalars['Boolean']['input'];
-  taggedIds?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>> | InputMaybe<Scalars['String']['input']>>;
-  mediaIds?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>> | InputMaybe<Scalars['String']['input']>>;
+  teamId: string;
+  title?: string | null | undefined;
+  bodyText: string;
+  privateMemory: boolean;
+  taggedIds?: Array<string | null | undefined> | string | null | undefined;
+  mediaIds?: Array<string | null | undefined> | string | null | undefined;
 }>;
 
 
 export type CreateMemoryMutation = { createMemory: { id: string, title: string, pictures: Array<{ id: string, url: string }> } };
 
 export type CreateTopicMutationVariables = Exact<{
-  teamId: Scalars['String']['input'];
-  title: Scalars['String']['input'];
+  teamId: string;
+  title: string;
 }>;
 
 
 export type CreateTopicMutation = { createTopic: { id: string, title: string } };
 
 export type VoteTopicMutationVariables = Exact<{
-  topicId: Scalars['String']['input'];
-  nomineeId: Scalars['String']['input'];
-  repetitions?: InputMaybe<Scalars['Int']['input']>;
+  topicId: string;
+  nomineeId: string;
+  repetitions?: number | null | undefined;
 }>;
 
 
 export type VoteTopicMutation = { voteTopic: boolean };
 
 export type AddCharacteristicMutationVariables = Exact<{
-  teamMemberId: Scalars['String']['input'];
-  title: Scalars['String']['input'];
+  teamMemberId: string;
+  title: string;
 }>;
 
 
 export type AddCharacteristicMutation = { addCharacteristic: { id: string, title: string, count: number } };
 
 export type UpdateTeamSettingsMutationVariables = Exact<{
-  teamId: Scalars['String']['input'];
-  brandColor?: InputMaybe<Scalars['String']['input']>;
-  revealTributes?: InputMaybe<Scalars['Boolean']['input']>;
+  teamId: string;
+  brandColor?: string | null | undefined;
+  revealTributes?: boolean | null | undefined;
 }>;
 
 
 export type UpdateTeamSettingsMutation = { updateTeamSettings: { id: string, revealTributes: boolean, brandColor: string } };
 
 export type RequestYearbookExportMutationVariables = Exact<{
-  teamId: Scalars['String']['input'];
+  teamId: string;
 }>;
 
 
 export type RequestYearbookExportMutation = { requestYearbookExport: { id: string, status: ExportStatus } };
 
 export type HideTributeMutationVariables = Exact<{
-  tributeId: Scalars['String']['input'];
+  tributeId: string;
 }>;
 
 
 export type HideTributeMutation = { hideTribute: { id: string, hidden: boolean } };
 
 export type ReportTributeMutationVariables = Exact<{
-  tributeId: Scalars['String']['input'];
-  reason: Scalars['String']['input'];
+  tributeId: string;
+  reason: string;
 }>;
 
 

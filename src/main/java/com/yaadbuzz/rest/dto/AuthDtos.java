@@ -43,9 +43,17 @@ public final class AuthDtos {
 
     @Schema(name = "ChangePasswordRequest")
     public record ChangePasswordRequest(
-            @NotBlank String currentPassword,
+            String currentPassword,
             @NotBlank @Size(min = 8) String newPassword
     ) {
+    }
+
+    @Schema(name = "OAuthExchangeRequest")
+    public record OAuthExchangeRequest(@NotBlank String code) {
+    }
+
+    @Schema(name = "OAuthProvidersResponse")
+    public record OAuthProvidersResponse(boolean google, boolean github) {
     }
 
     @Schema(name = "MessageResponse")

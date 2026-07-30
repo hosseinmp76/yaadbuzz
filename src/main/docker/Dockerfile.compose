@@ -1,12 +1,33 @@
 ####
 # Multi-stage image for docker compose (builds sources inside the image).
 # Not used by Quarkus image-build — that uses Dockerfile.jvm.
+#
+# Node + webui deps are installed in earlier layers so Maven/Quinoa package
+# reuses them (and Docker can cache npm ci when only Java/UI sources change).
 ###
+FROM node:24.18.0-bookworm-slim AS node
+
 FROM maven:3.9.11-eclipse-temurin-25 AS build
+
+# Same Node as quarkus.quinoa.package-manager-install.node-version
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/bin/npm /usr/local/bin/npm
+COPY --from=node /usr/local/bin/npx /usr/local/bin/npx
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN node -v && npm -v
+
 WORKDIR /build
+
 COPY pom.xml .
+
+# Cacheable frontend dependency layer
+COPY src/main/webui/package.json src/main/webui/package-lock.json ./src/main/webui/
+RUN npm ci --prefix src/main/webui
+
 COPY src ./src
-RUN mvn -B -DskipTests package
+# node_modules from the previous layer is kept (not in build context / .dockerignore).
+# Disable Quinoa's Node download; use the image Node and preinstalled deps.
+RUN mvn -B -DskipTests -Dquarkus.quinoa.package-manager-install=false package
 
 FROM registry.access.redhat.com/ubi9/openjdk-25-runtime:1.24
 ENV LANGUAGE='en_US:en'
