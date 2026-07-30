@@ -36,23 +36,12 @@ public class OAuthResource {
     @ConfigProperty(name = "yaadbuzz.oauth.telegram.enabled", defaultValue = "false")
     boolean telegramEnabled;
 
-    @ConfigProperty(name = "yaadbuzz.oauth.telegram.bot-username", defaultValue = "")
-    String telegramBotUsername;
-
     @GET
     @Path("/providers")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Which social login providers are configured")
     public OAuthProvidersResponse providers() {
-        String bot = telegramEnabled && telegramBotUsername != null
-                ? telegramBotUsername.replace("@", "").trim()
-                : "";
-        return new OAuthProvidersResponse(
-                googleEnabled,
-                githubEnabled,
-                telegramEnabled && !bot.isBlank(),
-                bot.isBlank() ? null : bot
-        );
+        return new OAuthProvidersResponse(googleEnabled, githubEnabled, telegramEnabled);
     }
 
     @POST

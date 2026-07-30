@@ -4,8 +4,8 @@ import com.yaadbuzz.auth.AuthService;
 import com.yaadbuzz.auth.OAuthCodeStore;
 import com.yaadbuzz.auth.OidcCookieClearer;
 import com.yaadbuzz.common.ApiException;
+import io.quarkus.oidc.IdToken;
 import io.quarkus.oidc.OidcSession;
-import io.quarkus.oidc.UserInfo;
 import io.quarkus.security.Authenticated;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
@@ -15,17 +15,17 @@ import jakarta.ws.rs.core.Response;
 import java.net.URI;
 import java.util.Set;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.logging.Logger;
 
 /**
- * OIDC-protected entrypoints. Visiting {@code /api/auth/oauth/google} (or github)
+ * OIDC-protected entrypoints. Visiting {@code /api/auth/oauth/{google|github|telegram}}
  * starts the provider login; after redirect back, issues a one-time code for the SPA.
  * <p>
- * Identity comes from {@link UserInfo} only — do not inject {@code JsonWebToken} here.
- * GitHub (and other OAuth2 providers) return opaque access tokens that cannot be
- * converted to JWTs.
+ * Identity is read from the {@link IdToken} only (not the access token). Telegram has no
+ * UserInfo endpoint; GitHub access tokens are opaque and must not be injected as JWT.
  */
 @Path("/api/auth/oauth")
 @Tag(name = "Auth")
@@ -33,7 +33,7 @@ import org.jboss.logging.Logger;
 public class OAuthLoginResource {
 
     private static final Logger LOG = Logger.getLogger(OAuthLoginResource.class);
-    private static final Set<String> PROVIDERS = Set.of("google", "github");
+    private static final Set<String> PROVIDERS = Set.of("google", "github", "telegram");
 
     @Inject
     AuthService authService;
@@ -42,7 +42,8 @@ public class OAuthLoginResource {
     OAuthCodeStore oAuthCodeStore;
 
     @Inject
-    UserInfo userInfo;
+    @IdToken
+    JsonWebToken idToken;
 
     @Inject
     OidcSession oidcSession;
@@ -59,9 +60,12 @@ public class OAuthLoginResource {
     @ConfigProperty(name = "yaadbuzz.oauth.github.enabled", defaultValue = "false")
     boolean githubEnabled;
 
+    @ConfigProperty(name = "yaadbuzz.oauth.telegram.enabled", defaultValue = "false")
+    boolean telegramEnabled;
+
     @GET
     @Path("/{provider}")
-    @Operation(summary = "Start or finish OAuth login (Google / GitHub)")
+    @Operation(summary = "Start or finish OAuth login (Google / GitHub / Telegram)")
     public Response login(@PathParam("provider") String provider) {
         String normalized = provider == null ? "" : provider.trim().toLowerCase();
         if (!PROVIDERS.contains(normalized)) {
@@ -72,6 +76,9 @@ public class OAuthLoginResource {
         }
         if ("github".equals(normalized) && !githubEnabled) {
             throw ApiException.badRequest("GitHub login is not configured");
+        }
+        if ("telegram".equals(normalized) && !telegramEnabled) {
+            throw ApiException.badRequest("Telegram login is not configured");
         }
 
         OAuthIdentity identity = extractIdentity(normalized);
@@ -90,27 +97,32 @@ public class OAuthLoginResource {
         }
 
         URI redirect = URI.create(trimSlash(publicUrl) + "/oauth/callback?code=" + code);
-        // Explicitly expire OIDC cookies on this redirect — local logout alone can leave them.
         return Response.seeOther(redirect).cookie(oidcCookieClearer.expiredCookies()).build();
     }
 
     private OAuthIdentity extractIdentity(String provider) {
-        String email = claim(userInfo, "email");
         String subject = firstNonBlank(
-                claim(userInfo, "id"),
-                claim(userInfo, "sub")
+                stringClaim(idToken, "id"),
+                idToken.getSubject()
         );
+        String email = stringClaim(idToken, "email");
         String displayName = firstNonBlank(
-                claim(userInfo, "name"),
-                claim(userInfo, "login"),
+                stringClaim(idToken, "name"),
+                stringClaim(idToken, "preferred_username"),
+                stringClaim(idToken, "login"),
                 email != null ? email.split("@")[0] : null
         );
+
         if ("github".equals(provider) && (email == null || email.isBlank())) {
-            String login = claim(userInfo, "login");
+            String login = stringClaim(idToken, "login");
             if (login != null && !login.isBlank()) {
                 email = login + "@users.noreply.github.com";
             }
         }
+        if ("telegram".equals(provider) && (email == null || email.isBlank()) && subject != null) {
+            email = subject + "@users.noreply.telegram.org";
+        }
+
         if (subject == null || subject.isBlank()) {
             throw ApiException.unauthorized("OAuth provider did not return a user id");
         }
@@ -120,11 +132,12 @@ public class OAuthLoginResource {
         return new OAuthIdentity(subject, email, displayName);
     }
 
-    private static String claim(UserInfo info, String name) {
-        if (info == null || !info.contains(name) || info.get(name) == null) {
+    private static String stringClaim(JsonWebToken token, String name) {
+        if (token == null) {
             return null;
         }
-        return String.valueOf(info.get(name));
+        Object value = token.getClaim(name);
+        return value == null ? null : String.valueOf(value);
     }
 
     private static String firstNonBlank(String... values) {

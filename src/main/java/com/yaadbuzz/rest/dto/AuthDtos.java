@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 public final class AuthDtos {
 
@@ -53,25 +52,8 @@ public final class AuthDtos {
     public record OAuthExchangeRequest(@NotBlank String code) {
     }
 
-    @Schema(name = "TelegramLoginRequest")
-    public record TelegramLoginRequest(
-            @NotBlank String id,
-            @JsonProperty("first_name") String firstName,
-            @JsonProperty("last_name") String lastName,
-            String username,
-            @JsonProperty("photo_url") String photoUrl,
-            @NotBlank @JsonProperty("auth_date") String authDate,
-            @NotBlank String hash
-    ) {
-    }
-
     @Schema(name = "OAuthProvidersResponse")
-    public record OAuthProvidersResponse(
-            boolean google,
-            boolean github,
-            boolean telegram,
-            String telegramBotUsername
-    ) {
+    public record OAuthProvidersResponse(boolean google, boolean github, boolean telegram) {
     }
 
     @Schema(name = "MessageResponse")

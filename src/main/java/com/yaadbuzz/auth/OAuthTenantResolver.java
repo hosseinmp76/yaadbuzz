@@ -6,7 +6,7 @@ import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
- * Resolves OIDC tenant from {@code /api/auth/oauth/{google|github}} path segments.
+ * Resolves OIDC tenant from {@code /api/auth/oauth/{google|github|telegram}} path segments.
  * Returns null for all other routes so JWT remains the API auth mechanism.
  */
 @ApplicationScoped
@@ -27,6 +27,9 @@ public class OAuthTenantResolver implements TenantResolver {
         }
         if (path.contains("/api/auth/oauth/github")) {
             return "github";
+        }
+        if (path.contains("/api/auth/oauth/telegram")) {
+            return "telegram";
         }
         return null;
     }

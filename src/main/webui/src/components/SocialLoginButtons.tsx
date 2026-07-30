@@ -6,7 +6,6 @@ type Providers = {
   google: boolean
   github: boolean
   telegram: boolean
-  telegramBotUsername?: string | null
 }
 
 export function SocialLoginButtons() {
@@ -23,7 +22,6 @@ export function SocialLoginButtons() {
             google: !!data.google,
             github: !!data.github,
             telegram: !!data.telegram,
-            telegramBotUsername: data.telegramBotUsername ?? null,
           })
         }
       })
@@ -82,8 +80,7 @@ export function SocialLoginButtons() {
             variant="secondary"
             className="w-full sm:flex-1"
             onClick={() => {
-              // Same-window redirect (widget popup never returns JWTs to this tab).
-              window.location.assign('/api/auth/oauth/telegram/start')
+              window.location.assign('/api/auth/oauth/telegram')
             }}
           >
             {t('login.telegram')}

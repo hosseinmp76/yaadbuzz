@@ -98,8 +98,8 @@ export YAADBUZZ_OAUTH_GITHUB_ENABLED=true
 export YAADBUZZ_OAUTH_GITHUB_CLIENT_ID=...
 export YAADBUZZ_OAUTH_GITHUB_CLIENT_SECRET=...
 export YAADBUZZ_OAUTH_TELEGRAM_ENABLED=true
-export YAADBUZZ_OAUTH_TELEGRAM_BOT_TOKEN=123456:ABC...   # from @BotFather
-export YAADBUZZ_OAUTH_TELEGRAM_BOT_USERNAME=YourBotUsername  # without @
+export YAADBUZZ_OAUTH_TELEGRAM_CLIENT_ID=...      # BotFather → Bot Settings → Web Login → Client ID
+export YAADBUZZ_OAUTH_TELEGRAM_CLIENT_SECRET=...  # Web Login Client Secret (not the bot token)
 export YAADBUZZ_PUBLIC_URL=http://localhost:8080   # must match browser origin
 ```
 
@@ -107,10 +107,12 @@ Authorized redirect URIs (must match **exactly**, including `http` vs `https`):
 
 - Local Google: `http://localhost:8080/api/auth/oauth/google`
 - Local GitHub: `http://localhost:8080/api/auth/oauth/github`
+- Local Telegram: `http://localhost:8080/api/auth/oauth/telegram`
 - Prod Google: `https://yaadbuzz.ir/api/auth/oauth/google`
 - Prod GitHub: `https://yaadbuzz.ir/api/auth/oauth/github`
+- Prod Telegram: `https://yaadbuzz.ir/api/auth/oauth/telegram`
 
-**Telegram** uses same-window OAuth at `oauth.telegram.org` (not the embed widget popup). In [@BotFather](https://t.me/BotFather): create a bot, `/setdomain` to `yaadbuzz.ir`. Button → `/api/auth/oauth/telegram/start` → Telegram → `/api/auth/oauth/telegram` → SPA `/oauth/callback`.
+**Telegram OIDC:** In [@BotFather](https://t.me/BotFather) open **Bot Settings → Web Login**. Register allowed origin `https://yaadbuzz.ir` and redirect URI `https://yaadbuzz.ir/api/auth/oauth/telegram`. Use the shown **Client ID** and **Client Secret** (not the bot API token). Discovery: `https://oauth.telegram.org/.well-known/openid-configuration`.
 
 Production forces HTTPS in the OIDC `redirect_uri` (`force-redirect-https-scheme`). Set `YAADBUZZ_PUBLIC_URL=https://yaadbuzz.ir` in `.env`.
 
