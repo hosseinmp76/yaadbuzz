@@ -1,5 +1,6 @@
 import { UsersThree } from '@phosphor-icons/react'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -16,14 +17,14 @@ import { Stack } from '../components/ui/Stack'
 import { stackClass } from '../components/ui/styles'
 import { CREATE_TEAM, TEAMS } from '../api/queries'
 
-const schema = z.object({
-  name: z.string().min(2, 'Team name is required'),
-})
-
-type FormValues = z.infer<typeof schema>
+type FormValues = { name: string }
 
 export default function OrgPage() {
+  const { t } = useTranslation()
   const { orgId = '' } = useParams()
+  const schema = z.object({
+    name: z.string().min(2, t('org.teamNameRequired')),
+  })
   const [{ data, fetching, error }, reexecute] = useQuery({
     query: TEAMS,
     variables: { organizationId: orgId },
@@ -49,7 +50,7 @@ export default function OrgPage() {
       toast.error(result.error.message)
       return
     }
-    toast.success('Team created')
+    toast.success(t('org.created'))
     reset()
     reexecute({ requestPolicy: 'network-only' })
   })
@@ -57,16 +58,16 @@ export default function OrgPage() {
   return (
     <Layout>
       <Link to="/app" className="text-sm font-semibold text-muted hover:text-ink">
-        ← Back to organizations
+        {t('org.back')}
       </Link>
-      <PageTitle>Teams</PageTitle>
+      <PageTitle>{t('org.teams')}</PageTitle>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <Panel className={stackClass}>
           <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
             <UsersThree size={22} weight="duotone" className="text-brand" />
-            Your teams
+            {t('org.yourTeams')}
           </h2>
-          {fetching && <p className="text-muted">Loading…</p>}
+          {fetching && <p className="text-muted">{t('org.loading')}</p>}
           {error && <p className="text-danger">{error.message}</p>}
           <Stack>
             {(data?.teams ?? []).map(
@@ -75,25 +76,25 @@ export default function OrgPage() {
                   <div>
                     <strong>{team.name}</strong>
                     <div className="text-sm text-muted">
-                      {team.tributesRevealed ? 'Tributes revealed' : 'Tributes sealed'}
+                      {team.tributesRevealed ? t('org.tributesRevealed') : t('org.tributesSealed')}
                     </div>
                   </div>
-                  <Chip>Open</Chip>
+                  <Chip>{t('org.open')}</Chip>
                 </ListItemLink>
               ),
             )}
           </Stack>
         </Panel>
         <Panel>
-          <h2 className="mb-3 font-display text-xl tracking-tight">Create team</h2>
+          <h2 className="mb-3 font-display text-xl tracking-tight">{t('org.createTeam')}</h2>
           <form className={stackClass} onSubmit={onCreate}>
             <Label>
-              Name
+              {t('org.name')}
               <Input {...register('name')} />
               <FieldError message={errors.name?.message} />
             </Label>
             <Button type="submit" disabled={isSubmitting}>
-              Create team
+              {t('org.createTeam')}
             </Button>
           </form>
         </Panel>

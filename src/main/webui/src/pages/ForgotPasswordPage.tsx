@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
     })
     const data = await res.json().catch(() => ({}))
     if (!res.ok) {
-      toast.error(data.message || 'Request failed')
+      toast.error(data.message || t('forgot.failed'))
       return
     }
     toast.success(data.message || t('forgot.success'))

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth'
+import { BrandMark } from './BrandMark'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { SiteFooter } from './SiteFooter'
 import { Button } from './ui/Button'
@@ -24,12 +25,12 @@ export default function Layout({ children }: { children: ReactNode }) {
         <Link
           to={user ? '/app' : '/'}
           className="shrink-0 font-display text-[1.35rem] tracking-[-0.03em] sm:text-[1.6rem]"
-          aria-label="Yaadbuzz home"
+          aria-label={t('brand.homeAria')}
         >
-          Yaad<span className="text-brand">buzz</span>
+          <BrandMark />
         </Link>
         <nav aria-label="Primary" className="flex min-w-0 items-center gap-1.5 sm:gap-3">
-          <LanguageSwitcher className="hidden sm:inline-flex" />
+          <LanguageSwitcher />
           <Link
             to="/about"
             className="px-2 text-sm font-semibold text-muted hover:text-ink sm:text-base"

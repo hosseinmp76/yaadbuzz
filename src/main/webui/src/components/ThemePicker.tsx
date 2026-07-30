@@ -1,16 +1,18 @@
 import { Check, Palette } from '@phosphor-icons/react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '../lib/cn'
 import { useTheme } from '../theme/theme-context'
 import { Stack } from './ui/Stack'
 
 export function ThemePicker({ compact = false }: { compact?: boolean }) {
+  const { t } = useTranslation()
   const { themeId, themes, setThemeId } = useTheme()
 
   return (
     <Stack className={compact ? 'min-w-0' : 'min-w-0 sm:min-w-64'}>
       <div className="flex items-center gap-2 text-sm font-semibold text-muted">
         <Palette size={18} weight="duotone" />
-        Theme
+        {t('preferences.theme')}
       </div>
       <div className={cn('grid gap-2', compact ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3')}>
         {themes.map((theme) => {

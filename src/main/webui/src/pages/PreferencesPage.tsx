@@ -79,7 +79,7 @@ export default function PreferencesPage() {
     })
     const data = await res.json().catch(() => ({}))
     if (!res.ok) {
-      toast.error(data.message || 'Request failed')
+      toast.error(data.message || t('common.requestFailed'))
       return
     }
     passwordForm.reset()

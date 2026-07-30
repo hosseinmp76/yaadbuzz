@@ -43,7 +43,7 @@ export default function LoginPage() {
       toast.success(t('login.success'))
       void navigate('/app')
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Login failed'
+      const message = err instanceof Error ? err.message : t('login.failed')
       setError('root', { message })
       toast.error(message)
     }

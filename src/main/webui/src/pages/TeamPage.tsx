@@ -1,6 +1,7 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { BookOpenText, DownloadSimple, MagnifyingGlass, Printer, Sparkle } from '@phosphor-icons/react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useClient, useMutation, useQuery } from 'urql'
 import Layout from '../components/Layout'
@@ -43,6 +44,7 @@ type YearbookThemeOption = (typeof YEARBOOK_THEMES)[number]
 type Tab = 'members' | 'memories' | 'topics' | 'search' | 'yearbook' | 'preferences' | 'settings'
 
 export default function TeamPage() {
+  const { t } = useTranslation()
   const { teamId = '' } = useParams()
   const [params, setParams] = useSearchParams()
   const tab = (params.get('tab') as Tab) || 'members'
@@ -57,20 +59,18 @@ export default function TeamPage() {
         to={team ? `/orgs/${team.organizationId}` : '/app'}
         className="text-sm font-semibold text-muted hover:text-ink"
       >
-        ← Back
+        {t('team.back')}
       </Link>
-      <PageTitle>{team?.name ?? 'Team'}</PageTitle>
+      <PageTitle>{team?.name ?? t('team.fallbackTitle')}</PageTitle>
       <p className="text-muted">
-        {team?.tributesRevealed
-          ? 'Tributes are revealed'
-          : 'Tributes stay sealed until reveal day'}
+        {team?.tributesRevealed ? t('team.tributesRevealed') : t('team.tributesSealed')}
       </p>
       <Tabs>
         {(
           ['members', 'memories', 'topics', 'search', 'yearbook', 'preferences', 'settings'] as Tab[]
-        ).map((t) => (
-          <TabButton key={t} active={tab === t} onClick={() => setTab(t)}>
-            {t}
+        ).map((tabKey) => (
+          <TabButton key={tabKey} active={tab === tabKey} onClick={() => setTab(tabKey)}>
+            {t(`team.tabs.${tabKey}`)}
           </TabButton>
         ))}
       </Tabs>
@@ -92,6 +92,7 @@ export default function TeamPage() {
 }
 
 function MembersTab({ teamId }: { teamId: string }) {
+  const { t } = useTranslation()
   const client = useClient()
   const [query, setQuery] = useState('')
   const [items, setItems] = useState<any[]>([])
@@ -145,15 +146,15 @@ function MembersTab({ teamId }: { teamId: string }) {
   return (
     <section className={stackClass}>
       <Label className="mb-0">
-        <span className="sr-only">Search members</span>
+        <span className="sr-only">{t('team.searchMembers')}</span>
         <div className="relative">
           <MagnifyingGlass
             size={18}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+            className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-muted"
           />
           <Input
-            className="pl-10"
-            placeholder="Search members…"
+            className="ps-10"
+            placeholder={t('team.searchMembers')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -166,7 +167,7 @@ function MembersTab({ teamId }: { teamId: string }) {
               <Avatar name={m.nickname} src={m.avatar?.url} size="sm" />
               <div className="min-w-0">
                 <strong>{m.nickname}</strong>
-                <div className="text-sm text-muted">{m.bio || 'No bio yet'}</div>
+                <div className="text-sm text-muted">{m.bio || t('team.noBio')}</div>
               </div>
             </div>
             <Chip>{m.role}</Chip>
@@ -174,13 +175,14 @@ function MembersTab({ teamId }: { teamId: string }) {
         ))}
       </div>
       <InfiniteSentinel ref={sentinelRef}>
-        {loading ? 'Loading…' : hasNext ? 'Scroll for more' : 'End of list'}
+        {loading ? t('team.loading') : hasNext ? t('team.scrollMore') : t('team.endList')}
       </InfiniteSentinel>
     </section>
   )
 }
 
 function MemoriesTab({ teamId }: { teamId: string }) {
+  const { t } = useTranslation()
   const client = useClient()
   const [, createMemory] = useMutation(CREATE_MEMORY)
   const [items, setItems] = useState<any[]>([])
@@ -244,14 +246,14 @@ function MemoriesTab({ teamId }: { teamId: string }) {
         toast.error(result.error.message)
         return
       }
-      toast.success('Memory posted')
+      toast.success(t('team.memoryPosted'))
       setTitle('')
       setBodyText('')
       setFiles([])
       setCursor(null)
       await load(true)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to post memory')
+      toast.error(err instanceof Error ? err.message : t('team.memoryFailed'))
     } finally {
       setPosting(false)
     }
@@ -262,7 +264,7 @@ function MemoriesTab({ teamId }: { teamId: string }) {
       <section className={stackClass}>
         {items.map((m) => (
           <article key={m.id} className={panelClass}>
-            <strong>{m.title || 'Untitled memory'}</strong>
+            <strong>{m.title || t('team.untitledMemory')}</strong>
             <p className="mt-2 whitespace-pre-wrap">{m.bodyText}</p>
             {m.pictures?.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
@@ -281,17 +283,17 @@ function MemoriesTab({ teamId }: { teamId: string }) {
           </article>
         ))}
         <InfiniteSentinel ref={sentinelRef}>
-          {hasNext ? 'Loading more…' : 'No more memories'}
+          {hasNext ? t('team.moreMemories') : t('team.noMoreMemories')}
         </InfiniteSentinel>
       </section>
       <form className={cn(panelClass, stackClass)} onSubmit={onCreate}>
-        <h2 className="font-display text-xl tracking-tight">Share a memory</h2>
+        <h2 className="font-display text-xl tracking-tight">{t('team.shareMemory')}</h2>
         <Label>
-          Title
+          {t('team.title')}
           <Input value={title} onChange={(e) => setTitle(e.target.value)} />
         </Label>
         <Label>
-          Story
+          {t('team.story')}
           <Textarea
             value={bodyText}
             onChange={(e) => setBodyText(e.target.value)}
@@ -300,7 +302,7 @@ function MemoriesTab({ teamId }: { teamId: string }) {
           />
         </Label>
         <Label>
-          Photos
+          {t('team.photos')}
           <Input
             type="file"
             accept="image/jpeg,image/png,image/webp,image/gif"
@@ -309,10 +311,10 @@ function MemoriesTab({ teamId }: { teamId: string }) {
           />
         </Label>
         {files.length > 0 && (
-          <p className="text-sm text-muted">{files.length} photo(s) selected (max 6)</p>
+          <p className="text-sm text-muted">{t('team.photosSelected', { count: files.length })}</p>
         )}
         <Button type="submit" disabled={posting}>
-          {posting ? 'Posting…' : 'Post'}
+          {posting ? t('team.posting') : t('team.post')}
         </Button>
       </form>
     </div>
@@ -320,6 +322,7 @@ function MemoriesTab({ teamId }: { teamId: string }) {
 }
 
 function TopicsTab({ teamId }: { teamId: string }) {
+  const { t } = useTranslation()
   const [{ data }, reexecute] = useQuery({ query: TOPICS, variables: { teamId } })
   const [{ data: membersData }] = useQuery({
     query: TEAM_MEMBERS,
@@ -349,7 +352,7 @@ function TopicsTab({ teamId }: { teamId: string }) {
       toast.error(result.error.message)
       return
     }
-    toast.success('Topic added')
+    toast.success(t('team.topicAdded'))
     setTitle('')
     reexecute({ requestPolicy: 'network-only' })
   }
@@ -361,40 +364,40 @@ function TopicsTab({ teamId }: { teamId: string }) {
       toast.error(result.error.message)
       return
     }
-    toast.success('Vote cast')
+    toast.success(t('team.voteCast'))
     reStandings({ requestPolicy: 'network-only' })
   }
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <section className={cn(panelClass, stackClass)}>
-        <h2 className="font-display text-xl tracking-tight">Award topics</h2>
+        <h2 className="font-display text-xl tracking-tight">{t('team.awardTopics')}</h2>
         <div className={stackClass}>
-          {(data?.topics ?? []).map((t: { id: string; title: string }) => (
+          {(data?.topics ?? []).map((topic: { id: string; title: string }) => (
             <Button
-              key={t.id}
-              variant={selectedTopic === t.id ? 'primary' : 'secondary'}
-              onClick={() => setSelectedTopic(t.id)}
+              key={topic.id}
+              variant={selectedTopic === topic.id ? 'primary' : 'secondary'}
+              onClick={() => setSelectedTopic(topic.id)}
             >
-              {t.title}
+              {topic.title}
             </Button>
           ))}
         </div>
         <form className={stackClass} onSubmit={onCreate}>
           <Label>
-            New topic
+            {t('team.newTopic')}
             <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
           </Label>
-          <Button type="submit">Add topic</Button>
+          <Button type="submit">{t('team.addTopic')}</Button>
         </form>
       </section>
       <section className={cn(panelClass, stackClass)}>
-        <h2 className="font-display text-xl tracking-tight">Vote & standings</h2>
+        <h2 className="font-display text-xl tracking-tight">{t('team.voteStandings')}</h2>
         <form className={stackClass} onSubmit={onVote}>
           <Label>
-            Nominee
+            {t('team.nominee')}
             <Select value={nomineeId} onChange={(e) => setNomineeId(e.target.value)} required>
-              <option value="">Select member</option>
+              <option value="">{t('team.selectMember')}</option>
               {(membersData?.teamMembers?.items ?? []).map(
                 (m: { id: string; nickname: string }) => (
                   <option key={m.id} value={m.id}>
@@ -405,7 +408,7 @@ function TopicsTab({ teamId }: { teamId: string }) {
             </Select>
           </Label>
           <Button type="submit" disabled={!selectedTopic}>
-            Cast vote
+            {t('team.castVote')}
           </Button>
         </form>
         <div className={stackClass}>
@@ -424,11 +427,12 @@ function TopicsTab({ teamId }: { teamId: string }) {
 }
 
 function SearchTab({ teamId }: { teamId: string }) {
+  const { t } = useTranslation()
   const [q, setQ] = useState('')
   const [debounced, setDebounced] = useState('')
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(q), 250)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setDebounced(q), 250)
+    return () => clearTimeout(timer)
   }, [q])
   const [{ data, fetching }] = useQuery({
     query: SEARCH,
@@ -439,28 +443,28 @@ function SearchTab({ teamId }: { teamId: string }) {
   return (
     <section className={cn(panelClass, stackClass)}>
       <Label className="mb-0">
-        <span className="sr-only">Search</span>
+        <span className="sr-only">{t('team.tabs.search')}</span>
         <div className="relative">
           <MagnifyingGlass
             size={18}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+            className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-muted"
           />
           <Input
-            className="pl-10"
-            placeholder="Search members, tributes, memories, topics…"
+            className="ps-10"
+            placeholder={t('team.searchPlaceholder')}
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
       </Label>
-      {fetching && <p className="text-muted">Searching…</p>}
+      {fetching && <p className="text-muted">{t('team.searching')}</p>}
       <div className={stackClass}>
         {(data?.search?.items ?? []).map(
           (hit: { type: string; id: string; title?: string; snippet?: string }) => (
             <ListItem key={`${hit.type}-${hit.id}`}>
               <div>
                 <Chip>{hit.type}</Chip>
-                <strong className="ml-2">{hit.title || 'Result'}</strong>
+                <strong className="ms-2">{hit.title || t('team.result')}</strong>
                 <div className="text-sm text-muted">{hit.snippet}</div>
               </div>
             </ListItem>
@@ -488,6 +492,7 @@ function YearbookTab({
     yearbookShowAwards?: boolean
   }
 }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const client = useClient()
   const [{ data }, reexecute] = useQuery({ query: YEARBOOK_EXPORTS, variables: { teamId } })
@@ -531,7 +536,7 @@ function YearbookTab({
       toast.error(result.error.message)
       return
     }
-    toast.success('Yearbook generation started')
+    toast.success(t('team.generationStarted'))
     reexecute({ requestPolicy: 'network-only' })
   }
 
@@ -557,7 +562,7 @@ function YearbookTab({
     await client
       .query(YEARBOOK, { teamId }, { requestPolicy: 'network-only' })
       .toPromise()
-    if (showToast) toast.success('Yearbook customization saved')
+    if (showToast) toast.success(t('team.designSaved'))
     return true
   }
 
@@ -587,20 +592,17 @@ function YearbookTab({
       <section className={cn(panelClass, stackClass)}>
         <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
           <BookOpenText size={22} weight="duotone" className="text-brand" />
-          View & print online
+          {t('team.viewPrint')}
         </h2>
-        <p className="text-muted">
-          Open the live yearbook in your browser, then use Print → Save as PDF. Current form
-          values are saved before opening.
-        </p>
+        <p className="text-muted">{t('team.viewPrintHint')}</p>
         <div className="flex flex-wrap gap-2">
           <Button onClick={openYearbookPreview} disabled={saving}>
             <BookOpenText size={18} />
-            Open yearbook
+            {t('team.openYearbook')}
           </Button>
           <Button variant="secondary" onClick={openYearbookPreview} disabled={saving}>
             <Printer size={18} />
-            Print-ready page
+            {t('team.printReady')}
           </Button>
         </div>
       </section>
@@ -608,12 +610,10 @@ function YearbookTab({
       <section className={cn(panelClass, stackClass)}>
         <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
           <Sparkle size={22} weight="duotone" className="text-accent" />
-          Server PDF export
+          {t('team.serverPdf')}
         </h2>
-        <p className="text-muted">
-          Generate a downloadable PDF on the server (uses the same customization).
-        </p>
-        <Button onClick={onGenerate}>Generate yearbook PDF</Button>
+        <p className="text-muted">{t('team.serverPdfHint')}</p>
+        <Button onClick={onGenerate}>{t('team.generatePdf')}</Button>
         <div className={stackClass}>
           {(data?.yearbookExports ?? []).map(
             (exp: {
@@ -637,7 +637,7 @@ function YearbookTab({
                     onClick={() => downloadYearbook(exp.id)}
                   >
                     <DownloadSimple size={18} />
-                    Download
+                    {t('team.download')}
                   </Button>
                 )}
               </ListItem>
@@ -646,64 +646,62 @@ function YearbookTab({
         </div>
       </section>
 
-      <form className={cn(panelClass, stackClass, "lg:col-span-2")} onSubmit={onSaveCustomization}>
-        <h2 className="font-display text-xl tracking-tight">Customize yearbook</h2>
-        <p className="text-muted">
-          Team admins can change cover copy, theme, and which sections appear online and in PDFs.
-        </p>
+      <form className={cn(panelClass, stackClass, 'lg:col-span-2')} onSubmit={onSaveCustomization}>
+        <h2 className="font-display text-xl tracking-tight">{t('team.customize')}</h2>
+        <p className="text-muted">{t('team.customizeHint')}</p>
         <div className="grid gap-4 md:grid-cols-2">
           <Label>
-            Cover title
+            {t('team.coverTitle')}
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Defaults to team name + Yearbook"
+              placeholder={t('team.titlePlaceholder')}
             />
           </Label>
           <Label>
-            Cover subtitle
+            {t('team.coverSubtitle')}
             <Input
               value={subtitle}
               onChange={(e) => setSubtitle(e.target.value)}
-              placeholder="Defaults to organization name"
+              placeholder={t('team.subtitlePlaceholder')}
             />
           </Label>
         </div>
         <Label>
-          Dedication / cover message
+          {t('team.dedicationLabel')}
           <Textarea
             value={dedication}
             onChange={(e) => setDedication(e.target.value)}
             rows={3}
-            placeholder="Optional message on the cover"
+            placeholder={t('team.dedicationPlaceholder')}
           />
         </Label>
         <Label>
-          Theme
+          {t('team.layoutTheme')}
           <Select
             value={theme}
             onChange={(e) => setTheme(e.target.value as YearbookThemeOption)}
           >
-            {YEARBOOK_THEMES.map((t) => (
-              <option key={t} value={t}>
-                {t.charAt(0) + t.slice(1).toLowerCase()}
+            {YEARBOOK_THEMES.map((themeOption) => (
+              <option key={themeOption} value={themeOption}>
+                {themeOption.charAt(0) + themeOption.slice(1).toLowerCase()}
               </option>
             ))}
           </Select>
         </Label>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          <Toggle label="Show members" checked={showMembers} onChange={setShowMembers} />
-          <Toggle label="Show tributes" checked={showTributes} onChange={setShowTributes} />
+          <Toggle label={t('team.showMembers')} checked={showMembers} onChange={setShowMembers} />
+          <Toggle label={t('team.showTributes')} checked={showTributes} onChange={setShowTributes} />
           <Toggle
-            label="Show characteristics"
+            label={t('team.showCharacteristics')}
             checked={showCharacteristics}
             onChange={setShowCharacteristics}
           />
-          <Toggle label="Show memories" checked={showMemories} onChange={setShowMemories} />
-          <Toggle label="Show awards" checked={showAwards} onChange={setShowAwards} />
+          <Toggle label={t('team.showMemories')} checked={showMemories} onChange={setShowMemories} />
+          <Toggle label={t('team.showAwards')} checked={showAwards} onChange={setShowAwards} />
         </div>
         <Button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : 'Save yearbook design'}
+          {saving ? t('common.saving') : t('team.saveDesign')}
         </Button>
       </form>
     </div>
@@ -728,6 +726,7 @@ function Toggle({
 }
 
 function PreferencesTab({ teamId }: { teamId: string }) {
+  const { t } = useTranslation()
   const [{ data, fetching, error }, reexecute] = useQuery({
     query: MY_TEAM_MEMBERSHIP,
     variables: { teamId },
@@ -758,7 +757,7 @@ function PreferencesTab({ teamId }: { teamId: string }) {
         toast.error(result.error.message)
         return
       }
-      toast.success('Team profile updated')
+      toast.success(t('team.profileUpdated'))
       reexecute({ requestPolicy: 'network-only' })
     } finally {
       setSaving(false)
@@ -779,15 +778,15 @@ function PreferencesTab({ teamId }: { teamId: string }) {
         toast.error(result.error.message)
         return
       }
-      toast.success('Photo updated')
+      toast.success(t('team.photoUpdated'))
       reexecute({ requestPolicy: 'network-only' })
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Upload failed')
+      toast.error(err instanceof Error ? err.message : t('team.uploadFailed'))
     }
   }
 
   if (fetching && !membership) {
-    return <p className="text-muted">Loading your profile…</p>
+    return <p className="text-muted">{t('team.loadingProfile')}</p>
   }
   if (error) {
     return <p className="text-danger">{error.message}</p>
@@ -795,25 +794,25 @@ function PreferencesTab({ teamId }: { teamId: string }) {
 
   return (
     <form className={cn(panelClass, stackClass, 'max-w-lg')} onSubmit={onSave}>
-      <h2 className="font-display text-xl tracking-tight">Your team profile</h2>
+      <h2 className="font-display text-xl tracking-tight">{t('team.yourProfile')}</h2>
       <p className="text-muted">
-        Nickname and photo shown to teammates in this yearbook. App theme lives in{' '}
+        {t('team.profileHintBefore')}{' '}
         <Link to="/preferences" className="font-semibold text-brand hover:underline">
-          Preferences
+          {t('nav.preferences')}
         </Link>
-        .
+        {t('team.profileHintAfter')}
       </p>
       <Avatar name={membership?.nickname ?? 'M'} src={membership?.avatar?.url} size="lg" />
       <Label>
-        Display name (nickname)
+        {t('team.displayNickname')}
         <Input value={nickname} onChange={(e) => setNickname(e.target.value)} required />
       </Label>
       <Label>
-        Bio
+        {t('team.bio')}
         <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} />
       </Label>
       <Label>
-        Profile photo
+        {t('team.profilePhoto')}
         <Input
           type="file"
           accept="image/*"
@@ -821,7 +820,7 @@ function PreferencesTab({ teamId }: { teamId: string }) {
         />
       </Label>
       <Button type="submit" disabled={saving}>
-        {saving ? 'Saving…' : 'Save profile'}
+        {saving ? t('common.saving') : t('team.saveProfile')}
       </Button>
     </form>
   )
@@ -836,6 +835,7 @@ function SettingsTab({
   revealTributes: boolean
   brandColor: string
 }) {
+  const { t } = useTranslation()
   const [, createInvite] = useMutation(CREATE_INVITE)
   const [, inviteByEmail] = useMutation(INVITE_BY_EMAIL)
   const [, updateSettings] = useMutation(UPDATE_TEAM_SETTINGS)
@@ -858,7 +858,7 @@ function SettingsTab({
     }
     if (result.data?.createInvite?.code) {
       setInviteCode(result.data.createInvite.code)
-      toast.success('Invite code created')
+      toast.success(t('team.inviteCreated'))
     }
   }
 
@@ -875,7 +875,7 @@ function SettingsTab({
         toast.error(result.error.message)
         return
       }
-      toast.success(`Invitation sent to ${inviteEmail.trim()}`)
+      toast.success(t('team.inviteSent', { email: inviteEmail.trim() }))
       setInviteEmail('')
       if (result.data?.inviteByEmail?.code) {
         setInviteCode(result.data.inviteByEmail.code)
@@ -892,44 +892,44 @@ function SettingsTab({
       toast.error(result.error.message)
       return
     }
-    toast.success('Settings saved')
+    toast.success(t('team.settingsSaved'))
   }
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <section className={cn(panelClass, stackClass)}>
-        <h2 className="font-display text-xl tracking-tight">Invites</h2>
-        <p className="text-sm text-muted">
-          Share a reusable code, or email a one-time invitation link.
-        </p>
-        <Button onClick={onInvite}>Create invite code</Button>
+        <h2 className="font-display text-xl tracking-tight">{t('team.invites')}</h2>
+        <p className="text-sm text-muted">{t('team.invitesHint')}</p>
+        <Button onClick={onInvite}>{t('team.createInvite')}</Button>
         {inviteCode && (
           <p>
-            Latest code: <strong>{inviteCode}</strong>
+            {t('team.latestCode')} <strong>{inviteCode}</strong>
             <br />
-            <span className="text-sm text-muted">Join link: /join?code={inviteCode}</span>
+            <span className="text-sm text-muted">
+              {t('team.joinLink')} /join?code={inviteCode}
+            </span>
           </p>
         )}
         <form className={stackClass} onSubmit={onInviteEmail}>
           <Label>
-            Invite by email
+            {t('team.inviteByEmail')}
             <Input
               type="email"
               required
-              placeholder="teammate@example.com"
+              placeholder={t('team.inviteEmailPlaceholder')}
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
             />
           </Label>
           <Button type="submit" disabled={sendingEmail}>
-            {sendingEmail ? 'Sending…' : 'Send invitation email'}
+            {sendingEmail ? t('team.sending') : t('team.sendInvite')}
           </Button>
         </form>
       </section>
       <form className={cn(panelClass, stackClass)} onSubmit={onSave}>
-        <h2 className="font-display text-xl tracking-tight">Team settings</h2>
+        <h2 className="font-display text-xl tracking-tight">{t('team.teamSettings')}</h2>
         <Label>
-          Brand color
+          {t('team.brandColor')}
           <Input value={color} onChange={(e) => setColor(e.target.value)} />
         </Label>
         <label className="flex items-center gap-2 font-semibold">
@@ -938,9 +938,9 @@ function SettingsTab({
             checked={reveal}
             onChange={(e) => setReveal(e.target.checked)}
           />
-          Reveal tributes to recipients
+          {t('team.revealTributes')}
         </label>
-        <Button type="submit">Save</Button>
+        <Button type="submit">{t('team.save')}</Button>
       </form>
     </div>
   )

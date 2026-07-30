@@ -50,7 +50,7 @@ export default function ResetPasswordPage() {
     })
     const data = await res.json().catch(() => ({}))
     if (!res.ok) {
-      toast.error(data.message || 'Request failed')
+      toast.error(data.message || t('reset.failed'))
       return
     }
     toast.success(data.message || t('reset.success'))

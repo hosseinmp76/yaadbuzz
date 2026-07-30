@@ -1,5 +1,6 @@
 import { Buildings, Plus } from '@phosphor-icons/react'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -16,13 +17,13 @@ import { Stack } from '../components/ui/Stack'
 import { stackClass } from '../components/ui/styles'
 import { CREATE_ORG, MY_ORGS } from '../api/queries'
 
-const schema = z.object({
-  name: z.string().min(2, 'Organization name is required'),
-})
-
-type FormValues = z.infer<typeof schema>
+type FormValues = { name: string }
 
 export default function DashboardPage() {
+  const { t } = useTranslation()
+  const schema = z.object({
+    name: z.string().min(2, t('dashboard.orgNameRequired')),
+  })
   const [{ data, fetching, error }, reexecute] = useQuery({ query: MY_ORGS })
   const [, createOrg] = useMutation(CREATE_ORG)
   const {
@@ -41,51 +42,51 @@ export default function DashboardPage() {
       toast.error(result.error.message)
       return
     }
-    toast.success('Organization created')
+    toast.success(t('dashboard.created'))
     reset()
     reexecute({ requestPolicy: 'network-only' })
   })
 
   return (
     <Layout>
-      <PageTitle>Your organizations</PageTitle>
-      <p className="text-muted">Start an organization, then create teams for each yearbook.</p>
+      <PageTitle>{t('dashboard.title')}</PageTitle>
+      <p className="text-muted">{t('dashboard.subtitle')}</p>
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <Panel className={stackClass}>
           <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
             <Buildings size={22} weight="duotone" className="text-brand" />
-            Organizations
+            {t('dashboard.organizations')}
           </h2>
-          {fetching && <p className="text-muted">Loading…</p>}
+          {fetching && <p className="text-muted">{t('dashboard.loading')}</p>}
           {error && <p className="text-danger">{error.message}</p>}
           <Stack>
             {(data?.myOrganizations ?? []).map((org: { id: string; name: string }) => (
               <ListItemLink key={org.id} to={`/orgs/${org.id}`}>
                 <div>
                   <strong>{org.name}</strong>
-                  <div className="text-sm text-muted">Open teams</div>
+                  <div className="text-sm text-muted">{t('dashboard.openTeams')}</div>
                 </div>
-                <Chip>View</Chip>
+                <Chip>{t('dashboard.view')}</Chip>
               </ListItemLink>
             ))}
           </Stack>
           <Link to="/join">
-            <Button variant="secondary">Join a team with invite code</Button>
+            <Button variant="secondary">{t('dashboard.joinTeam')}</Button>
           </Link>
         </Panel>
         <Panel>
           <h2 className="mb-3 flex items-center gap-2 font-display text-xl tracking-tight">
             <Plus size={22} weight="bold" className="text-brand" />
-            Create organization
+            {t('dashboard.createOrg')}
           </h2>
           <form className={stackClass} onSubmit={onCreate}>
             <Label>
-              Name
+              {t('dashboard.name')}
               <Input {...register('name')} />
               <FieldError message={errors.name?.message} />
             </Label>
             <Button type="submit" disabled={isSubmitting}>
-              Create
+              {t('dashboard.create')}
             </Button>
           </form>
         </Panel>

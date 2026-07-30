@@ -45,7 +45,7 @@ export default function RegisterPage() {
       toast.success(t('register.submit'))
       void navigate('/app')
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Registration failed'
+      const message = err instanceof Error ? err.message : t('register.failed')
       setError('root', { message })
       toast.error(message)
     }
