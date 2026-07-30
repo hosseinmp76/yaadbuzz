@@ -20,7 +20,8 @@ public class AuthRateLimitFilter implements ContainerRequestFilter {
             "api/auth/reset-password",
             "api/auth/refresh",
             "api/auth/change-password",
-            "api/auth/oauth/telegram"
+            "api/auth/oauth/telegram",
+            "api/auth/oauth/telegram/start"
     );
 
     @Inject

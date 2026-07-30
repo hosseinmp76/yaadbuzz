@@ -8,7 +8,6 @@ type AuthState = {
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, displayName: string) => Promise<void>
   completeOAuth: (code: string) => Promise<void>
-  completeTelegram: (payload: Record<string, string | undefined>) => Promise<void>
   updateUser: (user: AuthUser) => void
   logout: () => Promise<void>
 }
@@ -63,9 +62,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     async completeOAuth(code) {
       setStored(await authRequest('/api/auth/oauth/exchange', { code }))
-    },
-    async completeTelegram(payload) {
-      setStored(await authRequest('/api/auth/oauth/telegram', payload))
     },
     updateUser(nextUser) {
       setStored((prev) => (prev ? { ...prev, user: nextUser } : prev))

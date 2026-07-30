@@ -19,6 +19,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,9 +29,9 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 /**
- * Telegram Login Widget auth (HMAC-verified). Prefer POST from {@code data-onauth}
- * so login completes in the main window (popup + {@code data-auth-url} leaves JWTs
- * only in a closing popup). See https://core.telegram.org/widgets/login
+ * Telegram login via same-window redirect to {@code oauth.telegram.org}
+ * (avoids the Login Widget popup that never returns JWTs to the SPA).
+ * See https://core.telegram.org/widgets/login
  */
 @Path("/api/auth/oauth/telegram")
 @Tag(name = "Auth")
@@ -48,13 +50,32 @@ public class TelegramAuthResource {
     @ConfigProperty(name = "yaadbuzz.oauth.telegram.enabled", defaultValue = "false")
     boolean telegramEnabled;
 
+    @ConfigProperty(name = "yaadbuzz.oauth.telegram.bot-token", defaultValue = "")
+    String botToken;
+
     @ConfigProperty(name = "yaadbuzz.public-url")
     String publicUrl;
+
+    @GET
+    @Path("/start")
+    @Operation(summary = "Start Telegram login (same-window redirect)")
+    public Response start() {
+        requireEnabled();
+        String origin = trimSlash(publicUrl);
+        String returnTo = origin + "/api/auth/oauth/telegram";
+        String botId = botIdFromToken(botToken);
+        String target = "https://oauth.telegram.org/auth"
+                + "?bot_id=" + urlEncode(botId)
+                + "&origin=" + urlEncode(origin)
+                + "&return_to=" + urlEncode(returnTo)
+                + "&request_access=write";
+        return Response.seeOther(URI.create(target)).build();
+    }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Complete Telegram Login Widget auth (SPA onauth)")
+    @Operation(summary = "Complete Telegram login from widget onauth (optional)")
     public AuthResponse login(@Valid TelegramLoginRequest request) {
         AuthService.AuthTokens tokens = authenticate(toFields(request));
         return new AuthResponse(
@@ -67,7 +88,7 @@ public class TelegramAuthResource {
     }
 
     @GET
-    @Operation(summary = "Telegram Login Widget redirect callback (fallback)")
+    @Operation(summary = "Telegram OAuth return_to callback")
     public Response callback(@Context UriInfo uriInfo) {
         Map<String, String> fields = new HashMap<>();
         uriInfo.getQueryParameters().forEach((key, values) -> {
@@ -81,10 +102,14 @@ public class TelegramAuthResource {
         return Response.seeOther(redirect).build();
     }
 
-    private AuthService.AuthTokens authenticate(Map<String, String> fields) {
-        if (!telegramEnabled) {
+    private void requireEnabled() {
+        if (!telegramEnabled || botToken == null || botToken.isBlank()) {
             throw ApiException.badRequest("Telegram login is not configured");
         }
+    }
+
+    private AuthService.AuthTokens authenticate(Map<String, String> fields) {
+        requireEnabled();
         telegramLoginVerifier.verify(fields);
         String id = fields.get("id");
         if (id == null || id.isBlank()) {
@@ -103,6 +128,18 @@ public class TelegramAuthResource {
         );
     }
 
+    private static String botIdFromToken(String token) {
+        int colon = token.indexOf(':');
+        if (colon <= 0) {
+            throw ApiException.badRequest("Invalid Telegram bot token");
+        }
+        String id = token.substring(0, colon).trim();
+        if (!id.chars().allMatch(Character::isDigit)) {
+            throw ApiException.badRequest("Invalid Telegram bot token");
+        }
+        return id;
+    }
+
     private static Map<String, String> toFields(TelegramLoginRequest request) {
         Map<String, String> fields = new LinkedHashMap<>();
         put(fields, "id", request.id());
@@ -119,6 +156,10 @@ public class TelegramAuthResource {
         if (value != null && !value.isBlank()) {
             fields.put(key, value);
         }
+    }
+
+    private static String urlEncode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
     private static String trimSlash(String url) {
