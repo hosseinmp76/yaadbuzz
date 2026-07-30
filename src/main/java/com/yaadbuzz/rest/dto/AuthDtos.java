@@ -53,7 +53,12 @@ public final class AuthDtos {
     }
 
     @Schema(name = "OAuthProvidersResponse")
-    public record OAuthProvidersResponse(boolean google, boolean github) {
+    public record OAuthProvidersResponse(
+            boolean google,
+            boolean github,
+            boolean telegram,
+            String telegramBotUsername
+    ) {
     }
 
     @Schema(name = "MessageResponse")

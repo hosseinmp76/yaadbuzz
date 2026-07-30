@@ -77,13 +77,13 @@ services:
     # Build locally:
     #   APP_PULL_POLICY=build docker compose up -d --build
     #   # or simply: docker compose up -d --build
-    image: ${APP_IMAGE:-hosseinmp762/yaadbuzz:2026.07.30.5}
+    image: ${APP_IMAGE:-hosseinmp762/yaadbuzz}:${IMAGE_TAG:-2026.07.30.5}
     pull_policy: ${APP_PULL_POLICY:-missing}
     build:
       context: .
       dockerfile: src/main/docker/Dockerfile.compose
       tags:
-        - ${APP_IMAGE:-yaadbuzz/yaadbuzz:local}
+        - ${APP_IMAGE:-yaadbuzz/yaadbuzz}:${IMAGE_TAG:-local}
     depends_on:
       postgres:
         condition: service_healthy
@@ -119,6 +119,9 @@ services:
       YAADBUZZ_OAUTH_GITHUB_ENABLED: ${YAADBUZZ_OAUTH_GITHUB_ENABLED:-false}
       YAADBUZZ_OAUTH_GITHUB_CLIENT_ID: ${YAADBUZZ_OAUTH_GITHUB_CLIENT_ID:-}
       YAADBUZZ_OAUTH_GITHUB_CLIENT_SECRET: ${YAADBUZZ_OAUTH_GITHUB_CLIENT_SECRET:-}
+      YAADBUZZ_OAUTH_TELEGRAM_ENABLED: ${YAADBUZZ_OAUTH_TELEGRAM_ENABLED:-false}
+      YAADBUZZ_OAUTH_TELEGRAM_BOT_TOKEN: ${YAADBUZZ_OAUTH_TELEGRAM_BOT_TOKEN:-}
+      YAADBUZZ_OAUTH_TELEGRAM_BOT_USERNAME: ${YAADBUZZ_OAUTH_TELEGRAM_BOT_USERNAME:-}
       QUARKUS_LOG_SENTRY_ENABLED: ${QUARKUS_LOG_SENTRY_ENABLED:-false}
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}

@@ -86,9 +86,9 @@ Vite’s managed port is **3000** (`quarkus.quinoa.dev-server.port`). Prefer usi
 
 **Seed users** (dev seed enabled; password `password123`):
 
-### Social login (Google / GitHub)
+### Social login (Google / GitHub / Telegram)
 
-Buttons appear on Login/Register only when enabled. Create OAuth apps and set:
+Buttons appear on Login/Register only when enabled. Create OAuth apps / bot and set:
 
 ```bash
 export YAADBUZZ_OAUTH_GOOGLE_ENABLED=true
@@ -97,6 +97,9 @@ export YAADBUZZ_OAUTH_GOOGLE_CLIENT_SECRET=...
 export YAADBUZZ_OAUTH_GITHUB_ENABLED=true
 export YAADBUZZ_OAUTH_GITHUB_CLIENT_ID=...
 export YAADBUZZ_OAUTH_GITHUB_CLIENT_SECRET=...
+export YAADBUZZ_OAUTH_TELEGRAM_ENABLED=true
+export YAADBUZZ_OAUTH_TELEGRAM_BOT_TOKEN=123456:ABC...   # from @BotFather
+export YAADBUZZ_OAUTH_TELEGRAM_BOT_USERNAME=YourBotUsername  # without @
 export YAADBUZZ_PUBLIC_URL=http://localhost:8080   # must match browser origin
 ```
 
@@ -106,6 +109,8 @@ Authorized redirect URIs (must match **exactly**, including `http` vs `https`):
 - Local GitHub: `http://localhost:8080/api/auth/oauth/github`
 - Prod Google: `https://yaadbuzz.ir/api/auth/oauth/google`
 - Prod GitHub: `https://yaadbuzz.ir/api/auth/oauth/github`
+
+**Telegram** uses the [Login Widget](https://core.telegram.org/widgets/login) (not OIDC). In [@BotFather](https://t.me/BotFather): create a bot, then `/setdomain` to your site host (`yaadbuzz.ir` or `localhost` for local HTTPS tunnels). Widget posts to `/api/auth/oauth/telegram`.
 
 Production forces HTTPS in the OIDC `redirect_uri` (`force-redirect-https-scheme`). Set `YAADBUZZ_PUBLIC_URL=https://yaadbuzz.ir` in `.env`.
 

@@ -86,7 +86,8 @@
     "failed": "Login failed",
     "orContinueWith": "Or continue with",
     "google": "Continue with Google",
-    "github": "Continue with GitHub"
+    "github": "Continue with GitHub",
+    "telegram": "Continue with Telegram"
   },
   "oauth": {
     "seoTitle": "Signing in",

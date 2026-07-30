@@ -6,7 +6,7 @@ Online yearbook generator built with **Quarkus**, **React (Quinoa)**, **GraphQL*
 
 ## Features
 
-- Email/password JWT auth, plus optional Google / GitHub OAuth
+- Email/password JWT auth, plus optional Google / GitHub OAuth and Telegram Login Widget
 - Organizations → Teams → members via invite codes
 - Tributes about teammates (anonymous / private / reveal mode)
 - Shared memories with comments

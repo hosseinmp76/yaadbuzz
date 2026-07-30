@@ -27,7 +27,8 @@ public class SecurityHeadersFilter implements ContainerResponseFilter {
                             + "img-src 'self' data: https: blob:; "
                             + "font-src 'self' data: https://fonts.gstatic.com; "
                             + "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-                            + "script-src 'self'; "
+                            + "script-src 'self' https://telegram.org; "
+                            + "frame-src https://oauth.telegram.org; "
                             + "connect-src 'self' https://*.ingest.sentry.io https://*.ingest.de.sentry.io wss: ws:;"
             );
         }
