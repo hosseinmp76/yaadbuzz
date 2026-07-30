@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import i18n, { applyDocumentLanguage } from '../i18n'
 import { ThemeContext, type ThemeContextValue } from './theme-context'
 import {
   THEME_STORAGE_KEY,
@@ -14,6 +15,8 @@ function applyTheme(theme: ThemeDefinition) {
   Object.entries(theme.vars).forEach(([key, value]) => {
     root.style.setProperty(key, value)
   })
+  // Re-apply language fonts after theme colors (themes must not own typography).
+  applyDocumentLanguage(i18n.language)
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

@@ -35,8 +35,6 @@ export const THEMES: ThemeDefinition[] = [
       '--glow-2': 'rgba(194, 65, 12, 0.12)',
       '--danger': '#b91c1c',
       '--on-brand': '#ffffff',
-      '--font-display-family': '"Fraunces", Georgia, serif',
-      '--font-body-family': '"Source Sans 3", system-ui, sans-serif',
     },
   },
   {
@@ -60,8 +58,6 @@ export const THEMES: ThemeDefinition[] = [
       '--glow-2': 'rgba(212, 167, 44, 0.12)',
       '--danger': '#f87171',
       '--on-brand': '#102010',
-      '--font-display-family': '"Fraunces", Georgia, serif',
-      '--font-body-family': '"Source Sans 3", system-ui, sans-serif',
     },
   },
   {
@@ -85,8 +81,6 @@ export const THEMES: ThemeDefinition[] = [
       '--glow-2': 'rgba(234, 88, 12, 0.12)',
       '--danger': '#b91c1c',
       '--on-brand': '#f8fafc',
-      '--font-display-family': '"Fraunces", Georgia, serif',
-      '--font-body-family': '"Source Sans 3", system-ui, sans-serif',
     },
   },
   {
@@ -110,8 +104,6 @@ export const THEMES: ThemeDefinition[] = [
       '--glow-2': 'rgba(217, 119, 6, 0.12)',
       '--danger': '#b91c1c',
       '--on-brand': '#ecfeff',
-      '--font-display-family': '"Fraunces", Georgia, serif',
-      '--font-body-family': '"Source Sans 3", system-ui, sans-serif',
     },
   },
   {
@@ -135,8 +127,6 @@ export const THEMES: ThemeDefinition[] = [
       '--glow-2': 'rgba(103, 232, 249, 0.1)',
       '--danger': '#fca5a5',
       '--on-brand': '#111827',
-      '--font-display-family': '"Fraunces", Georgia, serif',
-      '--font-body-family': '"Source Sans 3", system-ui, sans-serif',
     },
   },
 ]

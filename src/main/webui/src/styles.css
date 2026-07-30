@@ -45,8 +45,12 @@
   }
 
   html[lang="fa"] {
-    --font-display-family: "Vazirmatn", "Fraunces", Georgia, serif;
-    --font-body-family: "Vazirmatn", "Source Sans 3", system-ui, sans-serif;
+    --font-display-family: "Vazirmatn", Tahoma, sans-serif;
+    --font-body-family: "Vazirmatn", Tahoma, sans-serif;
+  }
+
+  html[lang="fa"] .font-display {
+    letter-spacing: -0.01em;
   }
 
   * {

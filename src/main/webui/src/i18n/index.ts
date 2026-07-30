@@ -24,8 +24,18 @@ void i18n
 
 export function applyDocumentLanguage(lng: string) {
   const lang = lng.startsWith('fa') ? 'fa' : 'en'
-  document.documentElement.lang = lang
-  document.documentElement.dir = lang === 'fa' ? 'rtl' : 'ltr'
+  const root = document.documentElement
+  root.lang = lang
+  root.dir = lang === 'fa' ? 'rtl' : 'ltr'
+
+  // Inline so theme color vars cannot wipe Persian typography.
+  if (lang === 'fa') {
+    root.style.setProperty('--font-display-family', '"Vazirmatn", Tahoma, sans-serif')
+    root.style.setProperty('--font-body-family', '"Vazirmatn", Tahoma, sans-serif')
+  } else {
+    root.style.setProperty('--font-display-family', '"Fraunces", Georgia, serif')
+    root.style.setProperty('--font-body-family', '"Source Sans 3", system-ui, sans-serif')
+  }
 }
 
 i18n.on('languageChanged', applyDocumentLanguage)
