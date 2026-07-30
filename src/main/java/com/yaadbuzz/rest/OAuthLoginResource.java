@@ -6,7 +6,10 @@ import com.yaadbuzz.auth.OidcCookieClearer;
 import com.yaadbuzz.common.ApiException;
 import io.quarkus.oidc.IdToken;
 import io.quarkus.oidc.OidcSession;
+import io.quarkus.oidc.UserInfo;
+import io.quarkus.oidc.runtime.OidcUtils;
 import io.quarkus.security.Authenticated;
+import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -24,8 +27,9 @@ import org.jboss.logging.Logger;
  * OIDC-protected entrypoints. Visiting {@code /api/auth/oauth/{google|github|telegram}}
  * starts the provider login; after redirect back, issues a one-time code for the SPA.
  * <p>
- * Identity is read from the {@link IdToken} only (not the access token). Telegram has no
- * UserInfo endpoint; GitHub access tokens are opaque and must not be injected as JWT.
+ * Do not inject the access token as {@link JsonWebToken} (GitHub tokens are opaque).
+ * Prefer {@link UserInfo} when present (GitHub/Google); fall back to {@link IdToken}
+ * claims (Telegram has no UserInfo endpoint).
  */
 @Path("/api/auth/oauth")
 @Tag(name = "Auth")
@@ -44,6 +48,9 @@ public class OAuthLoginResource {
     @Inject
     @IdToken
     JsonWebToken idToken;
+
+    @Inject
+    SecurityIdentity securityIdentity;
 
     @Inject
     OidcSession oidcSession;
@@ -101,20 +108,32 @@ public class OAuthLoginResource {
     }
 
     private OAuthIdentity extractIdentity(String provider) {
+        UserInfo userInfo = securityIdentity.getAttribute(OidcUtils.USER_INFO_ATTRIBUTE);
+
         String subject = firstNonBlank(
+                claim(userInfo, "id"),
+                claim(userInfo, "sub"),
                 stringClaim(idToken, "id"),
-                idToken.getSubject()
+                stringClaim(idToken, "sub"),
+                idToken.getSubject(),
+                principalName()
         );
-        String email = stringClaim(idToken, "email");
+        String email = firstNonBlank(
+                claim(userInfo, "email"),
+                stringClaim(idToken, "email")
+        );
         String displayName = firstNonBlank(
+                claim(userInfo, "name"),
+                claim(userInfo, "login"),
                 stringClaim(idToken, "name"),
                 stringClaim(idToken, "preferred_username"),
                 stringClaim(idToken, "login"),
+                claim(userInfo, "preferred_username"),
                 email != null ? email.split("@")[0] : null
         );
 
         if ("github".equals(provider) && (email == null || email.isBlank())) {
-            String login = stringClaim(idToken, "login");
+            String login = firstNonBlank(claim(userInfo, "login"), stringClaim(idToken, "login"));
             if (login != null && !login.isBlank()) {
                 email = login + "@users.noreply.github.com";
             }
@@ -124,12 +143,33 @@ public class OAuthLoginResource {
         }
 
         if (subject == null || subject.isBlank()) {
+            LOG.warnf(
+                    "OAuth identity missing for provider=%s principal=%s idToken.sub=%s userInfoNull=%s",
+                    provider,
+                    principalName(),
+                    idToken != null ? idToken.getSubject() : null,
+                    userInfo == null
+            );
             throw ApiException.unauthorized("OAuth provider did not return a user id");
         }
         if (email == null || email.isBlank()) {
             throw ApiException.unauthorized("OAuth provider did not return an email");
         }
         return new OAuthIdentity(subject, email, displayName);
+    }
+
+    private String principalName() {
+        if (securityIdentity == null || securityIdentity.isAnonymous() || securityIdentity.getPrincipal() == null) {
+            return null;
+        }
+        return securityIdentity.getPrincipal().getName();
+    }
+
+    private static String claim(UserInfo info, String name) {
+        if (info == null || !info.contains(name) || info.get(name) == null) {
+            return null;
+        }
+        return String.valueOf(info.get(name));
     }
 
     private static String stringClaim(JsonWebToken token, String name) {
