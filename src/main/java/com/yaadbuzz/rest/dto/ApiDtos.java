@@ -144,7 +144,7 @@ public final class ApiDtos {
             String text,
             boolean anonymous,
             boolean privateTribute,
-            boolean hidden,
+            boolean published,
             List<MediaType> pictures,
             Instant createdAt
     ) {
@@ -160,7 +160,7 @@ public final class ApiDtos {
                     tribute.text,
                     tribute.anonymous,
                     tribute.privateTribute,
-                    tribute.hidden,
+                    !tribute.hidden && !tribute.privateTribute,
                     tribute.pictures == null
                             ? List.of()
                             : tribute.pictures.stream().map(MediaType::from).toList(),

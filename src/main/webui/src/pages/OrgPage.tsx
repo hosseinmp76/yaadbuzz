@@ -73,9 +73,7 @@ export default function OrgPage() {
               <ListItemLink key={team.id} to={`/teams/${team.id}`}>
                 <div>
                   <strong>{team.name}</strong>
-                  <div className="text-sm text-muted">
-                    {team.tributesRevealed ? t('org.tributesRevealed') : t('org.tributesSealed')}
-                  </div>
+                  <div className="text-sm text-muted">{t('org.tributesPublishHint')}</div>
                 </div>
                 <Chip>{t('org.open')}</Chip>
               </ListItemLink>

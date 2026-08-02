@@ -67,17 +67,14 @@ public class AccessService {
     }
 
     public boolean canViewTribute(Team team, TeamMember viewer, com.yaadbuzz.domain.Tribute tribute) {
-        if (tribute.hidden || tribute.isDeleted()) {
+        if (tribute.isDeleted()) {
             return false;
         }
-        if (tribute.writer.id.equals(viewer.id)) {
+        if (tribute.writer.id.equals(viewer.id) || tribute.recipient.id.equals(viewer.id)) {
             return true;
         }
-        // Private tributes: writer + recipient only (admins are not special-cased).
-        if (tribute.privateTribute && !tribute.recipient.id.equals(viewer.id)) {
-            return false;
-        }
-        if (tribute.recipient.id.equals(viewer.id) && !team.tributesRevealed()) {
+        // Unpublished or private tributes stay between writer and recipient.
+        if (tribute.hidden || tribute.privateTribute) {
             return false;
         }
         return true;

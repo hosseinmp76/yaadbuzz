@@ -335,11 +335,6 @@ components:
         displayName:
           type: string
           pattern: \S
-    ReportTributeRequest:
-      type: object
-      properties:
-        reason:
-          type: string
     ResetPasswordRequest:
       type: object
       required:
@@ -457,7 +452,7 @@ components:
           type: boolean
         privateTribute:
           type: boolean
-        hidden:
+        published:
           type: boolean
         pictures:
           type: array
@@ -1995,9 +1990,9 @@ paths:
       security:
       - SecurityScheme:
         - user
-  /api/tributes/{id}/hide:
+  /api/tributes/{id}/publish:
     post:
-      summary: Hide a tribute
+      summary: Publish a tribute (recipient only)
       tags:
       - Tributes
       parameters:
@@ -2020,9 +2015,9 @@ paths:
       security:
       - SecurityScheme:
         - user
-  /api/tributes/{id}/report:
+  /api/tributes/{id}/unpublish:
     post:
-      summary: Report a tribute
+      summary: Unpublish a tribute (recipient only)
       tags:
       - Tributes
       parameters:
@@ -2031,27 +2026,17 @@ paths:
         required: true
         schema:
           $ref: "#/components/schemas/UUID"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ReportTributeRequest"
-        required: true
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties:
-                  type: boolean
+                $ref: "#/components/schemas/TributeType"
         "401":
           description: Not Authorized
         "403":
           description: Not Allowed
-        "400":
-          description: Bad Request
       security:
       - SecurityScheme:
         - user

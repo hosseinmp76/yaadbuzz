@@ -200,18 +200,14 @@ export const api = {
         body,
       }),
     ) as Promise<Tribute>,
-  reportTribute: (tributeId: string, reason: string) =>
+  publishTribute: (tributeId: string) =>
     unwrap(
-      openapi.POST('/api/tributes/{id}/report', {
-        params: { path: { id: tributeId } },
-        body: { reason },
-      }),
-    ) as Promise<{ ok?: boolean }>,
-  hideTribute: (tributeId: string) =>
-    unwrap(
-      openapi.POST('/api/tributes/{id}/hide', { params: { path: { id: tributeId } } }),
+      openapi.POST('/api/tributes/{id}/publish', { params: { path: { id: tributeId } } }),
     ) as Promise<Tribute>,
-
+  unpublishTribute: (tributeId: string) =>
+    unwrap(
+      openapi.POST('/api/tributes/{id}/unpublish', { params: { path: { id: tributeId } } }),
+    ) as Promise<Tribute>,
   memories: (teamId: string, opts?: { first?: number; after?: string }) =>
     unwrap(
       openapi.GET('/api/teams/{id}/memories', {

@@ -18,7 +18,6 @@ class AccessServiceTributeVisibilityTest {
     private Team team;
     private TeamMember writer;
     private TeamMember recipient;
-    private TeamMember admin;
     private TeamMember other;
     private Tribute tribute;
 
@@ -30,62 +29,45 @@ class AccessServiceTributeVisibilityTest {
 
         writer = member(TeamRole.MEMBER);
         recipient = member(TeamRole.MEMBER);
-        admin = member(TeamRole.ADMIN);
         other = member(TeamRole.MEMBER);
 
         tribute = new Tribute();
         tribute.id = UUID.randomUUID();
         tribute.writer = writer;
         tribute.recipient = recipient;
-        tribute.hidden = false;
+        tribute.hidden = true;
         tribute.privateTribute = false;
         tribute.anonymous = false;
         tribute.text = "Great teammate";
     }
 
     @Test
-    void writerCanAlwaysViewOwnTribute() {
+    void writerAndRecipientCanViewUnpublishedTribute() {
         assertTrue(accessService.canViewTribute(team, writer, tribute));
-    }
-
-    @Test
-    void recipientCannotViewUntilRevealed() {
-        assertFalse(accessService.canViewTribute(team, recipient, tribute));
-
-        team.revealTributes = true;
         assertTrue(accessService.canViewTribute(team, recipient, tribute));
+        assertFalse(accessService.canViewTribute(team, other, tribute));
     }
 
     @Test
-    void otherMembersCanViewPublicTributeEvenWhenSealed() {
+    void othersCanViewPublishedTribute() {
+        tribute.hidden = false;
         assertTrue(accessService.canViewTribute(team, other, tribute));
     }
 
     @Test
     void privateTributeVisibleOnlyToWriterAndRecipient() {
         tribute.privateTribute = true;
-        team.revealTributes = true;
+        tribute.hidden = false;
 
         assertTrue(accessService.canViewTribute(team, writer, tribute));
         assertTrue(accessService.canViewTribute(team, recipient, tribute));
         assertFalse(accessService.canViewTribute(team, other, tribute));
-        assertFalse(accessService.canViewTribute(team, admin, tribute));
-    }
-
-    @Test
-    void hiddenTributeIsInvisible() {
-        tribute.hidden = true;
-        team.revealTributes = true;
-
-        assertFalse(accessService.canViewTribute(team, writer, tribute));
-        assertFalse(accessService.canViewTribute(team, recipient, tribute));
-        assertFalse(accessService.canViewTribute(team, admin, tribute));
     }
 
     @Test
     void softDeletedTributeIsInvisible() {
         tribute.softDelete();
-        team.revealTributes = true;
+        tribute.hidden = false;
 
         assertFalse(accessService.canViewTribute(team, writer, tribute));
     }

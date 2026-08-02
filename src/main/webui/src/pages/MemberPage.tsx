@@ -19,6 +19,11 @@ export default function MemberPage() {
   const { t } = useTranslation()
   const { memberId = '' } = useParams()
   const [{ data: member }] = useApiQuery(!!memberId, () => api.teamMember(memberId), [memberId])
+  const [{ data: me }] = useApiQuery(
+    !!member?.teamId,
+    () => api.myTeamMembership(member!.teamId),
+    [member?.teamId],
+  )
   const [{ data: characteristics = [] }, reChars] = useApiQuery(
     !!memberId,
     () => api.characteristics(memberId),
@@ -35,14 +40,12 @@ export default function MemberPage() {
       },
     ) => api.createTribute(teamId, body),
   )
+  const [, publishTribute] = useApiMutation((tributeId: string) => api.publishTribute(tributeId))
+  const [, unpublishTribute] = useApiMutation((tributeId: string) => api.unpublishTribute(tributeId))
   const [, addCharacteristic] = useApiMutation((teamMemberId: string, title: string) =>
     api.addCharacteristic(teamMemberId, title),
   )
-  const [, hideTribute] = useApiMutation((tributeId: string) => api.hideTribute(tributeId))
-  const [, reportTribute] = useApiMutation((tributeId: string, reason: string) =>
-    api.reportTribute(tributeId, reason),
-  )
-
+  const isOwnProfile = !!me && !!member && me.id === member.id
   const [text, setText] = useState('')
   const [anonymous, setAnonymous] = useState(false)
   const [privateTribute, setPrivateTribute] = useState(false)
@@ -158,34 +161,44 @@ export default function MemberPage() {
                 <span>— {tribute.writer?.nickname}</span>
                 {tribute.anonymous && <Chip>{t('member.anonymous')}</Chip>}
                 {tribute.privateTribute && <Chip>{t('member.private')}</Chip>}
+                {!tribute.privateTribute && (
+                  <Chip>{tribute.published ? t('member.published') : t('member.unpublished')}</Chip>
+                )}
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={() =>
-                    reportTribute(tribute.id, 'Inappropriate').then((r) => {
-                      if (r.error) toast.error(r.error.message)
-                      else toast.success(t('member.reported'))
-                    })
-                  }
-                >
-                  {t('member.report')}
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() =>
-                    hideTribute(tribute.id).then((r) => {
-                      if (r.error) toast.error(r.error.message)
-                      else {
-                        toast.success(t('member.hidden'))
-                        void loadTributes(true)
+              {isOwnProfile && !tribute.privateTribute && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {tribute.published ? (
+                    <Button
+                      variant="secondary"
+                      onClick={() =>
+                        unpublishTribute(tribute.id).then((r) => {
+                          if (r.error) toast.error(r.error.message)
+                          else {
+                            toast.success(t('member.tributeUnpublished'))
+                            void loadTributes(true)
+                          }
+                        })
                       }
-                    })
-                  }
-                >
-                  {t('member.hide')}
-                </Button>
-              </div>
+                    >
+                      {t('member.unpublish')}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() =>
+                        publishTribute(tribute.id).then((r) => {
+                          if (r.error) toast.error(r.error.message)
+                          else {
+                            toast.success(t('member.tributePublished'))
+                            void loadTributes(true)
+                          }
+                        })
+                      }
+                    >
+                      {t('member.publish')}
+                    </Button>
+                  )}
+                </div>
+              )}
             </article>
           ))}
           <InfiniteSentinel ref={sentinelRef}>

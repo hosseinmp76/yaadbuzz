@@ -228,15 +228,18 @@ public class SeedData {
                 }
                 boolean anonymous = tributeIdx % 7 == 0;
                 boolean privateTribute = tributeIdx % 11 == 0;
-                tribute(
+                Tribute seeded = tribute(
                         team,
                         writer,
                         recipient,
                         TRIBUTE_LINES[tributeIdx % TRIBUTE_LINES.length],
                         anonymous,
                         privateTribute,
-                        false,
                         Set.of(picsum(writer.user, "tribute-" + tributeIdx, 1000, 700)));
+                // Publish most non-private tributes so the yearbook has content.
+                if (!privateTribute && tributeIdx % 3 != 0) {
+                    seeded.hidden = false;
+                }
                 tributeIdx++;
             }
         }
@@ -374,7 +377,6 @@ public class SeedData {
             String text,
             boolean anonymous,
             boolean privateTribute,
-            boolean hidden,
             Set<MediaAsset> pictures
     ) {
         Tribute tribute = new Tribute();
@@ -384,7 +386,6 @@ public class SeedData {
         tribute.text = text;
         tribute.anonymous = anonymous;
         tribute.privateTribute = privateTribute;
-        tribute.hidden = hidden;
         tribute.pictures = pictures == null ? new HashSet<>() : new HashSet<>(pictures);
         tribute.persist();
         return tribute;

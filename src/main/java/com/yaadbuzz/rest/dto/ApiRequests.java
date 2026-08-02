@@ -64,9 +64,6 @@ public final class ApiRequests {
     ) {
     }
 
-    public record ReportTributeRequest(String reason) {
-    }
-
     public record CreateMemoryRequest(
             String title,
             String bodyText,

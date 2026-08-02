@@ -2,7 +2,6 @@ package com.yaadbuzz.rest;
 
 import com.yaadbuzz.auth.CurrentUserService;
 import com.yaadbuzz.rest.dto.ApiDtos.TributeType;
-import com.yaadbuzz.rest.dto.ApiRequests.ReportTributeRequest;
 import com.yaadbuzz.service.TributeService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -12,7 +11,6 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import java.util.Map;
 import java.util.UUID;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
@@ -30,17 +28,16 @@ public class TributeResource {
     TributeService tributeService;
 
     @POST
-    @Path("/{id}/report")
-    @Operation(summary = "Report a tribute")
-    public Map<String, Boolean> report(@PathParam("id") UUID id, ReportTributeRequest request) {
-        tributeService.report(id, currentUserService.requireUser(), request.reason());
-        return Map.of("ok", true);
+    @Path("/{id}/publish")
+    @Operation(summary = "Publish a tribute (recipient only)")
+    public TributeType publish(@PathParam("id") UUID id) {
+        return TributeType.from(tributeService.publish(id, currentUserService.requireUser()));
     }
 
     @POST
-    @Path("/{id}/hide")
-    @Operation(summary = "Hide a tribute")
-    public TributeType hide(@PathParam("id") UUID id) {
-        return TributeType.from(tributeService.hide(id, currentUserService.requireUser()));
+    @Path("/{id}/unpublish")
+    @Operation(summary = "Unpublish a tribute (recipient only)")
+    public TributeType unpublish(@PathParam("id") UUID id) {
+        return TributeType.from(tributeService.unpublish(id, currentUserService.requireUser()));
     }
 }

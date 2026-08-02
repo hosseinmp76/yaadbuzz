@@ -1,12 +1,14 @@
 package com.yaadbuzz.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.yaadbuzz.common.ApiException;
 import com.yaadbuzz.domain.Team;
 import com.yaadbuzz.domain.TeamMember;
+import com.yaadbuzz.domain.Tribute;
 import com.yaadbuzz.domain.User;
 import com.yaadbuzz.support.ApiClient;
 import com.yaadbuzz.support.AuthSupport;
@@ -45,17 +47,19 @@ class TributeServiceTest {
     }
 
     @Test
-    void sealedTributeHiddenFromRecipientViaApi() {
+    void tributeStartsUnpublishedUntilRecipientPublishes() {
         AuthSupport.AuthSession writer = AuthSupport.register(
                 "writer-" + UUID.randomUUID() + "@example.com", "password123", "Writer");
         AuthSupport.AuthSession recipient = AuthSupport.register(
                 "recip-" + UUID.randomUUID() + "@example.com", "password123", "Recipient");
+        AuthSupport.AuthSession other = AuthSupport.register(
+                "other-" + UUID.randomUUID() + "@example.com", "password123", "Other");
 
         String orgId = ApiClient.json(
                         ApiClient.post(
                                 writer.accessToken(),
                                 "/api/organizations",
-                                Map.of("name", "Seal Org", "brandColor", "#123456")),
+                                Map.of("name", "Publish Org", "brandColor", "#123456")),
                         200)
                 .get("id")
                 .toString();
@@ -64,12 +68,12 @@ class TributeServiceTest {
                         ApiClient.post(
                                 writer.accessToken(),
                                 "/api/organizations/" + orgId + "/teams",
-                                Map.of("name", "Seal Team", "brandColor", "#123456")),
+                                Map.of("name", "Publish Team", "brandColor", "#123456")),
                         200)
                 .get("id")
                 .toString();
 
-        String code = ApiClient.json(
+        String codeRecip = ApiClient.json(
                         ApiClient.post(
                                 writer.accessToken(),
                                 "/api/teams/" + teamId + "/invites",
@@ -77,17 +81,31 @@ class TributeServiceTest {
                         200)
                 .get("code")
                 .toString();
-
         String recipientMemberId = ApiClient.json(
                         ApiClient.post(
                                 recipient.accessToken(),
                                 "/api/teams/join",
-                                Map.of("code", code, "nickname", "Recip")),
+                                Map.of("code", codeRecip, "nickname", "Recip")),
                         200)
                 .get("id")
                 .toString();
 
+        String codeOther = ApiClient.json(
+                        ApiClient.post(
+                                writer.accessToken(),
+                                "/api/teams/" + teamId + "/invites",
+                                Map.of("role", "MEMBER")),
+                        200)
+                .get("code")
+                .toString();
         ApiClient.json(
+                ApiClient.post(
+                        other.accessToken(),
+                        "/api/teams/join",
+                        Map.of("code", codeOther, "nickname", "Other")),
+                200);
+
+        Map<String, Object> created = ApiClient.json(
                 ApiClient.post(
                         writer.accessToken(),
                         "/api/teams/" + teamId + "/tributes",
@@ -97,31 +115,31 @@ class TributeServiceTest {
                                 "anonymous", false,
                                 "privateTribute", false)),
                 200);
+        assertFalse(Boolean.TRUE.equals(created.get("published")));
+        String tributeId = created.get("id").toString();
 
-        Map<String, Object> recipientView = ApiClient.json(
+        Map<String, Object> otherView = ApiClient.json(
                 ApiClient.get(
-                        recipient.accessToken(),
+                        other.accessToken(),
                         "/api/teams/" + teamId + "/tributes?recipientId=" + recipientMemberId + "&first=20"),
                 200);
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> items = (List<Map<String, Object>>) recipientView.get("items");
-        assertTrue(items.isEmpty());
+        List<Map<String, Object>> itemsBefore = (List<Map<String, Object>>) otherView.get("items");
+        assertTrue(itemsBefore.isEmpty());
 
-        ApiClient.json(
-                ApiClient.patch(
-                        writer.accessToken(),
-                        "/api/teams/" + teamId,
-                        Map.of("revealTributes", true)),
+        Map<String, Object> published = ApiClient.json(
+                ApiClient.post(recipient.accessToken(), "/api/tributes/" + tributeId + "/publish", Map.of()),
                 200);
+        assertTrue(Boolean.TRUE.equals(published.get("published")));
 
-        Map<String, Object> revealedView = ApiClient.json(
+        Map<String, Object> otherViewAfter = ApiClient.json(
                 ApiClient.get(
-                        recipient.accessToken(),
+                        other.accessToken(),
                         "/api/teams/" + teamId + "/tributes?recipientId=" + recipientMemberId + "&first=20"),
                 200);
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> revealed = (List<Map<String, Object>>) revealedView.get("items");
-        assertTrue(revealed.stream().anyMatch(i -> "Secret praise".equals(i.get("text"))));
+        List<Map<String, Object>> itemsAfter = (List<Map<String, Object>>) otherViewAfter.get("items");
+        assertTrue(itemsAfter.stream().anyMatch(i -> "Secret praise".equals(i.get("text"))));
     }
 
     private String createUserEmail() {

@@ -33,7 +33,7 @@ export type Tribute = Req<
   | 'text'
   | 'anonymous'
   | 'privateTribute'
-  | 'hidden'
+  | 'published'
   | 'pictures'
   | 'createdAt'
 >

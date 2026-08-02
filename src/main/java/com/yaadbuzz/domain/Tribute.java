@@ -45,8 +45,9 @@ public class Tribute extends BaseEntity {
     @Column(name = "is_private", nullable = false)
     public boolean privateTribute;
 
+    /** When true, only writer and recipient can see the tribute until the recipient publishes. */
     @Column(nullable = false)
-    public boolean hidden = false;
+    public boolean hidden = true;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

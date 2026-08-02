@@ -53,9 +53,7 @@ export default function TeamPage() {
         {t('team.back')}
       </Link>
       <PageTitle>{team?.name ?? t('team.fallbackTitle')}</PageTitle>
-      <p className="text-muted">
-        {team?.tributesRevealed ? t('team.tributesRevealed') : t('team.tributesSealed')}
-      </p>
+      <p className="text-muted">{t('team.tributesPublishHint')}</p>
       <Tabs>
         {(
           [
@@ -89,11 +87,7 @@ export default function TeamPage() {
       {tab === 'yearbook' && <YearbookTab teamId={teamId} team={team} reTeam={reTeam} />}
       {tab === 'preferences' && <PreferencesTab teamId={teamId} />}
       {tab === 'settings' && (
-        <SettingsTab
-          teamId={teamId}
-          revealTributes={!!team?.revealTributes}
-          brandColor={team?.brandColor ?? '#0F766E'}
-        />
+        <SettingsTab teamId={teamId} brandColor={team?.brandColor ?? '#0F766E'} />
       )}
     </Layout>
   )
@@ -190,6 +184,7 @@ function TributesTab({ teamId }: { teamId: string }) {
     () => api.teamMembers(teamId, { first: 100 }),
     [teamId],
   )
+  const [{ data: me }] = useApiQuery(!!teamId, () => api.myTeamMembership(teamId), [teamId])
   const [, createTribute] = useApiMutation(
     (
       id: string,
@@ -201,10 +196,8 @@ function TributesTab({ teamId }: { teamId: string }) {
       },
     ) => api.createTribute(id, body),
   )
-  const [, hideTribute] = useApiMutation((tributeId: string) => api.hideTribute(tributeId))
-  const [, reportTribute] = useApiMutation((tributeId: string, reason: string) =>
-    api.reportTribute(tributeId, reason),
-  )
+  const [, publishTribute] = useApiMutation((tributeId: string) => api.publishTribute(tributeId))
+  const [, unpublishTribute] = useApiMutation((tributeId: string) => api.unpublishTribute(tributeId))
   const [items, setItems] = useState<Tribute[]>([])
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasNext, setHasNext] = useState(false)
@@ -306,34 +299,44 @@ function TributesTab({ teamId }: { teamId: string }) {
               </span>
               {tribute.anonymous && <Chip>{t('team.anonymous')}</Chip>}
               {tribute.privateTribute && <Chip>{t('team.privateTribute')}</Chip>}
+              {!tribute.privateTribute && (
+                <Chip>{tribute.published ? t('team.published') : t('team.unpublished')}</Chip>
+              )}
             </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  reportTribute(tribute.id, 'Inappropriate').then((r) => {
-                    if (r.error) toast.error(r.error.message)
-                    else toast.success(t('team.tributeReported'))
-                  })
-                }
-              >
-                {t('team.report')}
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  hideTribute(tribute.id).then((r) => {
-                    if (r.error) toast.error(r.error.message)
-                    else {
-                      toast.success(t('team.tributeHidden'))
-                      void load(true)
+            {me?.id === tribute.recipient?.id && !tribute.privateTribute && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {tribute.published ? (
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
+                      unpublishTribute(tribute.id).then((r) => {
+                        if (r.error) toast.error(r.error.message)
+                        else {
+                          toast.success(t('team.tributeUnpublished'))
+                          void load(true)
+                        }
+                      })
                     }
-                  })
-                }
-              >
-                {t('team.hide')}
-              </Button>
-            </div>
+                  >
+                    {t('team.unpublish')}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() =>
+                      publishTribute(tribute.id).then((r) => {
+                        if (r.error) toast.error(r.error.message)
+                        else {
+                          toast.success(t('team.tributePublished'))
+                          void load(true)
+                        }
+                      })
+                    }
+                  >
+                    {t('team.publish')}
+                  </Button>
+                )}
+              </div>
+            )}
           </article>
         ))}
         <InfiniteSentinel ref={sentinelRef}>
@@ -1180,11 +1183,9 @@ function PreferencesTab({ teamId }: { teamId: string }) {
 
 function SettingsTab({
   teamId,
-  revealTributes,
   brandColor,
 }: {
   teamId: string
-  revealTributes: boolean
   brandColor: string
 }) {
   const { t } = useTranslation()
@@ -1196,19 +1197,16 @@ function SettingsTab({
     (id: string, email: string, role: string) => api.inviteByEmail(id, email, role),
   )
   const [, updateSettings] = useApiMutation(
-    (id: string, body: { brandColor?: string | null; revealTributes?: boolean | null }) =>
-      api.updateTeamSettings(id, body),
+    (id: string, body: { brandColor?: string | null }) => api.updateTeamSettings(id, body),
   )
   const [inviteCode, setInviteCode] = useState<string | null>(null)
   const [inviteEmail, setInviteEmail] = useState('')
   const [sendingEmail, setSendingEmail] = useState(false)
-  const [reveal, setReveal] = useState(revealTributes)
   const [color, setColor] = useState(brandColor)
 
   useEffect(() => {
-    setReveal(revealTributes)
     setColor(brandColor)
-  }, [revealTributes, brandColor])
+  }, [brandColor])
 
   async function onInvite() {
     const result = await createInvite(teamId, { role: 'MEMBER', maxUses: 50 })
@@ -1243,7 +1241,7 @@ function SettingsTab({
 
   async function onSave(e: FormEvent) {
     e.preventDefault()
-    const result = await updateSettings(teamId, { brandColor: color, revealTributes: reveal })
+    const result = await updateSettings(teamId, { brandColor: color })
     if (result.error) {
       toast.error(result.error.message)
       return
@@ -1288,14 +1286,6 @@ function SettingsTab({
           {t('team.brandColor')}
           <Input value={color} onChange={(e) => setColor(e.target.value)} />
         </Label>
-        <label className="flex items-center gap-2 font-semibold">
-          <input
-            type="checkbox"
-            checked={reveal}
-            onChange={(e) => setReveal(e.target.checked)}
-          />
-          {t('team.revealTributes')}
-        </label>
         <Button type="submit">{t('team.save')}</Button>
       </form>
     </div>

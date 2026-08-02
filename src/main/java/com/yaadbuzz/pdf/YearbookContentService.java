@@ -37,7 +37,7 @@ public class YearbookContentService {
                 "team.id = ?1 and deletedAt is null order by nickname asc", team.id);
         // Exclude private tributes from shared yearbook (recipient-only; not admin-visible either).
         List<Tribute> tributes = Tribute.list(
-                "team.id = ?1 and deletedAt is null and hidden = false and privateTribute = false order by createdAt asc",
+                "team.id = ?1 and deletedAt is null and privateTribute = false and hidden = false order by createdAt asc",
                 team.id);
         List<Memory> memories = Memory.list(
                 "team.id = ?1 and deletedAt is null and privateMemory = false order by createdAt asc", team.id);

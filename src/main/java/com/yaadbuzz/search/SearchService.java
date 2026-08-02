@@ -2,6 +2,7 @@ package com.yaadbuzz.search;
 
 import com.yaadbuzz.common.CursorPage;
 import com.yaadbuzz.domain.Memory;
+import com.yaadbuzz.domain.Team;
 import com.yaadbuzz.domain.TeamMember;
 import com.yaadbuzz.domain.Topic;
 import com.yaadbuzz.domain.Tribute;
@@ -24,7 +25,8 @@ public class SearchService {
     AccessService accessService;
 
     public CursorPage<SearchHit> search(UUID teamId, User user, String query, Integer first, String after) {
-        accessService.requireTeamMember(teamId, user);
+        TeamMember viewer = accessService.requireTeamMember(teamId, user);
+        Team team = accessService.requireTeam(teamId);
         int limit = first == null || first < 1 || first > 50 ? 20 : first;
         int offset = 0;
         if (after != null && !after.isBlank()) {
@@ -53,7 +55,7 @@ public class SearchService {
                         .must(f.simpleQueryString().fields("text").matching(query)))
                 .fetch(0, limit);
         tributes.hits().stream()
-                .filter(t -> !t.hidden && !t.isDeleted())
+                .filter(t -> accessService.canViewTribute(team, viewer, t))
                 .forEach(t -> hits.add(new SearchHit("TRIBUTE", t.id, null, t.text)));
 
         var memories = searchSession.search(Memory.class)

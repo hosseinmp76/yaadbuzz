@@ -2575,7 +2575,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/tributes/{id}/hide": {
+    "/api/tributes/{id}/publish": {
         parameters: {
             query?: never;
             header?: never;
@@ -2584,7 +2584,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Hide a tribute */
+        /** Publish a tribute (recipient only) */
         post: {
             parameters: {
                 query?: never;
@@ -2627,7 +2627,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/tributes/{id}/report": {
+    "/api/tributes/{id}/unpublish": {
         parameters: {
             query?: never;
             header?: never;
@@ -2636,7 +2636,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Report a tribute */
+        /** Unpublish a tribute (recipient only) */
         post: {
             parameters: {
                 query?: never;
@@ -2646,11 +2646,7 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["ReportTributeRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description OK */
                 200: {
@@ -2658,17 +2654,8 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": {
-                            [key: string]: boolean;
-                        };
+                        "application/json": components["schemas"]["TributeType"];
                     };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
                 };
                 /** @description Not Authorized */
                 401: {
@@ -3015,9 +3002,6 @@ export interface components {
             password: string;
             displayName: string;
         };
-        ReportTributeRequest: {
-            reason?: string;
-        };
         ResetPasswordRequest: {
             token: string;
             newPassword: string;
@@ -3076,7 +3060,7 @@ export interface components {
             text?: string;
             anonymous?: boolean;
             privateTribute?: boolean;
-            hidden?: boolean;
+            published?: boolean;
             pictures?: components["schemas"]["MediaType"][];
             createdAt?: components["schemas"]["Instant"];
         };
