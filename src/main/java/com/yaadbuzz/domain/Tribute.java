@@ -4,8 +4,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.util.HashSet;
+import java.util.Set;
 import org.hibernate.search.mapper.pojo.automaticindexing.ReindexOnUpdate;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
@@ -43,4 +47,12 @@ public class Tribute extends BaseEntity {
 
     @Column(nullable = false)
     public boolean hidden = false;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "tribute_media",
+            joinColumns = @JoinColumn(name = "tribute_id"),
+            inverseJoinColumns = @JoinColumn(name = "media_asset_id")
+    )
+    public Set<MediaAsset> pictures = new HashSet<>();
 }

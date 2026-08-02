@@ -1,5 +1,8 @@
 package com.yaadbuzz.common;
 
+import io.smallrye.graphql.api.ErrorCode;
+
+@ErrorCode("API_ERROR")
 public class ApiException extends RuntimeException {
 
     public final int status;

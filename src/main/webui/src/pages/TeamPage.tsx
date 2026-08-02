@@ -16,20 +16,27 @@ import { Tabs, TabButton } from '../components/ui/Tabs'
 import { cn } from '../lib/cn'
 import { panelClass, stackClass } from '../components/ui/styles'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
+import { MemoryComments } from '../components/MemoryComments'
 import { downloadYearbook, uploadMedia } from '../api/graphql'
 import {
+  ADD_CHARACTERISTIC,
+  CHARACTERISTICS,
   CREATE_INVITE,
   CREATE_MEMORY,
   CREATE_TOPIC,
+  CREATE_TRIBUTE,
+  HIDE_TRIBUTE,
   INVITE_BY_EMAIL,
   MEMORIES,
   MY_TEAM_MEMBERSHIP,
+  REPORT_TRIBUTE,
   REQUEST_EXPORT,
   SEARCH,
   TEAM,
   TEAM_MEMBERS,
   TOPICS,
   TOPIC_STANDINGS,
+  TRIBUTES,
   UPDATE_TEAM_SETTINGS,
   UPDATE_YEARBOOK_SETTINGS,
   UPSERT_PROFILE,
@@ -41,7 +48,16 @@ import {
 const YEARBOOK_THEMES = ['CLASSIC', 'MODERN', 'SCRAPBOOK', 'MINIMAL'] as const
 type YearbookThemeOption = (typeof YEARBOOK_THEMES)[number]
 
-type Tab = 'members' | 'memories' | 'topics' | 'search' | 'yearbook' | 'preferences' | 'settings'
+type Tab =
+  | 'members'
+  | 'tributes'
+  | 'characteristics'
+  | 'memories'
+  | 'topics'
+  | 'search'
+  | 'yearbook'
+  | 'preferences'
+  | 'settings'
 
 export default function TeamPage() {
   const { t } = useTranslation()
@@ -67,7 +83,17 @@ export default function TeamPage() {
       </p>
       <Tabs>
         {(
-          ['members', 'memories', 'topics', 'search', 'yearbook', 'preferences', 'settings'] as Tab[]
+          [
+            'members',
+            'tributes',
+            'characteristics',
+            'memories',
+            'topics',
+            'search',
+            'yearbook',
+            'preferences',
+            'settings',
+          ] as Tab[]
         ).map((tabKey) => (
           <TabButton key={tabKey} active={tab === tabKey} onClick={() => setTab(tabKey)}>
             {t(`team.tabs.${tabKey}`)}
@@ -75,6 +101,8 @@ export default function TeamPage() {
         ))}
       </Tabs>
       {tab === 'members' && <MembersTab teamId={teamId} />}
+      {tab === 'tributes' && <TributesTab teamId={teamId} />}
+      {tab === 'characteristics' && <CharacteristicsTab teamId={teamId} />}
       {tab === 'memories' && <MemoriesTab teamId={teamId} />}
       {tab === 'topics' && <TopicsTab teamId={teamId} />}
       {tab === 'search' && <SearchTab teamId={teamId} />}
@@ -168,6 +196,7 @@ function MembersTab({ teamId }: { teamId: string }) {
               <div className="min-w-0">
                 <strong>{m.nickname}</strong>
                 <div className="text-sm text-muted">{m.bio || t('team.noBio')}</div>
+                <div className="mt-1 text-xs font-semibold text-brand">{t('team.openProfile')}</div>
               </div>
             </div>
             <Chip>{m.role}</Chip>
@@ -178,6 +207,344 @@ function MembersTab({ teamId }: { teamId: string }) {
         {loading ? t('team.loading') : hasNext ? t('team.scrollMore') : t('team.endList')}
       </InfiniteSentinel>
     </section>
+  )
+}
+
+function TributesTab({ teamId }: { teamId: string }) {
+  const { t } = useTranslation()
+  const client = useClient()
+  const [{ data: membersData }] = useQuery({
+    query: TEAM_MEMBERS,
+    variables: { teamId, first: 100 },
+  })
+  const [, createTribute] = useMutation(CREATE_TRIBUTE)
+  const [, hideTribute] = useMutation(HIDE_TRIBUTE)
+  const [, reportTribute] = useMutation(REPORT_TRIBUTE)
+  const [items, setItems] = useState<any[]>([])
+  const [cursor, setCursor] = useState<string | null>(null)
+  const [hasNext, setHasNext] = useState(false)
+  const [recipientId, setRecipientId] = useState('')
+  const [text, setText] = useState('')
+  const [anonymous, setAnonymous] = useState(false)
+  const [privateTribute, setPrivateTribute] = useState(false)
+  const cursorRef = useRef<string | null>(null)
+  const members = membersData?.teamMembers?.items ?? []
+
+  useEffect(() => {
+    cursorRef.current = cursor
+  }, [cursor])
+
+  useEffect(() => {
+    if (!recipientId && members[0]?.id) {
+      setRecipientId(members[0].id)
+    }
+  }, [members, recipientId])
+
+  const load = useCallback(
+    async (reset = false) => {
+      const result = await client
+        .query(TRIBUTES, {
+          teamId,
+          recipientId: null,
+          first: 12,
+          after: reset ? null : cursorRef.current,
+        })
+        .toPromise()
+      const page = result.data?.tributes
+      if (page) {
+        setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
+        setCursor(page.nextCursor)
+        setHasNext(page.hasNext)
+      }
+    },
+    [client, teamId],
+  )
+
+  useEffect(() => {
+    setItems([])
+    setCursor(null)
+    void load(true)
+  }, [teamId, load])
+
+  const sentinelRef = useInfiniteScroll(() => {
+    if (hasNext) void load(false)
+  }, hasNext)
+
+  async function onCreate(e: FormEvent) {
+    e.preventDefault()
+    if (!recipientId) return
+    const result = await createTribute({
+      teamId,
+      recipientId,
+      text,
+      anonymous,
+      privateTribute,
+    })
+    if (result.error) {
+      toast.error(result.error.message)
+      return
+    }
+    toast.success(t('team.tributeSaved'))
+    setText('')
+    setAnonymous(false)
+    setPrivateTribute(false)
+    setCursor(null)
+    await load(true)
+  }
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <section className={stackClass}>
+        <h2 className="font-display text-xl tracking-tight">{t('team.tributes')}</h2>
+        {items.length === 0 && <p className="text-muted">{t('team.noTributes')}</p>}
+        {items.map((tribute) => (
+          <article key={tribute.id} className={panelClass}>
+            <p className="whitespace-pre-wrap">{tribute.text}</p>
+            {tribute.pictures?.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {tribute.pictures.map((pic: { id: string; url: string }) => (
+                  <a key={pic.id} href={pic.url} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={pic.url}
+                      alt=""
+                      className="h-28 w-28 rounded-xl border border-line object-cover"
+                    />
+                  </a>
+                ))}
+              </div>
+            )}
+            <div className="mt-2 flex flex-wrap gap-2 text-sm text-muted">
+              <span>
+                {t('team.from')} {tribute.writer?.nickname}
+              </span>
+              <span>·</span>
+              <span>
+                {t('team.to')}{' '}
+                <Link
+                  to={`/members/${tribute.recipient?.id}`}
+                  className="font-semibold text-brand hover:underline"
+                >
+                  {tribute.recipient?.nickname}
+                </Link>
+              </span>
+              {tribute.anonymous && <Chip>{t('team.anonymous')}</Chip>}
+              {tribute.privateTribute && <Chip>{t('team.privateTribute')}</Chip>}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  reportTribute({ tributeId: tribute.id, reason: 'Inappropriate' }).then((r) => {
+                    if (r.error) toast.error(r.error.message)
+                    else toast.success(t('team.tributeReported'))
+                  })
+                }
+              >
+                {t('team.report')}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  hideTribute({ tributeId: tribute.id }).then((r) => {
+                    if (r.error) toast.error(r.error.message)
+                    else {
+                      toast.success(t('team.tributeHidden'))
+                      void load(true)
+                    }
+                  })
+                }
+              >
+                {t('team.hide')}
+              </Button>
+            </div>
+          </article>
+        ))}
+        <InfiniteSentinel ref={sentinelRef}>
+          {hasNext ? t('team.moreTributes') : t('team.noMoreTributes')}
+        </InfiniteSentinel>
+      </section>
+
+      <form className={cn(panelClass, stackClass)} onSubmit={onCreate}>
+        <h2 className="font-display text-xl tracking-tight">{t('team.writeTribute')}</h2>
+        <Label>
+          {t('team.forMember')}
+          <Select
+            value={recipientId}
+            onChange={(e) => setRecipientId(e.target.value)}
+            required
+          >
+            <option value="" disabled>
+              {t('team.selectMember')}
+            </option>
+            {members.map((m: { id: string; nickname: string }) => (
+              <option key={m.id} value={m.id}>
+                {m.nickname}
+              </option>
+            ))}
+          </Select>
+        </Label>
+        <Label>
+          {t('team.tributeMessage')}
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={4}
+            required
+          />
+        </Label>
+        <label className="flex items-center gap-2 font-semibold">
+          <input
+            type="checkbox"
+            checked={anonymous}
+            onChange={(e) => setAnonymous(e.target.checked)}
+          />
+          {t('team.anonymous')}
+        </label>
+        <label className="flex items-center gap-2 font-semibold">
+          <input
+            type="checkbox"
+            checked={privateTribute}
+            onChange={(e) => setPrivateTribute(e.target.checked)}
+          />
+          {t('team.privateTribute')}
+        </label>
+        <Button type="submit">{t('team.saveTribute')}</Button>
+      </form>
+    </div>
+  )
+}
+
+type CharItem = { id: string; title: string; count: number }
+type MemberChars = {
+  id: string
+  nickname: string
+  avatarUrl?: string | null
+  characteristics: CharItem[]
+}
+
+function CharacteristicsTab({ teamId }: { teamId: string }) {
+  const { t } = useTranslation()
+  const client = useClient()
+  const [{ data: membersData }] = useQuery({
+    query: TEAM_MEMBERS,
+    variables: { teamId, first: 100 },
+  })
+  const [, addCharacteristic] = useMutation(ADD_CHARACTERISTIC)
+  const [rows, setRows] = useState<MemberChars[]>([])
+  const [loading, setLoading] = useState(false)
+  const [memberId, setMemberId] = useState('')
+  const [title, setTitle] = useState('')
+  const members = membersData?.teamMembers?.items
+  const memberList = members ?? []
+
+  useEffect(() => {
+    if (!memberId && memberList[0]?.id) {
+      setMemberId(memberList[0].id)
+    }
+  }, [memberList, memberId])
+
+  const load = useCallback(async () => {
+    if (!members || members.length === 0) {
+      setRows([])
+      return
+    }
+    setLoading(true)
+    const next: MemberChars[] = []
+    for (const m of members) {
+      const result = await client
+        .query(CHARACTERISTICS, { teamMemberId: m.id }, { requestPolicy: 'network-only' })
+        .toPromise()
+      next.push({
+        id: m.id,
+        nickname: m.nickname,
+        avatarUrl: m.avatar?.url,
+        characteristics: result.data?.characteristics ?? [],
+      })
+    }
+    setRows(next)
+    setLoading(false)
+  }, [client, members])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  async function onAdd(e: FormEvent) {
+    e.preventDefault()
+    if (!memberId || !title.trim()) return
+    const result = await addCharacteristic({ teamMemberId: memberId, title: title.trim() })
+    if (result.error) {
+      toast.error(result.error.message)
+      return
+    }
+    toast.success(t('team.characteristicAdded'))
+    setTitle('')
+    await load()
+  }
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <section className={stackClass}>
+        <h2 className="font-display text-xl tracking-tight">{t('team.characteristics')}</h2>
+        {loading && <p className="text-muted">{t('team.loading')}</p>}
+        {!loading && rows.length === 0 && (
+          <p className="text-muted">{t('team.noCharacteristics')}</p>
+        )}
+        {rows.map((row) => (
+          <article key={row.id} className={panelClass}>
+            <div className="flex items-center gap-3">
+              <Avatar name={row.nickname} src={row.avatarUrl ?? undefined} size="sm" />
+              <div className="min-w-0">
+                <Link
+                  to={`/members/${row.id}`}
+                  className="font-semibold text-ink hover:text-brand"
+                >
+                  {row.nickname}
+                </Link>
+              </div>
+            </div>
+            {row.characteristics.length === 0 ? (
+              <p className="mt-3 text-sm text-muted">{t('team.noMemberCharacteristics')}</p>
+            ) : (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {row.characteristics.map((c) => (
+                  <Chip key={c.id}>
+                    {c.title} × {c.count}
+                  </Chip>
+                ))}
+              </div>
+            )}
+          </article>
+        ))}
+      </section>
+
+      <form className={cn(panelClass, stackClass)} onSubmit={onAdd}>
+        <h2 className="font-display text-xl tracking-tight">{t('team.addCharacteristic')}</h2>
+        <Label>
+          {t('team.forMember')}
+          <Select value={memberId} onChange={(e) => setMemberId(e.target.value)} required>
+            <option value="" disabled>
+              {t('team.selectMember')}
+            </option>
+            {memberList.map((m: { id: string; nickname: string }) => (
+              <option key={m.id} value={m.id}>
+                {m.nickname}
+              </option>
+            ))}
+          </Select>
+        </Label>
+        <Label>
+          {t('team.characteristicTag')}
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={t('team.characteristicPlaceholder')}
+            required
+          />
+        </Label>
+        <Button type="submit">{t('team.add')}</Button>
+      </form>
+    </div>
   )
 }
 
@@ -280,6 +647,7 @@ function MemoriesTab({ teamId }: { teamId: string }) {
               </div>
             )}
             <div className="mt-2 text-sm text-muted">— {m.writer.nickname}</div>
+            <MemoryComments memoryId={m.id} />
           </article>
         ))}
         <InfiniteSentinel ref={sentinelRef}>

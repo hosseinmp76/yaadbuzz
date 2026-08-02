@@ -121,6 +121,8 @@ Flow: provider → app issues a one-time code → SPA `/oauth/callback` exchange
 - `alice@yaadbuzz.local` — org owner / team admin
 - `bob@yaadbuzz.local`
 - `cara@yaadbuzz.local`
+- `dana@yaadbuzz.local`
+- `eve@yaadbuzz.local`
 
 ### Option B — Backend and frontend separately
 

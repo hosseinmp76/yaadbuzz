@@ -193,6 +193,7 @@ type TributeType {
   createdAt: DateTime
   hidden: Boolean!
   id: String
+  pictures: [MediaType]
   privateTribute: Boolean!
   recipient: TeamMemberType
   teamId: String

@@ -1,5 +1,5 @@
 import { Client, cacheExchange, fetchExchange, mapExchange } from 'urql'
-import { getAccessToken } from '../authStorage'
+import { AUTH_STORAGE_KEY, getAccessToken } from '../authStorage'
 
 export const client = new Client({
   url: '/graphql',
@@ -7,6 +7,10 @@ export const client = new Client({
     cacheExchange,
     mapExchange({
       onError(error) {
+        if (isStaleAuthError(error.message)) {
+          clearStoredAuthAndReload()
+          return
+        }
         console.error(error)
       },
     }),
@@ -20,6 +24,26 @@ export const client = new Client({
 function authHeaders(): HeadersInit {
   const token = getAccessToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+/** After DB reseed/wipe, JWTs still in localStorage point at deleted users. */
+function isStaleAuthError(message: string | undefined): boolean {
+  if (!message) return false
+  const m = message.toLowerCase()
+  return (
+    m.includes('user not found') ||
+    m.includes('authentication required') ||
+    m.includes('invalid authentication token') ||
+    m.includes('unauthorized')
+  )
+}
+
+function clearStoredAuthAndReload() {
+  const hadAuth = !!localStorage.getItem(AUTH_STORAGE_KEY)
+  localStorage.removeItem(AUTH_STORAGE_KEY)
+  if (!hadAuth) return
+  if (window.location.pathname.startsWith('/login')) return
+  window.location.replace('/login')
 }
 
 export async function uploadMedia(file: File) {

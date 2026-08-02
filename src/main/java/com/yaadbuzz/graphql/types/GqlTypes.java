@@ -146,6 +146,7 @@ public final class GqlTypes {
             boolean anonymous,
             boolean privateTribute,
             boolean hidden,
+            List<MediaType> pictures,
             Instant createdAt
     ) {
         public static TributeType from(Tribute tribute) {
@@ -161,6 +162,9 @@ public final class GqlTypes {
                     tribute.anonymous,
                     tribute.privateTribute,
                     tribute.hidden,
+                    tribute.pictures == null
+                            ? List.of()
+                            : tribute.pictures.stream().map(MediaType::from).toList(),
                     tribute.createdAt
             );
         }

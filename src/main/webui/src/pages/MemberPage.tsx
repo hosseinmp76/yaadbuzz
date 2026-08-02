@@ -1,4 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useClient, useMutation, useQuery } from 'urql'
@@ -23,6 +24,7 @@ import {
 } from '../api/queries'
 
 export default function MemberPage() {
+  const { t } = useTranslation()
   const { memberId = '' } = useParams()
   const [{ data }] = useQuery({ query: TEAM_MEMBER, variables: { id: memberId } })
   const member = data?.teamMember
@@ -45,6 +47,7 @@ export default function MemberPage() {
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasNext, setHasNext] = useState(false)
   const cursorRef = useRef<string | null>(null)
+  const characteristics = charsData?.characteristics ?? []
 
   useEffect(() => {
     cursorRef.current = cursor
@@ -95,8 +98,10 @@ export default function MemberPage() {
       toast.error(result.error.message)
       return
     }
-    toast.success('Tribute saved')
+    toast.success(t('member.tributeSaved'))
     setText('')
+    setAnonymous(false)
+    setPrivateTribute(false)
     setCursor(null)
     await loadTributes(true)
   }
@@ -108,7 +113,7 @@ export default function MemberPage() {
       toast.error(result.error.message)
       return
     }
-    toast.success('Characteristic added')
+    toast.success(t('member.charAdded'))
     setCharTitle('')
     reChars({ requestPolicy: 'network-only' })
   }
@@ -116,7 +121,7 @@ export default function MemberPage() {
   if (!member) {
     return (
       <Layout>
-        <p className="text-muted">Loading member…</p>
+        <p className="text-muted">{t('member.loading')}</p>
       </Layout>
     )
   }
@@ -127,60 +132,78 @@ export default function MemberPage() {
         to={`/teams/${member.teamId}`}
         className="text-sm font-semibold text-muted hover:text-ink"
       >
-        ← Back to team
+        {t('member.back')}
       </Link>
       <PageTitle>{member.nickname}</PageTitle>
-      <p className="text-muted">{member.bio || 'No bio yet'}</p>
+      <p className="text-muted">{member.bio || t('member.noBio')}</p>
       <Avatar name={member.nickname} src={member.avatar?.url} size="lg" className="mt-3" />
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <section className={stackClass}>
-          <h2 className="font-display text-xl tracking-tight">Tributes</h2>
-          {items.map((t) => (
-            <article key={t.id} className={panelClass}>
-              <p className="whitespace-pre-wrap">{t.text}</p>
-              <div className="mt-2 text-sm text-muted">— {t.writer?.nickname}</div>
+          <h2 className="font-display text-xl tracking-tight">{t('member.tributes')}</h2>
+          {items.length === 0 && <p className="text-muted">{t('member.noTributes')}</p>}
+          {items.map((tribute) => (
+            <article key={tribute.id} className={panelClass}>
+              <p className="whitespace-pre-wrap">{tribute.text}</p>
+              {tribute.pictures?.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {tribute.pictures.map((pic: { id: string; url: string }) => (
+                    <a key={pic.id} href={pic.url} target="_blank" rel="noopener noreferrer">
+                      <img
+                        src={pic.url}
+                        alt=""
+                        className="h-28 w-28 rounded-xl border border-line object-cover"
+                      />
+                    </a>
+                  ))}
+                </div>
+              )}
+              <div className="mt-2 flex flex-wrap gap-2 text-sm text-muted">
+                <span>— {tribute.writer?.nickname}</span>
+                {tribute.anonymous && <Chip>{t('member.anonymous')}</Chip>}
+                {tribute.privateTribute && <Chip>{t('member.private')}</Chip>}
+              </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button
                   variant="secondary"
                   onClick={() =>
-                    reportTribute({ tributeId: t.id, reason: 'Inappropriate' }).then((r) => {
+                    reportTribute({ tributeId: tribute.id, reason: 'Inappropriate' }).then((r) => {
                       if (r.error) toast.error(r.error.message)
-                      else toast.success('Reported')
+                      else toast.success(t('member.reported'))
                     })
                   }
                 >
-                  Report
+                  {t('member.report')}
                 </Button>
                 <Button
                   variant="secondary"
                   onClick={() =>
-                    hideTribute({ tributeId: t.id }).then((r) => {
+                    hideTribute({ tributeId: tribute.id }).then((r) => {
                       if (r.error) toast.error(r.error.message)
                       else {
-                        toast.success('Hidden')
+                        toast.success(t('member.hidden'))
                         void loadTributes(true)
                       }
                     })
                   }
                 >
-                  Hide
+                  {t('member.hide')}
                 </Button>
               </div>
             </article>
           ))}
           <InfiniteSentinel ref={sentinelRef}>
-            {hasNext ? 'Loading more…' : 'End of tributes'}
+            {hasNext ? t('member.moreTributes') : t('member.endTributes')}
           </InfiniteSentinel>
         </section>
 
         <div className={stackClass}>
           <form className={cn(panelClass, stackClass)} onSubmit={onTribute}>
             <h2 className="font-display text-xl tracking-tight">
-              Write about {member.nickname}
+              {t('member.writeAbout', { name: member.nickname })}
             </h2>
             <Label>
-              Message
+              {t('member.message')}
               <Textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
@@ -194,7 +217,7 @@ export default function MemberPage() {
                 checked={anonymous}
                 onChange={(e) => setAnonymous(e.target.checked)}
               />
-              Anonymous
+              {t('member.anonymous')}
             </label>
             <label className="flex items-center gap-2 font-semibold">
               <input
@@ -202,38 +225,40 @@ export default function MemberPage() {
                 checked={privateTribute}
                 onChange={(e) => setPrivateTribute(e.target.checked)}
               />
-              Private
+              {t('member.private')}
             </label>
-            <Button type="submit">Save tribute</Button>
+            <Button type="submit">{t('member.saveTribute')}</Button>
           </form>
 
           <form className={cn(panelClass, stackClass)} onSubmit={onCharacteristic}>
-            <h2 className="font-display text-xl tracking-tight">Characteristics</h2>
-            <div className="flex flex-wrap gap-2">
-              {(charsData?.characteristics ?? []).map(
-                (c: { id: string; title: string; count: number }) => (
+            <h2 className="font-display text-xl tracking-tight">{t('member.characteristics')}</h2>
+            {characteristics.length === 0 ? (
+              <p className="text-sm text-muted">{t('member.noCharacteristics')}</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {characteristics.map((c: { id: string; title: string; count: number }) => (
                   <Chip key={c.id}>
                     {c.title} × {c.count}
                   </Chip>
-                ),
-              )}
-            </div>
+                ))}
+              </div>
+            )}
             <Label>
-              Add tag
+              {t('member.addTag')}
               <Input value={charTitle} onChange={(e) => setCharTitle(e.target.value)} required />
             </Label>
-            <Button type="submit">Add</Button>
+            <Button type="submit">{t('member.add')}</Button>
           </form>
 
           <p className="text-sm text-muted">
-            Edit your nickname and photo in the team{' '}
+            {t('member.editHintBefore')}{' '}
             <Link
               to={`/teams/${member.teamId}?tab=preferences`}
               className="font-semibold text-brand hover:underline"
             >
-              Preferences
+              {t('member.preferences')}
             </Link>{' '}
-            tab.
+            {t('member.editHintAfter')}
           </p>
         </div>
       </div>

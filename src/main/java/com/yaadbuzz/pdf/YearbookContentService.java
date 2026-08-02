@@ -35,8 +35,10 @@ public class YearbookContentService {
     public YearbookContent assemble(Team team) {
         List<TeamMember> members = TeamMember.list(
                 "team.id = ?1 and deletedAt is null order by nickname asc", team.id);
+        // Exclude private tributes from shared yearbook (recipient-only; not admin-visible either).
         List<Tribute> tributes = Tribute.list(
-                "team.id = ?1 and deletedAt is null and hidden = false order by createdAt asc", team.id);
+                "team.id = ?1 and deletedAt is null and hidden = false and privateTribute = false order by createdAt asc",
+                team.id);
         List<Memory> memories = Memory.list(
                 "team.id = ?1 and deletedAt is null and privateMemory = false order by createdAt asc", team.id);
         List<Topic> topics = Topic.list(

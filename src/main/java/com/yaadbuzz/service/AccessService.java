@@ -73,7 +73,8 @@ public class AccessService {
         if (tribute.writer.id.equals(viewer.id)) {
             return true;
         }
-        if (tribute.privateTribute && !tribute.recipient.id.equals(viewer.id) && viewer.role != TeamRole.ADMIN) {
+        // Private tributes: writer + recipient only (admins are not special-cased).
+        if (tribute.privateTribute && !tribute.recipient.id.equals(viewer.id)) {
             return false;
         }
         if (tribute.recipient.id.equals(viewer.id) && !team.tributesRevealed()) {

@@ -12,7 +12,6 @@ import com.yaadbuzz.domain.TeamMember;
 import com.yaadbuzz.domain.Topic;
 import com.yaadbuzz.domain.TopicVote;
 import com.yaadbuzz.domain.Tribute;
-import com.yaadbuzz.domain.TributeReport;
 import com.yaadbuzz.domain.User;
 import com.yaadbuzz.domain.YearbookExport;
 import com.yaadbuzz.enums.ExportStatus;
@@ -27,11 +26,15 @@ import jakarta.enterprise.event.Observes;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
- * Dev seed covering every domain entity (and common field variants) when the DB is empty.
+ * Dev seed covering every domain entity when the DB is empty.
  * Password for all seed users: {@code password123}
  * Join invite code: {@code welcome2026}
  */
@@ -40,6 +43,57 @@ public class SeedData {
 
     public static final String SEED_PASSWORD = "password123";
     public static final String SEED_INVITE_CODE = "welcome2026";
+
+    private static final String[] CHAR_TITLES = {
+            "Optimistic", "Witty", "Reliable", "Creative", "Brave",
+            "Kind", "Organizer", "Storyteller", "Mentor", "Spark"
+    };
+
+    private static final String[] TOPIC_TITLES = {
+            "Most likely to start a band",
+            "Best unofficial teacher",
+            "Most likely to bring snacks",
+            "Quietest force of nature",
+            "Most likely to host a reunion"
+    };
+
+    private static final String[] MEMORY_TITLES = {
+            "First day on the lawn",
+            "Midnight project crunch",
+            "Auditorium dress rehearsal",
+            "Rainy Tuesday coffee run",
+            "Last lecture before summer"
+    };
+
+    private static final String[] MEMORY_BODIES = {
+            "We laughed until dusk outside the auditorium and somehow already felt like a team.",
+            "Someone ordered pizza at 1am and the whiteboard never looked the same again.",
+            "Cue lights, missed lines, and a standing ovation from the empty seats.",
+            "The whole squad showed up soaked — and still finished the deck.",
+            "We signed each other's notebooks and promised to keep the group chat alive."
+    };
+
+    private static final String[] TRIBUTE_LINES = {
+            "You made every rehearsal better.",
+            "Your calm under pressure saved more than one deadline.",
+            "Thanks for the playlists that carried us through finals.",
+            "You always noticed who was left out — and fixed it.",
+            "Working with you felt like having a second wind.",
+            "Your jokes kept the late nights human.",
+            "You brought snacks and sanity in equal measure.",
+            "I still quote your one-liners from that project.",
+            "You made hard days feel doable.",
+            "Grateful we shared this chapter."
+    };
+
+    private static final String[] NICKNAMES = {"Ally", "Bobby", "Cee", "Dee", "Eve"};
+    private static final String[] BIOS = {
+            "Always organizing reunions.",
+            "Coffee enthusiast and storyteller.",
+            "Quiet observer with loud laughter.",
+            "Late-night project partner.",
+            "Design doodler and weekend hiker."
+    };
 
     @ConfigProperty(name = "yaadbuzz.seed.enabled", defaultValue = "false")
     boolean seedEnabled;
@@ -59,17 +113,18 @@ public class SeedData {
             return;
         }
 
+        // Fixed seed so demo data is reproducible across restarts of empty DBs.
+        Random random = new Random(2026);
+
         User alice = user("alice@yaadbuzz.local", "Alice");
         User bob = user("bob@yaadbuzz.local", "Bob");
         User cara = user("cara@yaadbuzz.local", "Cara");
         User dana = user("dana@yaadbuzz.local", "Dana");
+        User eve = user("eve@yaadbuzz.local", "Eve");
+        List<User> users = List.of(alice, bob, cara, dana, eve);
 
-        MediaAsset orgLogo = media(alice, "seed/org-logo.png", "image/png", 12_480);
-        MediaAsset teamCover = media(alice, "seed/team-cover.jpg", "image/jpeg", 84_200);
-        MediaAsset aliceAvatar = media(alice, "seed/avatars/alice.png", "image/png", 9_100);
-        MediaAsset bobAvatar = media(bob, "seed/avatars/bob.png", "image/png", 8_640);
-        MediaAsset caraAvatar = media(cara, "seed/avatars/cara.png", "image/png", 7_920);
-        MediaAsset commentPic = media(bob, "seed/comments/campfire.jpg", "image/jpeg", 41_300);
+        MediaAsset orgLogo = picsum(alice, "org-logo", 400, 400);
+        MediaAsset teamCover = picsum(alice, "team-cover", 1600, 900);
 
         Organization org = new Organization();
         org.name = "Northwind Academy";
@@ -82,6 +137,7 @@ public class SeedData {
         membership(org, bob, OrgRole.ADMIN);
         membership(org, cara, OrgRole.MEMBER);
         membership(org, dana, OrgRole.MEMBER);
+        membership(org, eve, OrgRole.MEMBER);
 
         Team team = new Team();
         team.organization = org;
@@ -110,12 +166,15 @@ public class SeedData {
         alumni.yearbookTitle = "Alumni Scrapbook";
         alumni.persist();
 
-        TeamMember ally = member(team, alice, "Ally", TeamRole.ADMIN, "Always organizing reunions.", aliceAvatar);
-        TeamMember bobby = member(team, bob, "Bobby", TeamRole.MEMBER, "Coffee enthusiast and storyteller.", bobAvatar);
-        TeamMember cee = member(team, cara, "Cee", TeamRole.MEMBER, "Quiet observer with loud laughter.", caraAvatar);
-        TeamMember dee = member(team, dana, "Dee", TeamRole.MEMBER, "Late-night project partner.", null);
-        member(alumni, alice, "Ally", TeamRole.ADMIN, "Keeping alumni connected.", aliceAvatar);
-        member(alumni, bob, "Bobby", TeamRole.MEMBER, null, bobAvatar);
+        List<TeamMember> members = new ArrayList<>();
+        for (int i = 0; i < users.size(); i++) {
+            User user = users.get(i);
+            MediaAsset avatar = picsum(user, "avatar-" + NICKNAMES[i].toLowerCase(), 256, 256);
+            TeamRole role = i == 0 ? TeamRole.ADMIN : TeamRole.MEMBER;
+            members.add(member(team, user, NICKNAMES[i], role, BIOS[i], avatar));
+        }
+        member(alumni, alice, "Ally", TeamRole.ADMIN, "Keeping alumni connected.", members.get(0).avatar);
+        member(alumni, bob, "Bobby", TeamRole.MEMBER, null, members.get(1).avatar);
 
         Invite invite = new Invite();
         invite.team = team;
@@ -137,74 +196,78 @@ public class SeedData {
         expiredInvite.createdBy = alice;
         expiredInvite.persist();
 
-        Topic bandTopic = topic(team, "Most likely to start a band");
-        Topic teacherTopic = topic(team, "Best unofficial teacher");
+        // One memory per member, each with an image.
+        List<Memory> memories = new ArrayList<>();
+        for (int i = 0; i < members.size(); i++) {
+            TeamMember writer = members.get(i);
+            Set<TeamMember> tagged = new HashSet<>();
+            tagged.add(members.get((i + 1) % members.size()));
+            tagged.add(members.get((i + 2) % members.size()));
+            Memory memory = memory(
+                    team,
+                    writer,
+                    MEMORY_TITLES[i],
+                    MEMORY_BODIES[i],
+                    false,
+                    tagged,
+                    Set.of(picsum(writer.user, "memory-" + i, 1200, 800)));
+            memories.add(memory);
+        }
+
+        Comment root = comment(memories.get(0), members.get(2), null, "I still have the group photo from that night.");
+        Comment reply = comment(memories.get(0), members.get(1), root, "Send it to the yearbook channel!");
+        reply.pictures.add(picsum(bob, "comment-campfire", 900, 600));
+        comment(memories.get(0), members.get(0), null, "That day still feels like the start of everything.");
+
+        // Each member writes a tribute (with image) for every other member.
+        int tributeIdx = 0;
+        for (TeamMember writer : members) {
+            for (TeamMember recipient : members) {
+                if (writer.id.equals(recipient.id)) {
+                    continue;
+                }
+                boolean anonymous = tributeIdx % 7 == 0;
+                boolean privateTribute = tributeIdx % 11 == 0;
+                tribute(
+                        team,
+                        writer,
+                        recipient,
+                        TRIBUTE_LINES[tributeIdx % TRIBUTE_LINES.length],
+                        anonymous,
+                        privateTribute,
+                        false,
+                        Set.of(picsum(writer.user, "tribute-" + tributeIdx, 1000, 700)));
+                tributeIdx++;
+            }
+        }
+
+        // Each member adds 2 characteristics for every other member.
+        for (int wi = 0; wi < members.size(); wi++) {
+            for (int ri = 0; ri < members.size(); ri++) {
+                if (wi == ri) {
+                    continue;
+                }
+                TeamMember recipient = members.get(ri);
+                String titleA = CHAR_TITLES[(wi * 3 + ri) % CHAR_TITLES.length];
+                String titleB = CHAR_TITLES[(wi * 3 + ri + 1) % CHAR_TITLES.length];
+                bumpCharacteristic(recipient, titleA);
+                bumpCharacteristic(recipient, titleB);
+            }
+        }
+
+        // Five topics; each member votes once per topic for a random other member.
+        List<Topic> topics = new ArrayList<>();
+        for (String title : TOPIC_TITLES) {
+            topics.add(topic(team, title));
+        }
         topic(alumni, "Most likely to host a reunion");
 
-        vote(bandTopic, bobby, ally, 2);
-        vote(bandTopic, cee, bobby, 1);
-        vote(bandTopic, dee, ally, 3);
-        vote(teacherTopic, ally, cee, 1);
-        vote(teacherTopic, bobby, cee, 2);
-
-        Tribute publicTribute = tribute(
-                team, bobby, ally,
-                "You made every rehearsal better.",
-                false, false, false);
-        Tribute anonymousTribute = tribute(
-                team, cee, bobby,
-                "Your playlists carried us through finals week.",
-                true, false, false);
-        Tribute privateTribute = tribute(
-                team, ally, cee,
-                "Private note: thanks for covering for me that rainy Tuesday.",
-                false, true, false);
-        Tribute hiddenTribute = tribute(
-                team, dee, ally,
-                "This one got moderated after a report.",
-                false, false, true);
-        tribute(
-                team, ally, dee,
-                "You always brought snacks and sanity.",
-                false, false, false);
-
-        TributeReport report = new TributeReport();
-        report.tribute = hiddenTribute;
-        report.reporter = bobby;
-        report.reason = "Inappropriate for the yearbook";
-        report.persist();
-
-        Memory sharedMemory = memory(
-                team, bobby,
-                "First day",
-                "We laughed until dusk on the lawn outside the auditorium.",
-                false,
-                Set.of(ally, cee));
-        Memory privateMemory = memory(
-                team, ally,
-                "Admin-only reminder",
-                "Remember to unlock tributes before print day.",
-                true,
-                Set.of());
-        memory(
-                team, cee,
-                null,
-                "Untitled night: someone brought a guitar and nobody wanted to leave.",
-                false,
-                Set.of(bobby, dee));
-
-        Comment root = comment(sharedMemory, cee, null, "I still have the group photo from that night.");
-        Comment reply = comment(sharedMemory, bobby, root, "Send it to the yearbook channel!");
-        reply.pictures.add(commentPic);
-        comment(sharedMemory, ally, null, "That day still feels like the start of everything.");
-        comment(privateMemory, ally, null, "Leaving this here so future-me remembers.");
-
-        characteristic(ally, "Optimistic", 4);
-        characteristic(ally, "Organizer", 3);
-        characteristic(bobby, "Storyteller", 5);
-        characteristic(bobby, "Caffeinated", 2);
-        characteristic(cee, "Witty", 3);
-        characteristic(dee, "Reliable", 2);
+        for (Topic topicEntity : topics) {
+            for (TeamMember voter : members) {
+                TeamMember nominee = randomOther(random, members, voter);
+                vote(topicEntity, voter, nominee, 1 + random.nextInt(3));
+            }
+        }
 
         export(team, alice, ExportStatus.READY,
                 "seed/yearbooks/class-2026.pdf",
@@ -220,15 +283,16 @@ public class SeedData {
         export(alumni, alice, ExportStatus.PROCESSING, null, null, null, null);
 
         Log.infof(
-                "Seeded Yaadbuzz demo data. Users alice|bob|cara|dana@yaadbuzz.local / %s. Invite code: %s. Tributes=%d memories=%d",
+                "Seeded Yaadbuzz demo data. Users alice|bob|cara|dana|eve@yaadbuzz.local / %s. Invite: %s. "
+                        + "Members=%d tributes=%d memories=%d topics=%d votes=%d characteristics=%d",
                 SEED_PASSWORD,
                 SEED_INVITE_CODE,
+                members.size(),
                 Tribute.count(),
-                Memory.count());
-
-        // Touch a few locals so the richer graph stays intentional and readable.
-        Log.debugf("Seed variants: public=%s anon=%s private=%s hidden=%s report=%s",
-                publicTribute.id, anonymousTribute.id, privateTribute.id, hiddenTribute.id, report.id);
+                Memory.count(),
+                Topic.count("team.id = ?1", team.id),
+                TopicVote.count(),
+                Characteristic.count());
     }
 
     private User user(String email, String displayName) {
@@ -240,19 +304,22 @@ public class SeedData {
         return user;
     }
 
-    private MediaAsset media(User uploader, String key, String mimeType, long sizeBytes) {
+    /** Demo image via picsum (no MinIO object required). */
+    private MediaAsset picsum(User uploader, String seedKey, int width, int height) {
         MediaAsset asset = new MediaAsset();
-        asset.storageKey = key;
-        asset.url = publicUrl(key);
-        asset.mimeType = mimeType;
-        asset.sizeBytes = sizeBytes;
+        asset.storageKey = "seed/" + seedKey + ".jpg";
+        asset.url = "https://picsum.photos/seed/yaadbuzz-" + seedKey + "/" + width + "/" + height;
+        asset.mimeType = "image/jpeg";
+        asset.sizeBytes = (long) width * height / 20;
         asset.uploadedBy = uploader;
         asset.persist();
         return asset;
     }
 
     private String publicUrl(String key) {
-        String base = publicEndpoint.endsWith("/") ? publicEndpoint.substring(0, publicEndpoint.length() - 1) : publicEndpoint;
+        String base = publicEndpoint.endsWith("/")
+                ? publicEndpoint.substring(0, publicEndpoint.length() - 1)
+                : publicEndpoint;
         return base + "/" + bucket + "/" + key;
     }
 
@@ -293,6 +360,13 @@ public class SeedData {
         vote.persist();
     }
 
+    private TeamMember randomOther(Random random, List<TeamMember> members, TeamMember voter) {
+        List<TeamMember> others = members.stream()
+                .filter(m -> !m.id.equals(voter.id))
+                .toList();
+        return others.get(random.nextInt(others.size()));
+    }
+
     private Tribute tribute(
             Team team,
             TeamMember writer,
@@ -300,7 +374,8 @@ public class SeedData {
             String text,
             boolean anonymous,
             boolean privateTribute,
-            boolean hidden
+            boolean hidden,
+            Set<MediaAsset> pictures
     ) {
         Tribute tribute = new Tribute();
         tribute.team = team;
@@ -310,6 +385,7 @@ public class SeedData {
         tribute.anonymous = anonymous;
         tribute.privateTribute = privateTribute;
         tribute.hidden = hidden;
+        tribute.pictures = pictures == null ? new HashSet<>() : new HashSet<>(pictures);
         tribute.persist();
         return tribute;
     }
@@ -320,7 +396,8 @@ public class SeedData {
             String title,
             String body,
             boolean privateMemory,
-            Set<TeamMember> tagged
+            Set<TeamMember> tagged,
+            Set<MediaAsset> pictures
     ) {
         Memory memory = new Memory();
         memory.team = team;
@@ -329,6 +406,7 @@ public class SeedData {
         memory.bodyText = body;
         memory.privateMemory = privateMemory;
         memory.tagged = tagged;
+        memory.pictures = pictures == null ? new HashSet<>() : new HashSet<>(pictures);
         memory.persist();
         return memory;
     }
@@ -343,12 +421,17 @@ public class SeedData {
         return comment;
     }
 
-    private void characteristic(TeamMember member, String title, int count) {
-        Characteristic characteristic = new Characteristic();
-        characteristic.teamMember = member;
-        characteristic.title = title;
-        characteristic.count = count;
-        characteristic.persist();
+    private void bumpCharacteristic(TeamMember member, String title) {
+        Characteristic characteristic = Characteristic.findByMemberAndTitle(member.id, title)
+                .orElseGet(() -> {
+                    Characteristic c = new Characteristic();
+                    c.teamMember = member;
+                    c.title = title;
+                    c.count = 0;
+                    c.persist();
+                    return c;
+                });
+        characteristic.count += 1;
     }
 
     private void export(

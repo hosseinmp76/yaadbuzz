@@ -80,7 +80,7 @@ After GraphQL API changes: `./mvnw -Pgraphql-codegen generate-sources` (Quarkus 
    - Compose full build: `src/main/docker/Dockerfile.compose`
    - Quarkus `image-build` JVM: `Dockerfile.jvm`
    - Native image: `Dockerfile.native`
-6. **Seed users** (dev only, password `password123`): `alice@yaadbuzz.local`, `bob@yaadbuzz.local`, `cara@yaadbuzz.local`, `dana@yaadbuzz.local`. Invite code: `welcome2026`. Seed covers every domain entity when the DB is empty (`SeedData`).
+6. **Seed users** (dev only, password `password123`): `alice@yaadbuzz.local`, `bob@yaadbuzz.local`, `cara@yaadbuzz.local`, `dana@yaadbuzz.local`, `eve@yaadbuzz.local`. Invite code: `welcome2026`. Seed builds a 5-member team with cross-tributes, memories (with images), characteristics, topics/votes when the DB is empty (`SeedData`).
 7. **Frontend design:** Keep brand-forward UI; themes use CSS variables. Avoid generic purple-on-white / Inter-default looks unless matching an existing screen.
 8. **Commits / PRs:** Only when the user asks. Follow repo git/PR user rules.
 

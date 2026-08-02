@@ -62,13 +62,14 @@ class AccessServiceTributeVisibilityTest {
     }
 
     @Test
-    void privateTributeHiddenFromNonRecipientNonAdmin() {
+    void privateTributeVisibleOnlyToWriterAndRecipient() {
         tribute.privateTribute = true;
         team.revealTributes = true;
 
-        assertFalse(accessService.canViewTribute(team, other, tribute));
+        assertTrue(accessService.canViewTribute(team, writer, tribute));
         assertTrue(accessService.canViewTribute(team, recipient, tribute));
-        assertTrue(accessService.canViewTribute(team, admin, tribute));
+        assertFalse(accessService.canViewTribute(team, other, tribute));
+        assertFalse(accessService.canViewTribute(team, admin, tribute));
     }
 
     @Test

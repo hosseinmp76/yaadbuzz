@@ -15,6 +15,7 @@ import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.hibernate.Hibernate;
 
 @ApplicationScoped
 public class TributeService {
@@ -47,6 +48,7 @@ public class TributeService {
         return tribute;
     }
 
+    @Transactional
     public CursorPage<Tribute> list(UUID teamId, User user, UUID recipientId, Integer first, String after) {
         TeamMember viewer = accessService.requireTeamMember(teamId, user);
         Team team = accessService.requireTeam(teamId);
@@ -78,6 +80,22 @@ public class TributeService {
                 .toList();
         boolean hasNext = visible.size() > limit;
         List<Tribute> page = hasNext ? visible.subList(0, limit) : visible;
+        for (Tribute tribute : page) {
+            Hibernate.initialize(tribute.pictures);
+            Hibernate.initialize(tribute.team);
+            Hibernate.initialize(tribute.writer);
+            Hibernate.initialize(tribute.writer.team);
+            Hibernate.initialize(tribute.writer.user);
+            if (tribute.writer.avatar != null) {
+                Hibernate.initialize(tribute.writer.avatar);
+            }
+            Hibernate.initialize(tribute.recipient);
+            Hibernate.initialize(tribute.recipient.team);
+            Hibernate.initialize(tribute.recipient.user);
+            if (tribute.recipient.avatar != null) {
+                Hibernate.initialize(tribute.recipient.avatar);
+            }
+        }
         String next = null;
         if (hasNext && !page.isEmpty()) {
             Tribute last = page.get(page.size() - 1);
@@ -115,6 +133,7 @@ public class TributeService {
             // requireTeamAdmin already validates org admin path
         }
         tribute.hidden = true;
+        Hibernate.initialize(tribute.pictures);
         return tribute;
     }
 }

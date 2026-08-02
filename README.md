@@ -48,6 +48,7 @@ Seed users (password `password123`):
 - `bob@yaadbuzz.local` (org admin)
 - `cara@yaadbuzz.local`
 - `dana@yaadbuzz.local`
+- `eve@yaadbuzz.local`
 
 Seed invite code for Class of 2026: `welcome2026`
 

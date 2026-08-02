@@ -110,6 +110,11 @@ query Tributes($teamId: String!, $recipientId: String, $first: Int, $after: Stri
         id
         nickname
       }
+      pictures {
+        id
+        url
+        mimeType
+      }
     }
     nextCursor
     hasNext
@@ -165,6 +170,19 @@ query Characteristics($teamMemberId: String!) {
     id
     title
     count
+  }
+}
+
+query Comments($memoryId: String!) {
+  comments(memoryId: $memoryId) {
+    id
+    memoryId
+    text
+    createdAt
+    writer {
+      id
+      nickname
+    }
   }
 }
 
@@ -388,6 +406,19 @@ mutation AddCharacteristic($teamMemberId: String!, $title: String!) {
     id
     title
     count
+  }
+}
+
+mutation AddComment($memoryId: String!, $text: String!, $parentId: String, $mediaIds: [String]) {
+  addComment(memoryId: $memoryId, text: $text, parentId: $parentId, mediaIds: $mediaIds) {
+    id
+    memoryId
+    text
+    createdAt
+    writer {
+      id
+      nickname
+    }
   }
 }
 
