@@ -31,7 +31,13 @@ type YearbookData = {
     characteristics: Array<{ title: string; count: number }>
     tributes: Array<{ text: string; writer: string }>
   }>
-  memories: Array<{ title?: string; body: string; writer: string; imageUrls?: string[] }>
+  memories: Array<{
+    title?: string
+    body: string
+    writer: string
+    imageUrls?: string[]
+    comments?: Array<{ text: string; writer: string; imageUrls?: string[] }>
+  }>
   topics: Array<{
     title: string
     standings: Array<{ nickname: string; score: number }>
@@ -268,6 +274,30 @@ function YearbookDocument({ yearbook }: { yearbook: YearbookData }) {
                     </div>
                   )}
                   <p className="mt-2 text-sm text-[#57534e]">— {memory.writer}</p>
+                  {memory.comments && memory.comments.length > 0 && (
+                    <div className="mt-3 space-y-2 border-l-2 border-[#d6d3d1] pl-3">
+                      {memory.comments.map((comment, cIdx) => (
+                        <div key={cIdx} className="text-sm">
+                          {comment.text ? (
+                            <p className="whitespace-pre-wrap text-[#1c1917]">{comment.text}</p>
+                          ) : null}
+                          {comment.imageUrls && comment.imageUrls.length > 0 && (
+                            <div className={clsx('flex flex-wrap gap-2', comment.text && 'mt-2')}>
+                              {comment.imageUrls.map((url) => (
+                                <img
+                                  key={url}
+                                  src={url}
+                                  alt=""
+                                  className="h-20 max-w-[8rem] rounded-lg object-cover"
+                                />
+                              ))}
+                            </div>
+                          )}
+                          <p className="mt-0.5 text-[#57534e]">— {comment.writer}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </article>
               ))}
               {yearbook.memories.length === 0 && (

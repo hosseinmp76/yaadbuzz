@@ -2,35 +2,52 @@ import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { api } from '../api/client'
+import { uploadMedia } from '../api/http'
 import { useApiMutation, useApiQuery } from '../api/useApi'
 import { Button } from './ui/Button'
-import { Label, Textarea } from './ui/Field'
+import { Input, Label, Textarea } from './ui/Field'
 import { cn } from '../lib/cn'
 import { stackClass } from './ui/styles'
+
+const MAX_COMMENT_IMAGES = 6
 
 export function MemoryComments({ memoryId }: { memoryId: string }) {
   const { t } = useTranslation()
   const [{ data }, reexecute] = useApiQuery(!!memoryId, () => api.comments(memoryId), [memoryId])
-  const [, addComment] = useApiMutation((id: string, text: string) =>
-    api.addComment(id, { text, parentId: null, mediaIds: [] }),
+  const [, addComment] = useApiMutation(
+    (id: string, body: { text: string; mediaIds: string[] }) =>
+      api.addComment(id, { text: body.text, parentId: null, mediaIds: body.mediaIds }),
   )
   const [text, setText] = useState('')
+  const [files, setFiles] = useState<File[]>([])
   const [posting, setPosting] = useState(false)
   const comments = data ?? []
+  const canPost = !!text.trim() || files.length > 0
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!text.trim()) return
+    if (!canPost) return
     setPosting(true)
-    const result = await addComment(memoryId, text.trim())
-    setPosting(false)
-    if (result.error) {
-      toast.error(result.error.message)
-      return
+    try {
+      const mediaIds: string[] = []
+      for (const file of files.slice(0, MAX_COMMENT_IMAGES)) {
+        const uploaded = await uploadMedia(file)
+        mediaIds.push(uploaded.id)
+      }
+      const result = await addComment(memoryId, { text: text.trim(), mediaIds })
+      if (result.error) {
+        toast.error(result.error.message)
+        return
+      }
+      toast.success(t('team.commentPosted'))
+      setText('')
+      setFiles([])
+      reexecute()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('common.requestFailed'))
+    } finally {
+      setPosting(false)
     }
-    toast.success(t('team.commentPosted'))
-    setText('')
-    reexecute()
   }
 
   return (
@@ -42,7 +59,20 @@ export function MemoryComments({ memoryId }: { memoryId: string }) {
         <ul className={stackClass}>
           {comments.map((c) => (
             <li key={c.id} className="rounded-xl border border-line bg-panel-strong px-3 py-2 text-sm">
-              <p className="whitespace-pre-wrap">{c.text}</p>
+              {c.text ? <p className="whitespace-pre-wrap">{c.text}</p> : null}
+              {c.pictures && c.pictures.length > 0 && (
+                <div className={cn('flex flex-wrap gap-2', c.text ? 'mt-2' : '')}>
+                  {c.pictures.map((pic) => (
+                    <a key={pic.id} href={pic.url} target="_blank" rel="noopener noreferrer">
+                      <img
+                        src={pic.url}
+                        alt=""
+                        className="h-20 w-20 rounded-lg border border-line object-cover"
+                      />
+                    </a>
+                  ))}
+                </div>
+              )}
               <div className="mt-1 text-xs text-muted">— {c.writer?.nickname}</div>
             </li>
           ))}
@@ -56,10 +86,23 @@ export function MemoryComments({ memoryId }: { memoryId: string }) {
             onChange={(e) => setText(e.target.value)}
             rows={2}
             placeholder={t('team.commentPlaceholder')}
-            required
           />
         </Label>
-        <Button type="submit" variant="secondary" disabled={posting || !text.trim()}>
+        <Label>
+          {t('team.photos')}
+          <Input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            multiple
+            onChange={(e) =>
+              setFiles(Array.from(e.target.files ?? []).slice(0, MAX_COMMENT_IMAGES))
+            }
+          />
+        </Label>
+        {files.length > 0 && (
+          <p className="text-sm text-muted">{t('team.photosSelected', { count: files.length })}</p>
+        )}
+        <Button type="submit" variant="secondary" disabled={posting || !canPost}>
           {posting ? t('team.posting') : t('team.postComment')}
         </Button>
       </form>

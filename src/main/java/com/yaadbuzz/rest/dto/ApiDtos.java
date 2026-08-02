@@ -197,13 +197,23 @@ public final class ApiDtos {
         }
     }
 
-    public record CommentType(UUID id, UUID memoryId, TeamMemberType writer, String text, Instant createdAt) {
+    public record CommentType(
+            UUID id,
+            UUID memoryId,
+            TeamMemberType writer,
+            String text,
+            List<MediaType> pictures,
+            Instant createdAt
+    ) {
         public static CommentType from(Comment comment) {
             return new CommentType(
                     comment.id,
                     comment.memory.id,
                     TeamMemberType.from(comment.writer),
                     comment.text,
+                    comment.pictures == null
+                            ? List.of()
+                            : comment.pictures.stream().map(MediaType::from).toList(),
                     comment.createdAt
             );
         }
@@ -269,7 +279,16 @@ public final class ApiDtos {
     ) {
     }
 
-    public record YearbookMemoryType(String title, String body, String writer, List<String> imageUrls) {
+    public record YearbookCommentType(String text, String writer, List<String> imageUrls) {
+    }
+
+    public record YearbookMemoryType(
+            String title,
+            String body,
+            String writer,
+            List<String> imageUrls,
+            List<YearbookCommentType> comments
+    ) {
     }
 
     public record YearbookStandingType(String nickname, int score) {
@@ -328,7 +347,15 @@ public final class ApiDtos {
                                             .toList()))
                             .toList(),
                     content.memories().stream()
-                            .map(m -> new YearbookMemoryType(m.title(), m.body(), m.writer(), m.imageUrls()))
+                            .map(m -> new YearbookMemoryType(
+                                    m.title(),
+                                    m.body(),
+                                    m.writer(),
+                                    m.imageUrls(),
+                                    m.comments().stream()
+                                            .map(c -> new YearbookCommentType(
+                                                    c.text(), c.writer(), c.imageUrls()))
+                                            .toList()))
                             .toList(),
                     content.topics().stream()
                             .map(t -> new YearbookTopicType(

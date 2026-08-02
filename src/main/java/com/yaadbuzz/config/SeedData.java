@@ -214,10 +214,69 @@ public class SeedData {
             memories.add(memory);
         }
 
-        Comment root = comment(memories.get(0), members.get(2), null, "I still have the group photo from that night.");
-        Comment reply = comment(memories.get(0), members.get(1), root, "Send it to the yearbook channel!");
-        reply.pictures.add(picsum(bob, "comment-campfire", 900, 600));
-        comment(memories.get(0), members.get(0), null, "That day still feels like the start of everything.");
+        // Comments: text-only, text+photo, and photo-only across memories.
+        Comment root = comment(
+                memories.get(0),
+                members.get(2),
+                null,
+                "I still have the group photo from that night.",
+                Set.of());
+        comment(
+                memories.get(0),
+                members.get(1),
+                root,
+                "Send it to the yearbook channel!",
+                Set.of(picsum(bob, "comment-campfire", 900, 600)));
+        comment(
+                memories.get(0),
+                members.get(0),
+                null,
+                "That day still feels like the start of everything.",
+                Set.of());
+        comment(
+                memories.get(1),
+                members.get(3),
+                null,
+                "The whiteboard scars remain. Worth it.",
+                Set.of(picsum(dana, "comment-crunch", 1000, 700)));
+        comment(
+                memories.get(1),
+                members.get(4),
+                null,
+                "Who else remembers the 2am victory dance?",
+                Set.of());
+        comment(
+                memories.get(2),
+                members.get(0),
+                null,
+                "Encore energy even with empty seats.",
+                Set.of(
+                        picsum(alice, "comment-rehearsal-1", 900, 600),
+                        picsum(alice, "comment-rehearsal-2", 900, 600)));
+        comment(
+                memories.get(3),
+                members.get(2),
+                null,
+                "",
+                Set.of(picsum(cara, "comment-coffee-only", 800, 800)));
+        comment(
+                memories.get(3),
+                members.get(1),
+                null,
+                "Still smells like wet jackets and good ideas.",
+                Set.of());
+        comment(
+                memories.get(4),
+                members.get(3),
+                null,
+                "Notebook signatures forever.",
+                Set.of(picsum(dana, "comment-last-lecture", 1100, 750)));
+        comment(
+                memories.get(4),
+                members.get(4),
+                null,
+                "Group chat is still alive — barely.",
+                Set.of());
 
         // Each member writes a tribute (with image) for every other member.
         int tributeIdx = 0;
@@ -287,12 +346,13 @@ public class SeedData {
 
         Log.infof(
                 "Seeded Yaadbuzz demo data. Users alice|bob|cara|dana|eve@yaadbuzz.local / %s. Invite: %s. "
-                        + "Members=%d tributes=%d memories=%d topics=%d votes=%d characteristics=%d",
+                        + "Members=%d tributes=%d memories=%d comments=%d topics=%d votes=%d characteristics=%d",
                 SEED_PASSWORD,
                 SEED_INVITE_CODE,
                 members.size(),
                 Tribute.count(),
                 Memory.count(),
+                Comment.count(),
                 Topic.count("team.id = ?1", team.id),
                 TopicVote.count(),
                 Characteristic.count());
@@ -412,12 +472,19 @@ public class SeedData {
         return memory;
     }
 
-    private Comment comment(Memory memory, TeamMember writer, Comment parent, String text) {
+    private Comment comment(
+            Memory memory,
+            TeamMember writer,
+            Comment parent,
+            String text,
+            Set<MediaAsset> pictures
+    ) {
         Comment comment = new Comment();
         comment.memory = memory;
         comment.writer = writer;
         comment.parent = parent;
-        comment.text = text;
+        comment.text = text == null ? "" : text;
+        comment.pictures = pictures == null ? new HashSet<>() : new HashSet<>(pictures);
         comment.persist();
         return comment;
     }

@@ -49,6 +49,7 @@ public class MemoryService {
         memory.tagged = resolveTags(teamId, taggedIds);
         memory.pictures = resolveMedia(mediaIds);
         memory.persist();
+        initializeMemory(memory);
         return memory;
     }
 
@@ -80,8 +81,7 @@ public class MemoryService {
         boolean hasNext = visible.size() > limit;
         List<Memory> page = hasNext ? visible.subList(0, limit) : visible;
         for (Memory memory : page) {
-            Hibernate.initialize(memory.pictures);
-            Hibernate.initialize(memory.tagged);
+            initializeMemory(memory);
         }
         String next = null;
         if (hasNext && !page.isEmpty()) {
@@ -98,13 +98,15 @@ public class MemoryService {
             throw ApiException.notFound("Memory not found");
         }
         TeamMember writer = accessService.requireTeamMember(memory.team.id, user);
-        if (text == null || text.isBlank()) {
-            throw ApiException.badRequest("Comment text is required");
+        Set<MediaAsset> pictures = resolveMedia(mediaIds);
+        boolean hasText = text != null && !text.isBlank();
+        if (!hasText && pictures.isEmpty()) {
+            throw ApiException.badRequest("Comment text or images are required");
         }
         Comment comment = new Comment();
         comment.memory = memory;
         comment.writer = writer;
-        comment.text = text.trim();
+        comment.text = hasText ? text.trim() : "";
         if (parentId != null) {
             Comment parent = Comment.findById(parentId);
             if (parent == null) {
@@ -112,18 +114,50 @@ public class MemoryService {
             }
             comment.parent = parent;
         }
-        comment.pictures = resolveMedia(mediaIds);
+        comment.pictures = pictures;
         comment.persist();
+        initializeComment(comment);
         return comment;
     }
 
+    @Transactional
     public List<Comment> listComments(UUID memoryId, User user) {
         Memory memory = Memory.findById(memoryId);
         if (memory == null || memory.isDeleted()) {
             throw ApiException.notFound("Memory not found");
         }
         accessService.requireTeamMember(memory.team.id, user);
-        return Comment.list("memory.id = ?1 and deletedAt is null order by createdAt asc", memoryId);
+        List<Comment> comments = Comment.list(
+                "memory.id = ?1 and deletedAt is null order by createdAt asc", memoryId);
+        for (Comment comment : comments) {
+            initializeComment(comment);
+        }
+        return comments;
+    }
+
+    private void initializeMemory(Memory memory) {
+        Hibernate.initialize(memory.team);
+        Hibernate.initialize(memory.pictures);
+        Hibernate.initialize(memory.tagged);
+        initializeMember(memory.writer);
+        for (TeamMember tagged : memory.tagged) {
+            initializeMember(tagged);
+        }
+    }
+
+    private void initializeComment(Comment comment) {
+        Hibernate.initialize(comment.memory);
+        Hibernate.initialize(comment.pictures);
+        initializeMember(comment.writer);
+    }
+
+    private void initializeMember(TeamMember member) {
+        Hibernate.initialize(member);
+        Hibernate.initialize(member.team);
+        Hibernate.initialize(member.user);
+        if (member.avatar != null) {
+            Hibernate.initialize(member.avatar);
+        }
     }
 
     private Set<TeamMember> resolveTags(UUID teamId, List<UUID> taggedIds) {

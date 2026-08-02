@@ -1,6 +1,7 @@
 package com.yaadbuzz.pdf;
 
 import com.yaadbuzz.domain.Characteristic;
+import com.yaadbuzz.domain.Comment;
 import com.yaadbuzz.domain.Memory;
 import com.yaadbuzz.domain.Team;
 import com.yaadbuzz.domain.TeamMember;
@@ -82,6 +83,23 @@ public class YearbookContentService {
             return new YearbookContent.Topic(t.title, standings);
         }).toList();
 
+        Map<UUID, List<YearbookContent.Comment>> commentsByMemory = new HashMap<>();
+        if (!memories.isEmpty()) {
+            List<UUID> memoryIds = memories.stream().map(m -> m.id).toList();
+            List<Comment> comments = Comment.list(
+                    "memory.id in ?1 and deletedAt is null order by createdAt asc", memoryIds);
+            for (Comment comment : comments) {
+                Hibernate.initialize(comment.pictures);
+                List<String> commentImages = comment.pictures == null
+                        ? List.of()
+                        : comment.pictures.stream().map(a -> a.url).toList();
+                commentsByMemory
+                        .computeIfAbsent(comment.memory.id, k -> new ArrayList<>())
+                        .add(new YearbookContent.Comment(
+                                comment.text, comment.writer.nickname, commentImages));
+            }
+        }
+
         List<YearbookContent.Memory> memoryViews = memories.stream()
                 .sorted(Comparator.comparing((Memory m) -> m.createdAt))
                 .map(m -> {
@@ -93,7 +111,8 @@ public class YearbookContentService {
                             m.title == null ? "" : m.title,
                             m.bodyText,
                             m.writer.nickname,
-                            imageUrls);
+                            imageUrls,
+                            commentsByMemory.getOrDefault(m.id, List.of()));
                 })
                 .toList();
 

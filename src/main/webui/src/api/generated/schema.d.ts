@@ -2874,6 +2874,7 @@ export interface components {
             memoryId?: components["schemas"]["UUID"];
             writer?: components["schemas"]["TeamMemberType"];
             text?: string;
+            pictures?: components["schemas"]["MediaType"][];
             createdAt?: components["schemas"]["Instant"];
         };
         ConnectionMemory: {
@@ -3110,6 +3111,11 @@ export interface components {
             /** Format: int32 */
             count?: number;
         };
+        YearbookCommentType: {
+            text?: string;
+            writer?: string;
+            imageUrls?: string[];
+        };
         YearbookExportType: {
             id?: components["schemas"]["UUID"];
             teamId?: components["schemas"]["UUID"];
@@ -3131,6 +3137,7 @@ export interface components {
             body?: string;
             writer?: string;
             imageUrls?: string[];
+            comments?: components["schemas"]["YearbookCommentType"][];
         };
         YearbookStandingType: {
             nickname?: string;

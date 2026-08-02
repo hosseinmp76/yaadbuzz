@@ -140,6 +140,15 @@
       padding-bottom: 8px;
       border-bottom: 1px solid #e7e5e4;
     }
+    .memory-comments {
+      margin-top: 8px;
+      padding-left: 12px;
+      border-left: 2px solid #d6d3d1;
+    }
+    .memory-comment {
+      margin-top: 6px;
+      font-size: 10pt;
+    }
     .accent-bar {
       height: 8px;
       background-color: {brandColor};
@@ -212,6 +221,23 @@
       </div>
       {/if}
       <div class="meta">— {memory.writer}</div>
+      {#if memory.comments}
+      <div class="memory-comments">
+        {#for comment in memory.comments}
+        <div class="memory-comment">
+          {#if comment.text}<div>{comment.text}</div>{/if}
+          {#if comment.imageUrls}
+          <div style="margin-top:6px;">
+            {#for url in comment.imageUrls}
+            <img src="{url}" alt="" style="max-width:120px;max-height:90px;object-fit:cover;border-radius:6px;margin:2px 4px 2px 0;"/>
+            {/for}
+          </div>
+          {/if}
+          <div class="meta">— {comment.writer}</div>
+        </div>
+        {/for}
+      </div>
+      {/if}
     </div>
     {/for}
   </section>

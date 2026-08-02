@@ -49,7 +49,10 @@ export type Memory = Req<
   | 'pictures'
   | 'createdAt'
 >
-export type Comment = Req<S['CommentType'], 'id' | 'memoryId' | 'writer' | 'text' | 'createdAt'>
+export type Comment = Req<
+  S['CommentType'],
+  'id' | 'memoryId' | 'writer' | 'text' | 'pictures' | 'createdAt'
+>
 export type Topic = Req<S['TopicType'], 'id' | 'teamId' | 'title'>
 export type TopicStanding = Req<S['TopicStandingType'], 'nominee' | 'score'>
 export type Characteristic = Req<S['CharacteristicType'], 'id' | 'teamMemberId' | 'title' | 'count'>

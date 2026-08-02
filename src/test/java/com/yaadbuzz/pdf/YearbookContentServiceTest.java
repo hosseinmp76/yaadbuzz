@@ -41,7 +41,9 @@ class YearbookContentServiceTest {
 
         var org = organizationService.create(user, "Yb Org", "#0F766E");
         var team = teamService.create(user, org.id, "Yb Team", "#B45309");
-        memoryService.create(team.id, user, "Campfire", "We stayed up late.", false, List.of(), List.of());
+        var memory = memoryService.create(
+                team.id, user, "Campfire", "We stayed up late.", false, List.of(), List.of());
+        memoryService.addComment(memory.id, user, "Still my favorite night.", null, List.of());
 
         teamService.updateYearbookSettings(
                 team.id,
@@ -70,5 +72,8 @@ class YearbookContentServiceTest {
         assertFalse(content.showAwards());
         assertEquals(1, content.memories().size());
         assertEquals("Campfire", content.memories().getFirst().title());
+        assertEquals(1, content.memories().getFirst().comments().size());
+        assertEquals("Still my favorite night.", content.memories().getFirst().comments().getFirst().text());
+        assertTrue(content.memories().getFirst().comments().getFirst().imageUrls().isEmpty());
     }
 }

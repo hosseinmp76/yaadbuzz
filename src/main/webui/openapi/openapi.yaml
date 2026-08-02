@@ -67,6 +67,10 @@ components:
           $ref: "#/components/schemas/TeamMemberType"
         text:
           type: string
+        pictures:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaType"
         createdAt:
           $ref: "#/components/schemas/Instant"
     ConnectionMemory:
@@ -542,6 +546,17 @@ components:
         count:
           type: integer
           format: int32
+    YearbookCommentType:
+      type: object
+      properties:
+        text:
+          type: string
+        writer:
+          type: string
+        imageUrls:
+          type: array
+          items:
+            type: string
     YearbookExportType:
       type: object
       properties:
@@ -589,6 +604,10 @@ components:
           type: array
           items:
             type: string
+        comments:
+          type: array
+          items:
+            $ref: "#/components/schemas/YearbookCommentType"
     YearbookStandingType:
       type: object
       properties:

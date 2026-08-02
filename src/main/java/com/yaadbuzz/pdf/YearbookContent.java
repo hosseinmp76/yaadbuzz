@@ -36,7 +36,15 @@ public record YearbookContent(
             List<Tribute> tributes
     ) {}
 
-    public record Memory(String title, String body, String writer, List<String> imageUrls) {}
+    public record Comment(String text, String writer, List<String> imageUrls) {}
+
+    public record Memory(
+            String title,
+            String body,
+            String writer,
+            List<String> imageUrls,
+            List<Comment> comments
+    ) {}
 
     public record Standing(String nickname, int score) {}
 
