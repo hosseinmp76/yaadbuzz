@@ -32,10 +32,10 @@ export default function Layout({ children }: { children: ReactNode }) {
         <nav aria-label="Primary" className="flex min-w-0 items-center gap-1.5 sm:gap-3">
           <LanguageSwitcher />
           <Link
-            to="/about"
+            to="/app"
             className="px-2 text-sm font-semibold text-muted hover:text-ink sm:text-base"
           >
-            {t('nav.about')}
+            {t('nav.organizations')}
           </Link>
           {user ? (
             <>
@@ -47,9 +47,6 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <UserCircle size={20} weight="duotone" className="sm:hidden" />
                 <span className="hidden sm:inline">{t('nav.preferences')}</span>
               </Link>
-              <span className="hidden max-w-[10rem] truncate text-muted md:inline">
-                {user.displayName}
-              </span>
               <Button
                 variant="secondary"
                 className="px-3 sm:px-5"

@@ -216,11 +216,20 @@ Binary: `target/yaadbuzz-1.0.0-SNAPSHOT-runner`.
 
 Starts Postgres, Elasticsearch, MinIO, nginx, and the app.
 
-**Secrets (`.env`)** — Compose auto-loads a file named `.env` in the project root for `${VAR}` substitution (file is gitignored):
+**Secrets (`.env`)** — Compose auto-loads a file named `.env` in the project root for `${VAR}` substitution (file is gitignored). Default generation targets **local dev** (`localhost` hostnames for Postgres, Elasticsearch, MinIO so `./mvnw quarkus:dev` works while dependencies run in Docker):
 
 ```bash
-./development/gen-secrets.sh          # writes .env (use --force to overwrite)
-# edit .env for YAADBUZZ_PUBLIC_URL, OAuth, mail, etc.
+./development/gen-secrets.sh              # writes local-dev .env (use --force to overwrite)
+./development/gen-secrets.sh --prod --force   # production URLs (https://yaadbuzz.ir)
+# edit .env for OAuth, mail, etc.
+docker compose up -d postgres elasticsearch minio minio-init
+./mvnw quarkus:dev
+```
+
+Full stack deploy (compose **app** uses docker network hostnames hardcoded in `docker-compose.yml`; only passwords and public URL come from `.env`):
+
+```bash
+./development/gen-secrets.sh --prod --force
 docker compose up -d --build
 ```
 
