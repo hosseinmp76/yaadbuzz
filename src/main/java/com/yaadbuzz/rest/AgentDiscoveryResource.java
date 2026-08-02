@@ -76,7 +76,7 @@ public class AgentDiscoveryResource {
                         markdownAboutDigest()),
                 skill("yaadbuzz-auth", "skill", "How agents authenticate (email/password JWT)", b + "/auth.md",
                         authMdDigest()),
-                skill("yaadbuzz-openapi", "api", "REST OpenAPI for auth, media, yearbook download", b + "/q/openapi",
+                skill("yaadbuzz-openapi", "api", "REST OpenAPI for auth, media, and yearbook domain APIs", b + "/q/openapi",
                         "openapi"),
                 skill("yaadbuzz-source", "skill", "AGPL corresponding source offer", b + "/source",
                         "source")
@@ -103,7 +103,7 @@ public class AgentDiscoveryResource {
         ));
         card.put("description",
                 "Yaadbuzz does not expose a Model Context Protocol transport yet. "
-                        + "Agents should use REST (/api/auth, /api/media) and GraphQL (/graphql). "
+                        + "Agents should use REST under /api (auth, media, and yearbook domain). "
                         + "See OpenAPI and auth.md.");
         card.put("transport", Map.of(
                 "type", "http",
@@ -117,7 +117,7 @@ public class AgentDiscoveryResource {
         card.put("related", Map.of(
                 "apiCatalog", b + "/.well-known/api-catalog",
                 "auth", b + "/auth.md",
-                "graphql", b + "/graphql"
+                "openapi", b + "/q/openapi"
         ));
         return Response.ok(card)
                 .header("Cache-Control", "public, max-age=3600")
@@ -227,7 +227,7 @@ public class AgentDiscoveryResource {
                 ```
 
                 - REST OpenAPI: %s/q/openapi
-                - GraphQL: `POST %s/graphql` (authenticated for app data)
+                - Domain API: `/api/organizations`, `/api/teams`, … (Bearer JWT)
                 - Health: %s/q/health
                 - API catalog: %s/.well-known/api-catalog
 
@@ -239,7 +239,7 @@ public class AgentDiscoveryResource {
                 ## License
 
                 AGPL-3.0 — corresponding source: %s/source
-                """.formatted(b, b, b, b, b, b, b, b, b);
+                """.formatted(b, b, b, b, b, b, b, b);
     }
 
     private String markdownAboutDigest() {

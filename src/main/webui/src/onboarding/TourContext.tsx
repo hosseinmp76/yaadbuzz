@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useClient } from 'urql'
-import { MY_ORGS, TEAMS } from '../api/queries'
+import { api } from '../api/client'
 import { TourContext } from './tourContextValue'
 import { buildTourSteps, type TourStep } from './tourSteps'
 import {
@@ -12,24 +11,20 @@ import {
 import { TourOverlay } from './TourOverlay'
 import { waitForTarget } from './waitForTarget'
 
-async function resolveIds(client: ReturnType<typeof useClient>): Promise<{
+async function resolveIds(): Promise<{
   orgId?: string
   teamId?: string
 }> {
-  const orgsResult = await client.query(MY_ORGS, {}, { requestPolicy: 'network-only' }).toPromise()
-  const orgId = orgsResult.data?.myOrganizations?.[0]?.id
+  const orgs = await api.myOrganizations()
+  const orgId = orgs[0]?.id
   if (!orgId) return {}
-
-  const teamsResult = await client
-    .query(TEAMS, { organizationId: orgId }, { requestPolicy: 'network-only' })
-    .toPromise()
-  const teamId = teamsResult.data?.teams?.[0]?.id
+  const teams = await api.teams(orgId)
+  const teamId = teams[0]?.id
   return { orgId, teamId }
 }
 
 export function TourProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
-  const client = useClient()
   const [steps, setSteps] = useState<TourStep[]>([])
   const [index, setIndex] = useState(0)
   const [ready, setReady] = useState(false)
@@ -87,7 +82,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     resetOnboardingForReplay()
     clearOnboardingDismissed()
     try {
-      const ids = await resolveIds(client)
+      const ids = await resolveIds()
       const built = buildTourSteps(ids)
       if (built.length === 0) {
         preparing.current = false
@@ -99,7 +94,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     } finally {
       preparing.current = false
     }
-  }, [client, goToIndex])
+  }, [goToIndex])
 
   const onNext = useCallback(() => {
     void goToIndex(index + 1, steps, 1)

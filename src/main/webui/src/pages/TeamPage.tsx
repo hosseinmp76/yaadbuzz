@@ -3,7 +3,10 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { BookOpenText, DownloadSimple, MagnifyingGlass, Printer, Sparkle } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { useClient, useMutation, useQuery } from 'urql'
+import { api } from '../api/client'
+import { downloadYearbook, uploadMedia } from '../api/http'
+import type { Team, TeamMember, Tribute, Memory, Topic, TopicStanding, SearchHit, YearbookExport } from '../api/types'
+import { useApiMutation, useApiQuery } from '../api/useApi'
 import Layout from '../components/Layout'
 import { Button } from '../components/ui/Button'
 import { Chip } from '../components/ui/Chip'
@@ -17,33 +20,6 @@ import { cn } from '../lib/cn'
 import { panelClass, stackClass } from '../components/ui/styles'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 import { MemoryComments } from '../components/MemoryComments'
-import { downloadYearbook, uploadMedia } from '../api/graphql'
-import {
-  ADD_CHARACTERISTIC,
-  CHARACTERISTICS,
-  CREATE_INVITE,
-  CREATE_MEMORY,
-  CREATE_TOPIC,
-  CREATE_TRIBUTE,
-  HIDE_TRIBUTE,
-  INVITE_BY_EMAIL,
-  MEMORIES,
-  MY_TEAM_MEMBERSHIP,
-  REPORT_TRIBUTE,
-  REQUEST_EXPORT,
-  SEARCH,
-  TEAM,
-  TEAM_MEMBERS,
-  TOPICS,
-  TOPIC_STANDINGS,
-  TRIBUTES,
-  UPDATE_TEAM_SETTINGS,
-  UPDATE_YEARBOOK_SETTINGS,
-  UPSERT_PROFILE,
-  VOTE_TOPIC,
-  YEARBOOK,
-  YEARBOOK_EXPORTS,
-} from '../api/queries'
 
 const YEARBOOK_THEMES = ['CLASSIC', 'MODERN', 'SCRAPBOOK', 'MINIMAL'] as const
 type YearbookThemeOption = (typeof YEARBOOK_THEMES)[number]
@@ -66,8 +42,7 @@ export default function TeamPage() {
   const tab = (params.get('tab') as Tab) || 'members'
   const setTab = (next: Tab) => setParams({ tab: next })
 
-  const [{ data: teamData }] = useQuery({ query: TEAM, variables: { id: teamId } })
-  const team = teamData?.team
+  const [{ data: team }, reTeam] = useApiQuery(!!teamId, () => api.team(teamId), [teamId])
 
   return (
     <Layout>
@@ -111,7 +86,7 @@ export default function TeamPage() {
       {tab === 'memories' && <MemoriesTab teamId={teamId} />}
       {tab === 'topics' && <TopicsTab teamId={teamId} />}
       {tab === 'search' && <SearchTab teamId={teamId} />}
-      {tab === 'yearbook' && <YearbookTab teamId={teamId} team={team} />}
+      {tab === 'yearbook' && <YearbookTab teamId={teamId} team={team} reTeam={reTeam} />}
       {tab === 'preferences' && <PreferencesTab teamId={teamId} />}
       {tab === 'settings' && (
         <SettingsTab
@@ -126,9 +101,8 @@ export default function TeamPage() {
 
 function MembersTab({ teamId }: { teamId: string }) {
   const { t } = useTranslation()
-  const client = useClient()
   const [query, setQuery] = useState('')
-  const [items, setItems] = useState<any[]>([])
+  const [items, setItems] = useState<TeamMember[]>([])
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasNext, setHasNext] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -144,25 +118,19 @@ function MembersTab({ teamId }: { teamId: string }) {
       if (loadingRef.current) return
       loadingRef.current = true
       setLoading(true)
-      const after = reset ? null : cursorRef.current
-      const result = await client
-        .query(TEAM_MEMBERS, {
-          teamId,
-          first: 12,
-          after,
-          query: query || null,
-        })
-        .toPromise()
-      const page = result.data?.teamMembers
-      if (page) {
-        setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
-        setCursor(page.nextCursor)
-        setHasNext(page.hasNext)
-      }
+      const after = reset ? undefined : cursorRef.current ?? undefined
+      const page = await api.teamMembers(teamId, {
+        first: 12,
+        after,
+        query: query || undefined,
+      })
+      setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
+      setCursor(page.nextCursor ?? null)
+      setHasNext(page.hasNext)
       loadingRef.current = false
       setLoading(false)
     },
-    [client, teamId, query],
+    [teamId, query],
   )
 
   useEffect(() => {
@@ -217,15 +185,27 @@ function MembersTab({ teamId }: { teamId: string }) {
 
 function TributesTab({ teamId }: { teamId: string }) {
   const { t } = useTranslation()
-  const client = useClient()
-  const [{ data: membersData }] = useQuery({
-    query: TEAM_MEMBERS,
-    variables: { teamId, first: 100 },
-  })
-  const [, createTribute] = useMutation(CREATE_TRIBUTE)
-  const [, hideTribute] = useMutation(HIDE_TRIBUTE)
-  const [, reportTribute] = useMutation(REPORT_TRIBUTE)
-  const [items, setItems] = useState<any[]>([])
+  const [{ data: membersPage }] = useApiQuery(
+    !!teamId,
+    () => api.teamMembers(teamId, { first: 100 }),
+    [teamId],
+  )
+  const [, createTribute] = useApiMutation(
+    (
+      id: string,
+      body: {
+        recipientId: string
+        text: string
+        anonymous: boolean
+        privateTribute: boolean
+      },
+    ) => api.createTribute(id, body),
+  )
+  const [, hideTribute] = useApiMutation((tributeId: string) => api.hideTribute(tributeId))
+  const [, reportTribute] = useApiMutation((tributeId: string, reason: string) =>
+    api.reportTribute(tributeId, reason),
+  )
+  const [items, setItems] = useState<Tribute[]>([])
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasNext, setHasNext] = useState(false)
   const [recipientId, setRecipientId] = useState('')
@@ -233,7 +213,7 @@ function TributesTab({ teamId }: { teamId: string }) {
   const [anonymous, setAnonymous] = useState(false)
   const [privateTribute, setPrivateTribute] = useState(false)
   const cursorRef = useRef<string | null>(null)
-  const members = membersData?.teamMembers?.items ?? []
+  const members = membersPage?.items ?? []
 
   useEffect(() => {
     cursorRef.current = cursor
@@ -247,22 +227,15 @@ function TributesTab({ teamId }: { teamId: string }) {
 
   const load = useCallback(
     async (reset = false) => {
-      const result = await client
-        .query(TRIBUTES, {
-          teamId,
-          recipientId: null,
-          first: 12,
-          after: reset ? null : cursorRef.current,
-        })
-        .toPromise()
-      const page = result.data?.tributes
-      if (page) {
-        setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
-        setCursor(page.nextCursor)
-        setHasNext(page.hasNext)
-      }
+      const page = await api.tributes(teamId, {
+        first: 12,
+        after: reset ? undefined : cursorRef.current ?? undefined,
+      })
+      setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
+      setCursor(page.nextCursor ?? null)
+      setHasNext(page.hasNext)
     },
-    [client, teamId],
+    [teamId],
   )
 
   useEffect(() => {
@@ -278,8 +251,7 @@ function TributesTab({ teamId }: { teamId: string }) {
   async function onCreate(e: FormEvent) {
     e.preventDefault()
     if (!recipientId) return
-    const result = await createTribute({
-      teamId,
+    const result = await createTribute(teamId, {
       recipientId,
       text,
       anonymous,
@@ -307,7 +279,7 @@ function TributesTab({ teamId }: { teamId: string }) {
             <p className="whitespace-pre-wrap">{tribute.text}</p>
             {tribute.pictures?.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
-                {tribute.pictures.map((pic: { id: string; url: string }) => (
+                {tribute.pictures.map((pic) => (
                   <a key={pic.id} href={pic.url} target="_blank" rel="noopener noreferrer">
                     <img
                       src={pic.url}
@@ -339,7 +311,7 @@ function TributesTab({ teamId }: { teamId: string }) {
               <Button
                 variant="secondary"
                 onClick={() =>
-                  reportTribute({ tributeId: tribute.id, reason: 'Inappropriate' }).then((r) => {
+                  reportTribute(tribute.id, 'Inappropriate').then((r) => {
                     if (r.error) toast.error(r.error.message)
                     else toast.success(t('team.tributeReported'))
                   })
@@ -350,7 +322,7 @@ function TributesTab({ teamId }: { teamId: string }) {
               <Button
                 variant="secondary"
                 onClick={() =>
-                  hideTribute({ tributeId: tribute.id }).then((r) => {
+                  hideTribute(tribute.id).then((r) => {
                     if (r.error) toast.error(r.error.message)
                     else {
                       toast.success(t('team.tributeHidden'))
@@ -381,7 +353,7 @@ function TributesTab({ teamId }: { teamId: string }) {
             <option value="" disabled>
               {t('team.selectMember')}
             </option>
-            {members.map((m: { id: string; nickname: string }) => (
+            {members.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.nickname}
               </option>
@@ -429,17 +401,19 @@ type MemberChars = {
 
 function CharacteristicsTab({ teamId }: { teamId: string }) {
   const { t } = useTranslation()
-  const client = useClient()
-  const [{ data: membersData }] = useQuery({
-    query: TEAM_MEMBERS,
-    variables: { teamId, first: 100 },
-  })
-  const [, addCharacteristic] = useMutation(ADD_CHARACTERISTIC)
+  const [{ data: membersPage }] = useApiQuery(
+    !!teamId,
+    () => api.teamMembers(teamId, { first: 100 }),
+    [teamId],
+  )
+  const [, addCharacteristic] = useApiMutation((teamMemberId: string, title: string) =>
+    api.addCharacteristic(teamMemberId, title),
+  )
   const [rows, setRows] = useState<MemberChars[]>([])
   const [loading, setLoading] = useState(false)
   const [memberId, setMemberId] = useState('')
   const [title, setTitle] = useState('')
-  const members = membersData?.teamMembers?.items
+  const members = membersPage?.items
   const memberList = members ?? []
 
   useEffect(() => {
@@ -456,19 +430,17 @@ function CharacteristicsTab({ teamId }: { teamId: string }) {
     setLoading(true)
     const next: MemberChars[] = []
     for (const m of members) {
-      const result = await client
-        .query(CHARACTERISTICS, { teamMemberId: m.id }, { requestPolicy: 'network-only' })
-        .toPromise()
+      const characteristics = await api.characteristics(m.id)
       next.push({
         id: m.id,
         nickname: m.nickname,
         avatarUrl: m.avatar?.url,
-        characteristics: result.data?.characteristics ?? [],
+        characteristics,
       })
     }
     setRows(next)
     setLoading(false)
-  }, [client, members])
+  }, [members])
 
   useEffect(() => {
     void load()
@@ -477,7 +449,7 @@ function CharacteristicsTab({ teamId }: { teamId: string }) {
   async function onAdd(e: FormEvent) {
     e.preventDefault()
     if (!memberId || !title.trim()) return
-    const result = await addCharacteristic({ teamMemberId: memberId, title: title.trim() })
+    const result = await addCharacteristic(memberId, title.trim())
     if (result.error) {
       toast.error(result.error.message)
       return
@@ -531,7 +503,7 @@ function CharacteristicsTab({ teamId }: { teamId: string }) {
             <option value="" disabled>
               {t('team.selectMember')}
             </option>
-            {memberList.map((m: { id: string; nickname: string }) => (
+            {memberList.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.nickname}
               </option>
@@ -555,9 +527,19 @@ function CharacteristicsTab({ teamId }: { teamId: string }) {
 
 function MemoriesTab({ teamId }: { teamId: string }) {
   const { t } = useTranslation()
-  const client = useClient()
-  const [, createMemory] = useMutation(CREATE_MEMORY)
-  const [items, setItems] = useState<any[]>([])
+  const [, createMemory] = useApiMutation(
+    (
+      id: string,
+      body: {
+        title: string
+        bodyText: string
+        privateMemory: boolean
+        taggedIds?: string[] | null
+        mediaIds?: string[] | null
+      },
+    ) => api.createMemory(id, body),
+  )
+  const [items, setItems] = useState<Memory[]>([])
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasNext, setHasNext] = useState(false)
   const [title, setTitle] = useState('')
@@ -572,21 +554,15 @@ function MemoriesTab({ teamId }: { teamId: string }) {
 
   const load = useCallback(
     async (reset = false) => {
-      const result = await client
-        .query(MEMORIES, {
-          teamId,
-          first: 10,
-          after: reset ? null : cursorRef.current,
-        })
-        .toPromise()
-      const page = result.data?.memories
-      if (page) {
-        setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
-        setCursor(page.nextCursor)
-        setHasNext(page.hasNext)
-      }
+      const page = await api.memories(teamId, {
+        first: 10,
+        after: reset ? undefined : cursorRef.current ?? undefined,
+      })
+      setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
+      setCursor(page.nextCursor ?? null)
+      setHasNext(page.hasNext)
     },
-    [client, teamId],
+    [teamId],
   )
 
   useEffect(() => {
@@ -606,9 +582,8 @@ function MemoriesTab({ teamId }: { teamId: string }) {
         const uploaded = await uploadMedia(file)
         mediaIds.push(uploaded.id)
       }
-      const result = await createMemory({
-        teamId,
-        title: title || null,
+      const result = await createMemory(teamId, {
+        title,
         bodyText,
         privateMemory: false,
         taggedIds: [],
@@ -640,7 +615,7 @@ function MemoriesTab({ teamId }: { teamId: string }) {
             <p className="mt-2 whitespace-pre-wrap">{m.bodyText}</p>
             {m.pictures?.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
-                {m.pictures.map((pic: { id: string; url: string }) => (
+                {m.pictures.map((pic) => (
                   <a key={pic.id} href={pic.url} target="_blank" rel="noopener noreferrer">
                     <img
                       src={pic.url}
@@ -696,49 +671,55 @@ function MemoriesTab({ teamId }: { teamId: string }) {
 
 function TopicsTab({ teamId }: { teamId: string }) {
   const { t } = useTranslation()
-  const [{ data }, reexecute] = useQuery({ query: TOPICS, variables: { teamId } })
-  const [{ data: membersData }] = useQuery({
-    query: TEAM_MEMBERS,
-    variables: { teamId, first: 50 },
-  })
-  const [, createTopic] = useMutation(CREATE_TOPIC)
-  const [, voteTopic] = useMutation(VOTE_TOPIC)
+  const [{ data: topics }, reexecute] = useApiQuery(!!teamId, () => api.topics(teamId), [teamId])
+  const [{ data: membersPage }] = useApiQuery(
+    !!teamId,
+    () => api.teamMembers(teamId, { first: 50 }),
+    [teamId],
+  )
+  const [, createTopic] = useApiMutation((id: string, topicTitle: string) =>
+    api.createTopic(id, topicTitle),
+  )
+  const [, voteTopic] = useApiMutation(
+    (topicId: string, nomineeId: string, repetitions: number) =>
+      api.voteTopic(topicId, nomineeId, repetitions),
+  )
   const [title, setTitle] = useState('')
   const [selectedTopic, setSelectedTopic] = useState<string>('')
   const [nomineeId, setNomineeId] = useState('')
-  const [{ data: standingsData }, reStandings] = useQuery({
-    query: TOPIC_STANDINGS,
-    variables: { topicId: selectedTopic },
-    pause: !selectedTopic,
-  })
+  const [{ data: standings }, reStandings] = useApiQuery(
+    !!selectedTopic,
+    () => api.topicStandings(selectedTopic),
+    [selectedTopic],
+  )
 
   useEffect(() => {
-    if (!selectedTopic && data?.topics?.[0]) {
-      setSelectedTopic(data.topics[0].id)
+    if (!selectedTopic && topics?.[0]) {
+      setSelectedTopic(topics[0].id)
     }
-  }, [data, selectedTopic])
+  }, [topics, selectedTopic])
 
   async function onCreate(e: FormEvent) {
     e.preventDefault()
-    const result = await createTopic({ teamId, title })
+    const result = await createTopic(teamId, title)
     if (result.error) {
       toast.error(result.error.message)
       return
     }
     toast.success(t('team.topicAdded'))
     setTitle('')
-    reexecute({ requestPolicy: 'network-only' })
+    reexecute()
   }
 
   async function onVote(e: FormEvent) {
     e.preventDefault()
-    const result = await voteTopic({ topicId: selectedTopic, nomineeId, repetitions: 1 })
+    const result = await voteTopic(selectedTopic, nomineeId, 1)
     if (result.error) {
       toast.error(result.error.message)
       return
     }
     toast.success(t('team.voteCast'))
-    reStandings({ requestPolicy: 'network-only' })
+    reStandings()
   }
 
   return (
@@ -746,7 +727,7 @@ function TopicsTab({ teamId }: { teamId: string }) {
       <section className={cn(panelClass, stackClass)}>
         <h2 className="font-display text-xl tracking-tight">{t('team.awardTopics')}</h2>
         <div className={stackClass}>
-          {(data?.topics ?? []).map((topic: { id: string; title: string }) => (
+          {(topics ?? []).map((topic: Topic) => (
             <Button
               key={topic.id}
               variant={selectedTopic === topic.id ? 'primary' : 'secondary'}
@@ -771,13 +752,11 @@ function TopicsTab({ teamId }: { teamId: string }) {
             {t('team.nominee')}
             <Select value={nomineeId} onChange={(e) => setNomineeId(e.target.value)} required>
               <option value="">{t('team.selectMember')}</option>
-              {(membersData?.teamMembers?.items ?? []).map(
-                (m: { id: string; nickname: string }) => (
-                  <option key={m.id} value={m.id}>
-                    {m.nickname}
-                  </option>
-                ),
-              )}
+              {(membersPage?.items ?? []).map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.nickname}
+                </option>
+              ))}
             </Select>
           </Label>
           <Button type="submit" disabled={!selectedTopic}>
@@ -785,14 +764,12 @@ function TopicsTab({ teamId }: { teamId: string }) {
           </Button>
         </form>
         <div className={stackClass}>
-          {(standingsData?.topicStandings ?? []).map(
-            (s: { nominee: { id: string; nickname: string }; score: number }) => (
-              <ListItem key={s.nominee.id}>
-                <strong>{s.nominee.nickname}</strong>
-                <Chip>{s.score}</Chip>
-              </ListItem>
-            ),
-          )}
+          {(standings ?? []).map((s: TopicStanding) => (
+            <ListItem key={s.nominee.id}>
+              <strong>{s.nominee.nickname}</strong>
+              <Chip>{s.score}</Chip>
+            </ListItem>
+          ))}
         </div>
       </section>
     </div>
@@ -807,11 +784,11 @@ function SearchTab({ teamId }: { teamId: string }) {
     const timer = setTimeout(() => setDebounced(q), 250)
     return () => clearTimeout(timer)
   }, [q])
-  const [{ data, fetching }] = useQuery({
-    query: SEARCH,
-    variables: { teamId, q: debounced, first: 20 },
-    pause: debounced.trim().length < 2,
-  })
+  const [{ data, fetching }] = useApiQuery(
+    debounced.trim().length >= 2,
+    () => api.search(teamId, debounced, { first: 20 }),
+    [teamId, debounced],
+  )
 
   return (
     <section className={cn(panelClass, stackClass)}>
@@ -832,17 +809,15 @@ function SearchTab({ teamId }: { teamId: string }) {
       </Label>
       {fetching && <p className="text-muted">{t('team.searching')}</p>}
       <div className={stackClass}>
-        {(data?.search?.items ?? []).map(
-          (hit: { type: string; id: string; title?: string; snippet?: string }) => (
-            <ListItem key={`${hit.type}-${hit.id}`}>
-              <div>
-                <Chip>{hit.type}</Chip>
-                <strong className="ms-2">{hit.title || t('team.result')}</strong>
-                <div className="text-sm text-muted">{hit.snippet}</div>
-              </div>
-            </ListItem>
-          ),
-        )}
+        {(data?.items ?? []).map((hit: SearchHit) => (
+          <ListItem key={`${hit.type}-${hit.id}`}>
+            <div>
+              <Chip>{hit.type}</Chip>
+              <strong className="ms-2">{hit.title || t('team.result')}</strong>
+              <div className="text-sm text-muted">{hit.snippet}</div>
+            </div>
+          </ListItem>
+        ))}
       </div>
     </section>
   )
@@ -851,32 +826,43 @@ function SearchTab({ teamId }: { teamId: string }) {
 function YearbookTab({
   teamId,
   team,
+  reTeam,
 }: {
   teamId: string
-  team?: {
-    yearbookTitle?: string
-    yearbookSubtitle?: string
-    yearbookDedication?: string
-    yearbookTheme?: YearbookThemeOption
-    yearbookShowMembers?: boolean
-    yearbookShowTributes?: boolean
-    yearbookShowCharacteristics?: boolean
-    yearbookShowMemories?: boolean
-    yearbookShowAwards?: boolean
-  }
+  team?: Team
+  reTeam: (opts?: { requestPolicy?: string }) => void
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const client = useClient()
-  const [{ data }, reexecute] = useQuery({ query: YEARBOOK_EXPORTS, variables: { teamId } })
-  const [, requestExport] = useMutation(REQUEST_EXPORT)
-  const [, updateYearbook] = useMutation(UPDATE_YEARBOOK_SETTINGS)
-  const [, reTeam] = useQuery({ query: TEAM, variables: { id: teamId } })
+  const [{ data: exports }, reexecute] = useApiQuery(
+    !!teamId,
+    () => api.yearbookExports(teamId),
+    [teamId],
+  )
+  const [, requestExport] = useApiMutation((id: string) => api.requestYearbookExport(id))
+  const [, updateYearbook] = useApiMutation(
+    (
+      id: string,
+      body: {
+        title?: string | null
+        subtitle?: string | null
+        dedication?: string | null
+        theme?: string | null
+        showMembers?: boolean | null
+        showTributes?: boolean | null
+        showCharacteristics?: boolean | null
+        showMemories?: boolean | null
+        showAwards?: boolean | null
+      },
+    ) => api.updateYearbookSettings(id, body),
+  )
 
   const [title, setTitle] = useState(team?.yearbookTitle ?? '')
   const [subtitle, setSubtitle] = useState(team?.yearbookSubtitle ?? '')
   const [dedication, setDedication] = useState(team?.yearbookDedication ?? '')
-  const [theme, setTheme] = useState<YearbookThemeOption>(team?.yearbookTheme ?? 'CLASSIC')
+  const [theme, setTheme] = useState<YearbookThemeOption>(
+    (team?.yearbookTheme as YearbookThemeOption | undefined) ?? 'CLASSIC',
+  )
   const [showMembers, setShowMembers] = useState(team?.yearbookShowMembers ?? true)
   const [showTributes, setShowTributes] = useState(team?.yearbookShowTributes ?? true)
   const [showCharacteristics, setShowCharacteristics] = useState(
@@ -890,7 +876,7 @@ function YearbookTab({
     setTitle(team?.yearbookTitle ?? '')
     setSubtitle(team?.yearbookSubtitle ?? '')
     setDedication(team?.yearbookDedication ?? '')
-    setTheme(team?.yearbookTheme ?? 'CLASSIC')
+    setTheme((team?.yearbookTheme as YearbookThemeOption | undefined) ?? 'CLASSIC')
     setShowMembers(team?.yearbookShowMembers ?? true)
     setShowTributes(team?.yearbookShowTributes ?? true)
     setShowCharacteristics(team?.yearbookShowCharacteristics ?? true)
@@ -899,23 +885,22 @@ function YearbookTab({
   }, [team])
 
   useEffect(() => {
-    const id = setInterval(() => reexecute({ requestPolicy: 'network-only' }), 5000)
+    const id = setInterval(() => reexecute(), 5000)
     return () => clearInterval(id)
   }, [reexecute])
 
   async function onGenerate() {
-    const result = await requestExport({ teamId })
+    const result = await requestExport(teamId)
     if (result.error) {
       toast.error(result.error.message)
       return
     }
     toast.success(t('team.generationStarted'))
-    reexecute({ requestPolicy: 'network-only' })
+    reexecute()
   }
 
   async function saveCustomization(showToast = true) {
-    const result = await updateYearbook({
-      teamId,
+    const result = await updateYearbook(teamId, {
       title,
       subtitle,
       dedication,
@@ -930,11 +915,9 @@ function YearbookTab({
       toast.error(result.error.message)
       return false
     }
-    // Refresh cached team + assembled yearbook so the print page never shows a stale theme.
-    reTeam({ requestPolicy: 'network-only' })
-    await client
-      .query(YEARBOOK, { teamId }, { requestPolicy: 'network-only' })
-      .toPromise()
+    // Refresh team + assembled yearbook so the print page never shows a stale theme.
+    reTeam()
+    await api.yearbook(teamId)
     if (showToast) toast.success(t('team.designSaved'))
     return true
   }
@@ -988,34 +971,27 @@ function YearbookTab({
         <p className="text-muted">{t('team.serverPdfHint')}</p>
         <Button onClick={onGenerate}>{t('team.generatePdf')}</Button>
         <div className={stackClass}>
-          {(data?.yearbookExports ?? []).map(
-            (exp: {
-              id: string
-              status: string
-              createdAt: string
-              errorMessage?: string
-            }) => (
-              <ListItem key={exp.id}>
-                <div>
-                  <strong>{exp.status}</strong>
-                  <div className="text-sm text-muted">
-                    {new Date(exp.createdAt).toLocaleString()}
-                  </div>
-                  {exp.errorMessage && <div className="text-danger">{exp.errorMessage}</div>}
+          {(exports ?? []).map((exp: YearbookExport) => (
+            <ListItem key={exp.id}>
+              <div>
+                <strong>{exp.status}</strong>
+                <div className="text-sm text-muted">
+                  {new Date(exp.createdAt).toLocaleString()}
                 </div>
-                {exp.status === 'READY' && (
-                  <Button
-                    variant="secondary"
-                    className="w-full sm:w-auto"
-                    onClick={() => downloadYearbook(exp.id)}
-                  >
-                    <DownloadSimple size={18} />
-                    {t('team.download')}
-                  </Button>
-                )}
-              </ListItem>
-            ),
-          )}
+                {exp.errorMessage && <div className="text-danger">{exp.errorMessage}</div>}
+              </div>
+              {exp.status === 'READY' && (
+                <Button
+                  variant="secondary"
+                  className="w-full sm:w-auto"
+                  onClick={() => downloadYearbook(exp.id)}
+                >
+                  <DownloadSimple size={18} />
+                  {t('team.download')}
+                </Button>
+              )}
+            </ListItem>
+          ))}
         </div>
       </section>
 
@@ -1100,12 +1076,17 @@ function Toggle({
 
 function PreferencesTab({ teamId }: { teamId: string }) {
   const { t } = useTranslation()
-  const [{ data, fetching, error }, reexecute] = useQuery({
-    query: MY_TEAM_MEMBERSHIP,
-    variables: { teamId },
-  })
-  const [, upsertProfile] = useMutation(UPSERT_PROFILE)
-  const membership = data?.myTeamMembership
+  const [{ data: membership, fetching, error }, reexecute] = useApiQuery(
+    !!teamId,
+    () => api.myTeamMembership(teamId),
+    [teamId],
+  )
+  const [, upsertProfile] = useApiMutation(
+    (
+      id: string,
+      body: { nickname?: string | null; bio?: string | null; avatarId?: string | null },
+    ) => api.upsertTeamMemberProfile(id, body),
+  )
   const [nickname, setNickname] = useState('')
   const [bio, setBio] = useState('')
   const [saving, setSaving] = useState(false)
@@ -1120,8 +1101,7 @@ function PreferencesTab({ teamId }: { teamId: string }) {
     e.preventDefault()
     setSaving(true)
     try {
-      const result = await upsertProfile({
-        teamId,
+      const result = await upsertProfile(teamId, {
         nickname,
         bio,
         avatarId: null,
@@ -1131,7 +1111,7 @@ function PreferencesTab({ teamId }: { teamId: string }) {
         return
       }
       toast.success(t('team.profileUpdated'))
-      reexecute({ requestPolicy: 'network-only' })
+      reexecute()
     } finally {
       setSaving(false)
     }
@@ -1141,8 +1121,7 @@ function PreferencesTab({ teamId }: { teamId: string }) {
     if (!file) return
     try {
       const uploaded = await uploadMedia(file)
-      const result = await upsertProfile({
-        teamId,
+      const result = await upsertProfile(teamId, {
         nickname: null,
         bio: null,
         avatarId: uploaded.id,
@@ -1152,7 +1131,7 @@ function PreferencesTab({ teamId }: { teamId: string }) {
         return
       }
       toast.success(t('team.photoUpdated'))
-      reexecute({ requestPolicy: 'network-only' })
+      reexecute()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('team.uploadFailed'))
     }
@@ -1209,9 +1188,17 @@ function SettingsTab({
   brandColor: string
 }) {
   const { t } = useTranslation()
-  const [, createInvite] = useMutation(CREATE_INVITE)
-  const [, inviteByEmail] = useMutation(INVITE_BY_EMAIL)
-  const [, updateSettings] = useMutation(UPDATE_TEAM_SETTINGS)
+  const [, createInvite] = useApiMutation(
+    (id: string, body: { role?: string | null; maxUses?: number | null }) =>
+      api.createInvite(id, body),
+  )
+  const [, inviteByEmail] = useApiMutation(
+    (id: string, email: string, role: string) => api.inviteByEmail(id, email, role),
+  )
+  const [, updateSettings] = useApiMutation(
+    (id: string, body: { brandColor?: string | null; revealTributes?: boolean | null }) =>
+      api.updateTeamSettings(id, body),
+  )
   const [inviteCode, setInviteCode] = useState<string | null>(null)
   const [inviteEmail, setInviteEmail] = useState('')
   const [sendingEmail, setSendingEmail] = useState(false)
@@ -1224,13 +1211,13 @@ function SettingsTab({
   }, [revealTributes, brandColor])
 
   async function onInvite() {
-    const result = await createInvite({ teamId, role: 'MEMBER', maxUses: 50 })
+    const result = await createInvite(teamId, { role: 'MEMBER', maxUses: 50 })
     if (result.error) {
       toast.error(result.error.message)
       return
     }
-    if (result.data?.createInvite?.code) {
-      setInviteCode(result.data.createInvite.code)
+    if (result.data?.code) {
+      setInviteCode(result.data.code)
       toast.success(t('team.inviteCreated'))
     }
   }
@@ -1239,19 +1226,15 @@ function SettingsTab({
     e.preventDefault()
     setSendingEmail(true)
     try {
-      const result = await inviteByEmail({
-        teamId,
-        email: inviteEmail.trim(),
-        role: 'MEMBER',
-      })
+      const result = await inviteByEmail(teamId, inviteEmail.trim(), 'MEMBER')
       if (result.error) {
         toast.error(result.error.message)
         return
       }
       toast.success(t('team.inviteSent', { email: inviteEmail.trim() }))
       setInviteEmail('')
-      if (result.data?.inviteByEmail?.code) {
-        setInviteCode(result.data.inviteByEmail.code)
+      if (result.data?.code) {
+        setInviteCode(result.data.code)
       }
     } finally {
       setSendingEmail(false)
@@ -1260,7 +1243,7 @@ function SettingsTab({
 
   async function onSave(e: FormEvent) {
     e.preventDefault()
-    const result = await updateSettings({ teamId, brandColor: color, revealTributes: reveal })
+    const result = await updateSettings(teamId, { brandColor: color, revealTributes: reveal })
     if (result.error) {
       toast.error(result.error.message)
       return

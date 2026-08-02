@@ -87,7 +87,6 @@ public class SeoResource {
                 Disallow: /join
                 Disallow: /y/
                 Disallow: /api/
-                Disallow: /graphql
                 Disallow: /q/
 
                 Sitemap: %s/sitemap.xml

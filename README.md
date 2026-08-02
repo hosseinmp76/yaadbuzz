@@ -1,6 +1,6 @@
 # Yaadbuzz
 
-Online yearbook generator built with **Quarkus**, **React (Quinoa)**, **GraphQL**, **OpenAPI/Swagger**, **PostgreSQL**, **Elasticsearch**, and **MinIO**.
+Online yearbook generator built with **Quarkus**, **React (Quinoa)**, **REST/OpenAPI**, **PostgreSQL**, **Elasticsearch**, and **MinIO**.
 
 **License:** [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0)
 
@@ -14,7 +14,7 @@ Online yearbook generator built with **Quarkus**, **React (Quinoa)**, **GraphQL*
 - Elasticsearch search
 - Cursor-based infinite scroll
 - Async PDF yearbook export + download
-- Swagger UI for REST, GraphQL UI for app APIs
+- Swagger UI for the full REST API
 
 ## Quick start (dev)
 
@@ -38,9 +38,7 @@ docker compose up -d postgres elasticsearch minio minio-init
 Open:
 
 - App: http://localhost:8080
-- Swagger: http://localhost:8080/q/swagger-ui
-- GraphQL UI: http://localhost:8080/graphql-ui — paste `{"Authorization":"Bearer <accessToken>"}` in Headers after login
-- Regenerate typed GraphQL client (Quarkus must be running): `./mvnw -Pgraphql-codegen generate-sources`
+- Swagger: http://localhost:8080/q/swagger-ui — authorize with Bearer JWT after login
 
 Seed users (password `password123`):
 
@@ -113,7 +111,7 @@ npm run lint:fix   # auto-fix where possible
 | `POST /api/auth/oauth/exchange` | Exchange one-time OAuth code for JWTs |
 | `POST /api/media` | Image upload |
 | `GET /api/yearbooks/{id}/download` | PDF download |
-| `/graphql` | All yearbook domain operations |
+| `/api/organizations`, `/api/teams`, … | Yearbook domain operations |
 
 ## Project layout
 

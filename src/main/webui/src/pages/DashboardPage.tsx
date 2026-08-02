@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
-import { useMutation, useQuery } from 'urql'
 import { z } from 'zod'
+import { api } from '../api/client'
+import { useApiMutation, useApiQuery } from '../api/useApi'
 import Layout from '../components/Layout'
 import { Button } from '../components/ui/Button'
 import { Chip } from '../components/ui/Chip'
@@ -16,7 +17,6 @@ import { Panel } from '../components/ui/Panel'
 import { Stack } from '../components/ui/Stack'
 import { stackClass } from '../components/ui/styles'
 import { FirstVisitPrompt } from '../onboarding/FirstVisitPrompt'
-import { CREATE_ORG, MY_ORGS } from '../api/queries'
 
 type FormValues = { name: string }
 
@@ -25,8 +25,10 @@ export default function DashboardPage() {
   const schema = z.object({
     name: z.string().min(2, t('dashboard.orgNameRequired')),
   })
-  const [{ data, fetching, error }, reexecute] = useQuery({ query: MY_ORGS })
-  const [, createOrg] = useMutation(CREATE_ORG)
+  const [{ data, fetching, error }, reexecute] = useApiQuery(true, () => api.myOrganizations(), [])
+  const [, createOrg] = useApiMutation((name: string, brandColor: string) =>
+    api.createOrganization(name, brandColor),
+  )
   const {
     register,
     handleSubmit,
@@ -38,14 +40,14 @@ export default function DashboardPage() {
   })
 
   const onCreate = handleSubmit(async (values) => {
-    const result = await createOrg({ name: values.name, brandColor: '#0F766E' })
+    const result = await createOrg(values.name, '#0F766E')
     if (result.error) {
       toast.error(result.error.message)
       return
     }
     toast.success(t('dashboard.created'))
     reset()
-    reexecute({ requestPolicy: 'network-only' })
+    reexecute()
   })
 
   return (
@@ -62,7 +64,7 @@ export default function DashboardPage() {
           {fetching && <p className="text-muted">{t('dashboard.loading')}</p>}
           {error && <p className="text-danger">{error.message}</p>}
           <Stack>
-            {(data?.myOrganizations ?? []).map((org: { id: string; name: string }) => (
+            {(data ?? []).map((org) => (
               <ListItemLink key={org.id} to={`/orgs/${org.id}`}>
                 <div>
                   <strong>{org.name}</strong>

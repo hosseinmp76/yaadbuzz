@@ -2,7 +2,8 @@ import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { useClient, useMutation, useQuery } from 'urql'
+import { api } from '../api/client'
+import { useApiMutation, useApiQuery } from '../api/useApi'
 import Layout from '../components/Layout'
 import { Button } from '../components/ui/Button'
 import { Chip } from '../components/ui/Chip'
@@ -13,31 +14,34 @@ import { Avatar } from '../components/ui/Avatar'
 import { cn } from '../lib/cn'
 import { panelClass, stackClass } from '../components/ui/styles'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
-import {
-  ADD_CHARACTERISTIC,
-  CHARACTERISTICS,
-  CREATE_TRIBUTE,
-  HIDE_TRIBUTE,
-  REPORT_TRIBUTE,
-  TEAM_MEMBER,
-  TRIBUTES,
-} from '../api/queries'
 
 export default function MemberPage() {
   const { t } = useTranslation()
   const { memberId = '' } = useParams()
-  const [{ data }] = useQuery({ query: TEAM_MEMBER, variables: { id: memberId } })
-  const member = data?.teamMember
-  const [{ data: charsData }, reChars] = useQuery({
-    query: CHARACTERISTICS,
-    variables: { teamMemberId: memberId },
-    pause: !memberId,
-  })
-  const [, createTribute] = useMutation(CREATE_TRIBUTE)
-  const [, addCharacteristic] = useMutation(ADD_CHARACTERISTIC)
-  const [, hideTribute] = useMutation(HIDE_TRIBUTE)
-  const [, reportTribute] = useMutation(REPORT_TRIBUTE)
-  const client = useClient()
+  const [{ data: member }] = useApiQuery(!!memberId, () => api.teamMember(memberId), [memberId])
+  const [{ data: characteristics = [] }, reChars] = useApiQuery(
+    !!memberId,
+    () => api.characteristics(memberId),
+    [memberId],
+  )
+  const [, createTribute] = useApiMutation(
+    (
+      teamId: string,
+      body: {
+        recipientId: string
+        text: string
+        anonymous: boolean
+        privateTribute: boolean
+      },
+    ) => api.createTribute(teamId, body),
+  )
+  const [, addCharacteristic] = useApiMutation((teamMemberId: string, title: string) =>
+    api.addCharacteristic(teamMemberId, title),
+  )
+  const [, hideTribute] = useApiMutation((tributeId: string) => api.hideTribute(tributeId))
+  const [, reportTribute] = useApiMutation((tributeId: string, reason: string) =>
+    api.reportTribute(tributeId, reason),
+  )
 
   const [text, setText] = useState('')
   const [anonymous, setAnonymous] = useState(false)
@@ -47,7 +51,6 @@ export default function MemberPage() {
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasNext, setHasNext] = useState(false)
   const cursorRef = useRef<string | null>(null)
-  const characteristics = charsData?.characteristics ?? []
 
   useEffect(() => {
     cursorRef.current = cursor
@@ -56,22 +59,16 @@ export default function MemberPage() {
   const loadTributes = useCallback(
     async (reset = false) => {
       if (!member) return
-      const result = await client
-        .query(TRIBUTES, {
-          teamId: member.teamId,
-          recipientId: member.id,
-          first: 10,
-          after: reset ? null : cursorRef.current,
-        })
-        .toPromise()
-      const page = result.data?.tributes
-      if (page) {
-        setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
-        setCursor(page.nextCursor)
-        setHasNext(page.hasNext)
-      }
+      const page = await api.tributes(member.teamId, {
+        recipientId: member.id,
+        first: 10,
+        after: reset ? undefined : cursorRef.current ?? undefined,
+      })
+      setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
+      setCursor(page.nextCursor ?? null)
+      setHasNext(page.hasNext)
     },
-    [client, member],
+    [member],
   )
 
   useEffect(() => {
@@ -87,8 +84,7 @@ export default function MemberPage() {
   async function onTribute(e: FormEvent) {
     e.preventDefault()
     if (!member) return
-    const result = await createTribute({
-      teamId: member.teamId,
+    const result = await createTribute(member.teamId, {
       recipientId: member.id,
       text,
       anonymous,
@@ -108,7 +104,7 @@ export default function MemberPage() {
 
   async function onCharacteristic(e: FormEvent) {
     e.preventDefault()
-    const result = await addCharacteristic({ teamMemberId: memberId, title: charTitle })
+    const result = await addCharacteristic(memberId, charTitle)
     if (result.error) {
       toast.error(result.error.message)
       return
@@ -167,7 +163,7 @@ export default function MemberPage() {
                 <Button
                   variant="secondary"
                   onClick={() =>
-                    reportTribute({ tributeId: tribute.id, reason: 'Inappropriate' }).then((r) => {
+                    reportTribute(tribute.id, 'Inappropriate').then((r) => {
                       if (r.error) toast.error(r.error.message)
                       else toast.success(t('member.reported'))
                     })
@@ -178,7 +174,7 @@ export default function MemberPage() {
                 <Button
                   variant="secondary"
                   onClick={() =>
-                    hideTribute({ tributeId: tribute.id }).then((r) => {
+                    hideTribute(tribute.id).then((r) => {
                       if (r.error) toast.error(r.error.message)
                       else {
                         toast.success(t('member.hidden'))

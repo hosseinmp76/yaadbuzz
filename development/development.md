@@ -61,28 +61,11 @@ Open:
 | URL | What |
 |---|---|
 | http://localhost:8080 | App (UI + API) |
-| http://localhost:8080/q/swagger-ui | REST / OpenAPI |
-| http://localhost:8080/graphql-ui | GraphQL UI (Bearer JWT in Headers) |
+| http://localhost:8080/q/swagger-ui | REST / OpenAPI (Bearer JWT) |
 
-### Typed GraphQL client (codegen)
+Vite’s managed port is **3000** (`quarkus.quinoa.dev-server.port`). Prefer using **8080** so auth and `/api` share one origin.
 
-After changing backend GraphQL APIs, regenerate TypeScript documents (requires Quarkus running for schema fetch):
-
-```bash
-./mvnw -Pgraphql-codegen generate-sources
-# or from webui:
-cd src/main/webui && npm run graphql:generate
-```
-
-- Schema snapshot: `src/main/webui/graphql/schema.graphql`
-- Operations you edit: `src/main/webui/graphql/operations/*.graphql`
-- Generated types/docs: `src/main/webui/src/api/generated/graphql.ts`
-- App imports stay via `src/api/queries.ts`
-
-Optional: `YAADBUZZ_GRAPHQL_URL=https://… ./mvnw -Pgraphql-codegen generate-sources`
-
-
-Vite’s managed port is **3000** (`quarkus.quinoa.dev-server.port`). Prefer using **8080** so auth and GraphQL share one origin.
+Frontend domain calls live in `src/main/webui/src/api/` (`client.ts`, `http.ts`, `types.ts`, `useApi.ts`).
 
 **Seed users** (dev seed enabled; password `password123`):
 
@@ -146,7 +129,7 @@ npm install          # first time / after lockfile changes
 VITE_PROXY_API=1 npm run dev
 ```
 
-Open http://127.0.0.1:3000. With `VITE_PROXY_API=1`, Vite proxies `/graphql`, `/api`, and `/q` to Quarkus on `:8080`.
+Open http://127.0.0.1:3000. With `VITE_PROXY_API=1`, Vite proxies `/api` and `/q` to Quarkus on `:8080`.
 
 Do **not** enable that proxy while Quinoa is also managing Vite (`./mvnw quarkus:dev` without disabling the Quinoa dev server) — it deadlocks SPA requests on `:8080`.
 
@@ -164,7 +147,7 @@ npm run build      # production assets → dist/ (also produced by Quarkus packa
 ./mvnw quarkus:dev -Dquarkus.quinoa.enabled=false
 ```
 
-Hit Swagger / GraphQL UI on 8080. Useful for API-focused work.
+Hit Swagger UI on 8080. Useful for API-focused work.
 
 ---
 
@@ -396,8 +379,7 @@ yaadbuzz/
 │   │   │   ├── config/       # App config, seed
 │   │   │   ├── domain/       # JPA entities
 │   │   │   ├── enums/
-│   │   │   ├── graphql/      # GraphQL API + input/output types
-│   │   │   ├── rest/         # Auth, media, yearbook download REST
+│   │   │   ├── rest/         # Domain + auth/media REST + DTOs
 │   │   │   ├── service/      # Domain services / access control
 │   │   │   ├── search/       # Elasticsearch / Hibernate Search
 │   │   │   ├── storage/      # S3/MinIO client
@@ -419,7 +401,7 @@ yaadbuzz/
 │   │       ├── vite.config.ts
 │   │       ├── index.html
 │   │       └── src/
-│   │           ├── api/                # urql client + GraphQL documents
+│   │           ├── api/                # typed REST fetch client
 │   │           ├── components/         # Layout, ThemePicker, UI primitives
 │   │           ├── theme/              # Theme presets + ThemeProvider
 │   │           ├── pages/              # Route screens
@@ -435,10 +417,9 @@ yaadbuzz/
 
 ```text
 Browser
-  ├─ SPA (Quinoa / Vite) ──REST──► /api/auth, /api/media, /api/yearbooks/*/download
-  ├─ SPA /teams/:id/yearbook ──GraphQL yearbook──► online view → browser Print → PDF
-  └─ SPA ──GraphQL──► /graphql ──► services ──► Postgres / ES / MinIO
-                                    └─ scheduler/worker ──► server PDF in MinIO
+  ├─ SPA (Quinoa / Vite) ──REST──► /api/* ──► services ──► Postgres / ES / MinIO
+  ├─ SPA /teams/:id/yearbook ──GET /api/teams/:id/yearbook──► online view → browser Print → PDF
+  └─ scheduler/worker ──► server PDF in MinIO (download via /api/yearbooks/*/download)
 ```
 
 ---

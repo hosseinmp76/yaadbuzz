@@ -16,15 +16,15 @@ Naming: use **Team** (not Department).
 |---|---|
 | Backend | Quarkus **3.37.4**, Java **25**, Maven Wrapper (`./mvnw`) |
 | Frontend | React 19 + TypeScript + Vite via **Quinoa** (`src/main/webui`) |
-| App API | GraphQL (`/graphql`) |
-| Binary/auth API | REST + OpenAPI (`/api/auth/*`, `/api/media`, `/api/yearbooks/{id}/download`) |
+| App API | REST + OpenAPI (`/api/*`) |
+| Binary endpoints | Multipart media upload + yearbook PDF download under `/api` |
 | DB | PostgreSQL + Flyway |
 | Search | Elasticsearch 8 via Hibernate Search |
 | Object storage | MinIO / S3-compatible |
 | PDF | OpenHTMLToPDF + Qute template |
 | Auth | Local email/password JWT + optional Google/GitHub OAuth (OIDC); keep boundaries OIDC-ready |
 
-Frontend UI libs in use: Tailwind CSS v4, Motion, React Hook Form, Zod, Phosphor icons, Sonner, clsx, urql. Themes are user-selectable CSS-variable presets (`src/main/webui/src/theme/`).
+Frontend UI libs in use: Tailwind CSS v4, Motion, React Hook Form, Zod, Phosphor icons, Sonner, clsx. Themes are user-selectable CSS-variable presets (`src/main/webui/src/theme/`).
 
 ## Domain model (high level)
 
@@ -46,8 +46,7 @@ com.yaadbuzz
 ├── config/        # CDI config + seed
 ├── domain/        # JPA entities
 ├── enums/
-├── graphql/       # GraphQL API + types
-├── rest/          # Auth, media, yearbook download
+├── rest/          # Domain + auth/media REST + DTOs
 ├── service/       # Business logic / access control
 ├── search/        # Hibernate Search indexing/query
 ├── storage/       # S3/MinIO
@@ -55,20 +54,19 @@ com.yaadbuzz
 └── common/        # Errors, cursors, shared utilities
 ```
 
-Frontend lives in `src/main/webui/src/` (pages, components, theme, urql client).
+Frontend lives in `src/main/webui/src/` (pages, components, theme, typed `fetch` client under `api/`).
 
 ## API surface
 
 | Surface | Purpose |
 |---|---|
 | `POST /api/auth/*` | Register, login, refresh |
+| `GET/PATCH /api/me` | Current user |
+| `/api/organizations`, `/api/teams`, `/api/members`, … | Yearbook domain CRUD/read |
 | `POST /api/media` | Image upload |
 | `GET /api/yearbooks/{id}/download` | PDF download |
-| `/graphql` | Yearbook domain operations |
 
-Swagger: `/q/swagger-ui` · GraphQL UI: `/graphql-ui` (Bearer JWT in Headers)
-
-After GraphQL API changes: `./mvnw -Pgraphql-codegen generate-sources` (Quarkus must be up; writes typed TS under `src/main/webui/src/api/generated/`).
+Swagger: `/q/swagger-ui` (Bearer JWT).
 
 ## Dev / test conventions agents must respect
 
@@ -101,5 +99,5 @@ Separate frontend (Vite on :3000) requires Quarkus with Quinoa’s managed dev s
 
 - Flyway migrations under `src/main/resources/db/migration` (append new versions; don’t rewrite applied ones).
 - JWT key locations (`src/main/resources/jwt/`).
-- GraphQL vs REST split (don’t move binary upload/download into GraphQL).
+- Keep binary upload/download on multipart/stream REST (not JSON domain payloads).
 - Team naming and tribute privacy/reveal semantics.

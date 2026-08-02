@@ -1,9 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
-import { useMutation } from 'urql'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
+import { api } from '../api/client'
+import { useApiMutation } from '../api/useApi'
 import Layout from '../components/Layout'
 import { LanguageSwitcher } from '../components/LanguageSwitcher'
 import { ThemePicker } from '../components/ThemePicker'
@@ -14,12 +15,11 @@ import { cn } from '../lib/cn'
 import { panelClass, stackClass } from '../components/ui/styles'
 import { useAuth } from '../auth'
 import { Seo } from '../seo/Seo'
-import { UPDATE_MY_PROFILE } from '../api/queries'
 
 export default function PreferencesPage() {
   const { t } = useTranslation()
   const { user, updateUser, accessToken } = useAuth()
-  const [, updateMyProfile] = useMutation(UPDATE_MY_PROFILE)
+  const [, updateMyProfile] = useApiMutation((displayName: string) => api.updateMyProfile(displayName))
 
   const profileSchema = z.object({
     displayName: z.string().min(2, t('preferences.displayName')),
@@ -49,12 +49,12 @@ export default function PreferencesPage() {
   })
 
   const onSaveProfile = profileForm.handleSubmit(async (values) => {
-    const result = await updateMyProfile({ displayName: values.displayName })
+    const result = await updateMyProfile(values.displayName)
     if (result.error) {
       toast.error(result.error.message)
       return
     }
-    const updated = result.data?.updateMyProfile
+    const updated = result.data
     if (updated) {
       updateUser({
         userId: updated.id,

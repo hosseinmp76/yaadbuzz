@@ -24,7 +24,7 @@ public class AccessService {
     }
 
     public Team requireTeam(UUID id) {
-        // Fetch coverMedia so GraphQL mapping can read url/mimeType after the session closes.
+        // Fetch coverMedia so API mapping can read url/mimeType after the session closes.
         Team team = Team.find(
                         "from Team t left join fetch t.coverMedia left join fetch t.organization where t.id = ?1",
                         id)

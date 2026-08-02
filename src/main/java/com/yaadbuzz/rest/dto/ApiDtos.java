@@ -1,4 +1,4 @@
-package com.yaadbuzz.graphql.types;
+package com.yaadbuzz.rest.dto;
 
 import com.yaadbuzz.domain.Characteristic;
 import com.yaadbuzz.domain.Comment;
@@ -13,7 +13,6 @@ import com.yaadbuzz.domain.Tribute;
 import com.yaadbuzz.domain.User;
 import com.yaadbuzz.domain.YearbookExport;
 import com.yaadbuzz.enums.ExportStatus;
-import com.yaadbuzz.enums.OrgRole;
 import com.yaadbuzz.enums.TeamRole;
 import com.yaadbuzz.enums.YearbookTheme;
 import com.yaadbuzz.pdf.YearbookContent;
@@ -23,9 +22,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public final class GqlTypes {
+public final class ApiDtos {
 
-    private GqlTypes() {
+    private ApiDtos() {
     }
 
     public record UserType(UUID id, String email, String displayName) {
@@ -362,7 +361,5 @@ public final class GqlTypes {
 
     public record ConnectionSearch(List<SearchHitType> items, String nextCursor, boolean hasNext) {
     }
-
-    public record OrgRoleType(OrgRole role) {
-    }
 }
+

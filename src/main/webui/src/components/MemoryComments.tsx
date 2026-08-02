@@ -1,40 +1,28 @@
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { useMutation, useQuery } from 'urql'
-import { ADD_COMMENT, COMMENTS } from '../api/queries'
+import { api } from '../api/client'
+import { useApiMutation, useApiQuery } from '../api/useApi'
 import { Button } from './ui/Button'
 import { Label, Textarea } from './ui/Field'
 import { cn } from '../lib/cn'
 import { stackClass } from './ui/styles'
 
-type CommentItem = {
-  id: string
-  text: string
-  writer?: { id: string; nickname: string } | null
-}
-
 export function MemoryComments({ memoryId }: { memoryId: string }) {
   const { t } = useTranslation()
-  const [{ data }, reexecute] = useQuery({
-    query: COMMENTS,
-    variables: { memoryId },
-  })
-  const [, addComment] = useMutation(ADD_COMMENT)
+  const [{ data }, reexecute] = useApiQuery(!!memoryId, () => api.comments(memoryId), [memoryId])
+  const [, addComment] = useApiMutation((id: string, text: string) =>
+    api.addComment(id, { text, parentId: null, mediaIds: [] }),
+  )
   const [text, setText] = useState('')
   const [posting, setPosting] = useState(false)
-  const comments = (data?.comments ?? []) as CommentItem[]
+  const comments = data ?? []
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     if (!text.trim()) return
     setPosting(true)
-    const result = await addComment({
-      memoryId,
-      text: text.trim(),
-      parentId: null,
-      mediaIds: [],
-    })
+    const result = await addComment(memoryId, text.trim())
     setPosting(false)
     if (result.error) {
       toast.error(result.error.message)
@@ -42,7 +30,7 @@ export function MemoryComments({ memoryId }: { memoryId: string }) {
     }
     toast.success(t('team.commentPosted'))
     setText('')
-    reexecute({ requestPolicy: 'network-only' })
+    reexecute()
   }
 
   return (

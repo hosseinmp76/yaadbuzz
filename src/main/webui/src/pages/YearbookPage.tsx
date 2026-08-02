@@ -3,8 +3,8 @@ import clsx from 'clsx'
 import type { CSSProperties, ReactNode } from 'react'
 import { useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { useQuery } from 'urql'
-import { YEARBOOK } from '../api/queries'
+import { api } from '../api/client'
+import { useApiQuery } from '../api/useApi'
 import { Button } from '../components/ui/Button'
 import { Avatar } from '../components/ui/Avatar'
 
@@ -61,17 +61,16 @@ function darken(hex: string, amount = 0.35): string {
 
 export default function YearbookPage() {
   const { teamId = '' } = useParams()
-  const [{ data, fetching, error }, reexecute] = useQuery({
-    query: YEARBOOK,
-    variables: { teamId },
-    pause: !teamId,
-    requestPolicy: 'network-only',
-  })
-  const yearbook = data?.yearbook as YearbookData | undefined
+  const [{ data, fetching, error }, reexecute] = useApiQuery(
+    !!teamId,
+    () => api.yearbook(teamId),
+    [teamId],
+  )
+  const yearbook = data as YearbookData | undefined
 
   useEffect(() => {
     if (!teamId) return
-    reexecute({ requestPolicy: 'network-only' })
+    reexecute()
   }, [teamId, reexecute])
 
   return (

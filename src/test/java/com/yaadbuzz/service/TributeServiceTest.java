@@ -8,8 +8,8 @@ import com.yaadbuzz.common.ApiException;
 import com.yaadbuzz.domain.Team;
 import com.yaadbuzz.domain.TeamMember;
 import com.yaadbuzz.domain.User;
+import com.yaadbuzz.support.ApiClient;
 import com.yaadbuzz.support.AuthSupport;
-import com.yaadbuzz.support.GraphQlClient;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -45,105 +45,82 @@ class TributeServiceTest {
     }
 
     @Test
-    void sealedTributeHiddenFromRecipientViaGraphql() {
+    void sealedTributeHiddenFromRecipientViaApi() {
         AuthSupport.AuthSession writer = AuthSupport.register(
                 "writer-" + UUID.randomUUID() + "@example.com", "password123", "Writer");
         AuthSupport.AuthSession recipient = AuthSupport.register(
                 "recip-" + UUID.randomUUID() + "@example.com", "password123", "Recipient");
 
-        String orgId = ((Map<?, ?>) GraphQlClient.data(GraphQlClient.query(
-                writer.accessToken(),
-                "mutation { createOrganization(name: \"Seal Org\") { id } }"
-        )).get("createOrganization")).get("id").toString();
+        String orgId = ApiClient.json(
+                        ApiClient.post(
+                                writer.accessToken(),
+                                "/api/organizations",
+                                Map.of("name", "Seal Org", "brandColor", "#123456")),
+                        200)
+                .get("id")
+                .toString();
 
-        String teamId = ((Map<?, ?>) GraphQlClient.data(GraphQlClient.query(
-                writer.accessToken(),
-                """
-                        mutation($orgId: String!) {
-                          createTeam(organizationId: $orgId, name: "Seal Team") { id }
-                        }
-                        """,
-                Map.of("orgId", orgId)
-        )).get("createTeam")).get("id").toString();
+        String teamId = ApiClient.json(
+                        ApiClient.post(
+                                writer.accessToken(),
+                                "/api/organizations/" + orgId + "/teams",
+                                Map.of("name", "Seal Team", "brandColor", "#123456")),
+                        200)
+                .get("id")
+                .toString();
 
-        String code = ((Map<?, ?>) GraphQlClient.data(GraphQlClient.query(
-                writer.accessToken(),
-                """
-                        mutation($teamId: String!) {
-                          createInvite(teamId: $teamId, role: MEMBER) { code }
-                        }
-                        """,
-                Map.of("teamId", teamId)
-        )).get("createInvite")).get("code").toString();
+        String code = ApiClient.json(
+                        ApiClient.post(
+                                writer.accessToken(),
+                                "/api/teams/" + teamId + "/invites",
+                                Map.of("role", "MEMBER")),
+                        200)
+                .get("code")
+                .toString();
 
-        String recipientMemberId = ((Map<?, ?>) GraphQlClient.data(GraphQlClient.query(
-                recipient.accessToken(),
-                """
-                        mutation($code: String!) {
-                          joinTeam(code: $code, nickname: "Recip") { id }
-                        }
-                        """,
-                Map.of("code", code)
-        )).get("joinTeam")).get("id").toString();
+        String recipientMemberId = ApiClient.json(
+                        ApiClient.post(
+                                recipient.accessToken(),
+                                "/api/teams/join",
+                                Map.of("code", code, "nickname", "Recip")),
+                        200)
+                .get("id")
+                .toString();
 
-        GraphQlClient.data(GraphQlClient.query(
-                writer.accessToken(),
-                """
-                        mutation($teamId: String!, $recipientId: String!) {
-                          createTribute(
-                            teamId: $teamId,
-                            recipientId: $recipientId,
-                            text: "Secret praise",
-                            anonymous: false,
-                            privateTribute: false
-                          ) { id }
-                        }
-                        """,
-                Map.of("teamId", teamId, "recipientId", recipientMemberId)
-        ));
+        ApiClient.json(
+                ApiClient.post(
+                        writer.accessToken(),
+                        "/api/teams/" + teamId + "/tributes",
+                        Map.of(
+                                "recipientId", recipientMemberId,
+                                "text", "Secret praise",
+                                "anonymous", false,
+                                "privateTribute", false)),
+                200);
 
-        Map<String, Object> recipientView = GraphQlClient.data(GraphQlClient.query(
-                recipient.accessToken(),
-                """
-                        query($teamId: String!, $recipientId: String!) {
-                          tributes(teamId: $teamId, recipientId: $recipientId, first: 20) {
-                            items { text }
-                          }
-                        }
-                        """,
-                Map.of("teamId", teamId, "recipientId", recipientMemberId)
-        ));
+        Map<String, Object> recipientView = ApiClient.json(
+                ApiClient.get(
+                        recipient.accessToken(),
+                        "/api/teams/" + teamId + "/tributes?recipientId=" + recipientMemberId + "&first=20"),
+                200);
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> items =
-                (List<Map<String, Object>>) ((Map<?, ?>) recipientView.get("tributes")).get("items");
+        List<Map<String, Object>> items = (List<Map<String, Object>>) recipientView.get("items");
         assertTrue(items.isEmpty());
 
-        GraphQlClient.data(GraphQlClient.query(
-                writer.accessToken(),
-                """
-                        mutation($teamId: String!) {
-                          updateTeamSettings(teamId: $teamId, revealTributes: true) {
-                            tributesRevealed
-                          }
-                        }
-                        """,
-                Map.of("teamId", teamId)
-        ));
+        ApiClient.json(
+                ApiClient.patch(
+                        writer.accessToken(),
+                        "/api/teams/" + teamId,
+                        Map.of("revealTributes", true)),
+                200);
 
-        Map<String, Object> revealedView = GraphQlClient.data(GraphQlClient.query(
-                recipient.accessToken(),
-                """
-                        query($teamId: String!, $recipientId: String!) {
-                          tributes(teamId: $teamId, recipientId: $recipientId, first: 20) {
-                            items { text }
-                          }
-                        }
-                        """,
-                Map.of("teamId", teamId, "recipientId", recipientMemberId)
-        ));
+        Map<String, Object> revealedView = ApiClient.json(
+                ApiClient.get(
+                        recipient.accessToken(),
+                        "/api/teams/" + teamId + "/tributes?recipientId=" + recipientMemberId + "&first=20"),
+                200);
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> revealed =
-                (List<Map<String, Object>>) ((Map<?, ?>) revealedView.get("tributes")).get("items");
+        List<Map<String, Object>> revealed = (List<Map<String, Object>>) revealedView.get("items");
         assertTrue(revealed.stream().anyMatch(i -> "Secret praise".equals(i.get("text"))));
     }
 

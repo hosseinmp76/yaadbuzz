@@ -3,15 +3,15 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
-import { useMutation } from 'urql'
 import { z } from 'zod'
+import { api } from '../api/client'
+import { useApiMutation } from '../api/useApi'
 import Layout from '../components/Layout'
 import { Button } from '../components/ui/Button'
 import { FieldError, Input, Label, Textarea } from '../components/ui/Field'
 import { PageTitle } from '../components/ui/PageTitle'
 import { cn } from '../lib/cn'
 import { panelClass, stackClass } from '../components/ui/styles'
-import { JOIN_TEAM } from '../api/queries'
 
 type FormValues = {
   code: string
@@ -23,7 +23,9 @@ export default function JoinPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const [, joinTeam] = useMutation(JOIN_TEAM)
+  const [, joinTeam] = useApiMutation(
+    (code: string, nickname: string | null, bio: string | null) => api.joinTeam(code, nickname ?? '', bio),
+  )
   const schema = z.object({
     code: z.string().min(4, t('join.codeRequired')),
     nickname: z.string().optional(),
@@ -43,16 +45,12 @@ export default function JoinPage() {
   })
 
   const onSubmit = handleSubmit(async (values) => {
-    const result = await joinTeam({
-      code: values.code,
-      nickname: values.nickname || null,
-      bio: values.bio || null,
-    })
+    const result = await joinTeam(values.code, values.nickname || null, values.bio || null)
     if (result.error) {
       toast.error(result.error.message)
       return
     }
-    const teamId = result.data?.joinTeam?.teamId
+    const teamId = result.data?.teamId
     if (!teamId) {
       toast.error(t('common.requestFailed'))
       return
