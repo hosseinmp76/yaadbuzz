@@ -165,7 +165,7 @@ function YearbookDocument({ yearbook }: { yearbook: YearbookData }) {
           <img
             src={yearbook.coverMediaUrl}
             alt=""
-            className="mb-6 max-h-40 max-w-[70%] object-contain"
+            className="mb-8 max-h-[min(52vh,420px)] w-auto max-w-[min(92%,36rem)] object-contain shadow-lg"
           />
         ) : yearbook.logoUrl ? (
           <img src={yearbook.logoUrl} alt="" className="mb-6 max-h-20 object-contain" />
@@ -188,61 +188,65 @@ function YearbookDocument({ yearbook }: { yearbook: YearbookData }) {
             <SectionHeading color={brand} theme={theme}>
               Members
             </SectionHeading>
-            <div className="mt-5 space-y-8">
+            <div className="mt-5 space-y-12">
               {yearbook.members.map((member) => (
                 <div
                   key={member.nickname}
                   className={clsx(
-                    'yearbook-block',
+                    'yearbook-block text-center',
                     theme === 'SCRAPBOOK' &&
-                      'rounded-xl border border-[#e7e5e4] bg-[#fffdf8] p-4',
+                      'rounded-xl border border-[#e7e5e4] bg-[#fffdf8] p-6',
                   )}
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex flex-col items-center">
                     <Avatar
                       name={member.nickname}
                       src={member.avatarUrl}
-                      size="md"
-                      style={{ border: `2px solid ${brand}` }}
+                      size="lg"
+                      className="!h-auto !w-auto max-h-[160px] max-w-[160px]"
+                      style={{ border: `3px solid ${brand}` }}
                     />
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-display text-2xl tracking-tight text-[#1c1917]">
-                        {member.nickname}
-                      </h3>
-                      {member.bio && <p className="mt-1 text-[#57534e]">{member.bio}</p>}
-                      {yearbook.showCharacteristics && member.characteristics.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {member.characteristics.map((c) => (
-                            <span
-                              key={c.title}
-                              className="rounded-md px-2 py-1 text-xs font-semibold"
-                              style={{
-                                backgroundColor: chipBg,
-                                color: brand,
-                                border: `1px solid ${brand}`,
-                              }}
-                            >
-                              {c.title} × {c.count}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    <h3 className="mt-4 font-display text-2xl tracking-tight text-[#1c1917]">
+                      {member.nickname}
+                    </h3>
+                    {member.bio && (
+                      <p className="mx-auto mt-1 max-w-md text-[#57534e]">{member.bio}</p>
+                    )}
+                    {yearbook.showCharacteristics && member.characteristics.length > 0 && (
+                      <div className="mt-3 flex flex-wrap justify-center gap-2">
+                        {member.characteristics.map((c) => (
+                          <span
+                            key={c.title}
+                            className="rounded-md px-2 py-1 text-xs font-semibold"
+                            style={{
+                              backgroundColor: chipBg,
+                              color: brand,
+                              border: `1px solid ${brand}`,
+                            }}
+                          >
+                            {c.title} × {c.count}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {yearbook.showTributes &&
-                    member.tributes.map((t, idx) => (
-                      <blockquote
-                        key={`${member.nickname}-${idx}`}
-                        className="mt-3 px-3 py-2"
-                        style={{
-                          borderLeft: `4px solid ${brand}`,
-                          backgroundColor: theme === 'MODERN' ? '#f1f5f9' : '#f5f5f4',
-                        }}
-                      >
-                        <p className="whitespace-pre-wrap text-[#1c1917]">{t.text}</p>
-                        <footer className="mt-1 text-sm text-[#57534e]">— {t.writer}</footer>
-                      </blockquote>
-                    ))}
+                  {yearbook.showTributes && (
+                    <div className="mx-auto mt-4 max-w-lg space-y-3 text-left">
+                      {member.tributes.map((t, idx) => (
+                        <blockquote
+                          key={`${member.nickname}-${idx}`}
+                          className="px-3 py-2"
+                          style={{
+                            borderLeft: `4px solid ${brand}`,
+                            backgroundColor: theme === 'MODERN' ? '#f1f5f9' : '#f5f5f4',
+                          }}
+                        >
+                          <p className="whitespace-pre-wrap text-[#1c1917]">{t.text}</p>
+                          <footer className="mt-1 text-sm text-[#57534e]">— {t.writer}</footer>
+                        </blockquote>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -254,46 +258,48 @@ function YearbookDocument({ yearbook }: { yearbook: YearbookData }) {
             <SectionHeading color={brand} theme={theme}>
               Memories
             </SectionHeading>
-            <div className="mt-5 space-y-5">
+            <div className="mt-5 space-y-14">
               {yearbook.memories.map((memory, idx) => (
-                <article key={idx} className="yearbook-block">
-                  {memory.title && (
-                    <strong className="text-lg text-[#1c1917]">{memory.title}</strong>
-                  )}
-                  <p className="mt-1 whitespace-pre-wrap text-[#1c1917]">{memory.body}</p>
+                <article key={idx} className="yearbook-block break-inside-avoid">
                   {memory.imageUrls && memory.imageUrls.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="space-y-3">
                       {memory.imageUrls.map((url) => (
                         <img
                           key={url}
                           src={url}
                           alt=""
-                          className="h-28 max-w-[10rem] rounded-lg object-cover"
+                          className="mx-auto h-auto max-h-[32rem] w-auto max-w-2xl object-contain shadow-md"
                         />
                       ))}
                     </div>
                   )}
-                  <p className="mt-2 text-sm text-[#57534e]">— {memory.writer}</p>
+                  <div className="mx-auto mt-4 max-w-lg text-center">
+                    {memory.title && (
+                      <strong className="font-display text-xl text-[#1c1917]">{memory.title}</strong>
+                    )}
+                    <p className="mt-2 whitespace-pre-wrap text-[#1c1917]">{memory.body}</p>
+                    <p className="mt-2 text-sm italic text-[#57534e]">— {memory.writer}</p>
+                  </div>
                   {memory.comments && memory.comments.length > 0 && (
-                    <div className="mt-3 space-y-2 border-l-2 border-[#d6d3d1] pl-3">
+                    <div className="mx-auto mt-6 max-w-md space-y-5 border-t border-[#e7e5e4] pt-4">
                       {memory.comments.map((comment, cIdx) => (
-                        <div key={cIdx} className="text-sm">
-                          {comment.text ? (
-                            <p className="whitespace-pre-wrap text-[#1c1917]">{comment.text}</p>
-                          ) : null}
+                        <div key={cIdx} className="text-center text-sm">
                           {comment.imageUrls && comment.imageUrls.length > 0 && (
-                            <div className={clsx('flex flex-wrap gap-2', comment.text && 'mt-2')}>
+                            <div className="mb-2 space-y-2">
                               {comment.imageUrls.map((url) => (
                                 <img
                                   key={url}
                                   src={url}
                                   alt=""
-                                  className="h-20 max-w-[8rem] rounded-lg object-cover"
+                                  className="mx-auto h-auto max-h-64 w-auto max-w-[85%] object-contain shadow-sm"
                                 />
                               ))}
                             </div>
                           )}
-                          <p className="mt-0.5 text-[#57534e]">— {comment.writer}</p>
+                          {comment.text ? (
+                            <p className="whitespace-pre-wrap text-[#1c1917]">{comment.text}</p>
+                          ) : null}
+                          <p className="mt-0.5 italic text-[#57534e]">— {comment.writer}</p>
                         </div>
                       ))}
                     </div>
@@ -301,7 +307,7 @@ function YearbookDocument({ yearbook }: { yearbook: YearbookData }) {
                 </article>
               ))}
               {yearbook.memories.length === 0 && (
-                <p className="text-[#57534e]">No shared memories yet.</p>
+                <p className="text-center text-[#57534e]">No shared memories yet.</p>
               )}
             </div>
           </section>

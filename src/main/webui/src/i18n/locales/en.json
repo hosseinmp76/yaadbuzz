@@ -180,14 +180,13 @@
   "register": {
     "seoTitle": "Register",
     "title": "Create your account",
-    "subtitle": "Start a yearbook for your team.",
-    "displayName": "Display name",
+    "subtitle": "Enter your email and we will send a link to set your password.",
     "email": "Email",
-    "password": "Password",
-    "submit": "Create account",
-    "submitting": "Creating…",
+    "submit": "Send setup link",
+    "submitting": "Sending…",
     "haveAccount": "Already have an account?",
     "login": "Log in",
+    "success": "If that email can be used, a link to set your password has been sent.",
     "failed": "Registration failed"
   },
   "forgot": {
@@ -212,6 +211,20 @@
     "mismatch": "Passwords do not match",
     "missingToken": "This reset link is invalid or incomplete.",
     "success": "Password updated. You can log in now.",
+    "login": "Log in",
+    "failed": "Request failed"
+  },
+  "setup": {
+    "seoTitle": "Set your password",
+    "title": "Set your password",
+    "subtitle": "Finish creating your account with a password of at least 8 characters.",
+    "password": "Password",
+    "confirm": "Confirm password",
+    "submit": "Set password",
+    "submitting": "Saving…",
+    "mismatch": "Passwords do not match",
+    "missingToken": "This setup link is invalid or incomplete.",
+    "success": "Password set. You can log in now.",
     "login": "Log in",
     "failed": "Request failed"
   },

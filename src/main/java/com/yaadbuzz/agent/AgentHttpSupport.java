@@ -161,8 +161,9 @@ public class AgentHttpSupport {
 
                 Human UI: %s/register
 
-                Agents: `POST %s/api/auth/register` with JSON `{ "email", "password", "displayName" }`.
+                Agents: `POST %s/api/auth/register` with JSON `{ "email" }` (set-password link emailed),
+                then `POST %s/api/auth/reset-password` with `{ "token", "newPassword" }`.
                 Details: %s/auth.md
-                """.formatted(base, base, base);
+                """.formatted(base, base, base, base);
     }
 }

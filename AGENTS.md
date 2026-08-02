@@ -61,7 +61,7 @@ Frontend lives in `src/main/webui/src/` (pages, components, theme, OpenAPI-typed
 
 | Surface | Purpose |
 |---|---|
-| `POST /api/auth/*` | Register, login, refresh |
+| `POST /api/auth/*` | Register (email → set-password link), login, refresh, forgot/reset password |
 | `GET/PATCH /api/me` | Current user |
 | `/api/organizations`, `/api/teams`, `/api/members`, … | Yearbook domain CRUD/read |
 | `POST /api/media` | Image upload |

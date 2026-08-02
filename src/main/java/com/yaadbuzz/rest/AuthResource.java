@@ -42,10 +42,12 @@ public class AuthResource {
 
     @POST
     @Path("/register")
-    @Operation(summary = "Register with email and password")
-    public AuthResponse register(@Valid RegisterRequest request) {
-        var tokens = authService.register(request.email(), request.password(), request.displayName());
-        return toResponse(tokens);
+    @Operation(summary = "Start registration with email; a set-password link is emailed")
+    public MessageResponse register(@Valid RegisterRequest request) {
+        authService.register(request.email());
+        return new MessageResponse(
+                "If that email can be used, a link to set your password has been sent."
+        );
     }
 
     @POST

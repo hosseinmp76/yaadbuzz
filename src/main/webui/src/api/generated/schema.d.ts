@@ -603,7 +603,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Register with email and password */
+        /** Start registration with email; a set-password link is emailed */
         post: {
             parameters: {
                 query?: never;
@@ -623,7 +623,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["AuthResponse"];
+                        "application/json": components["schemas"]["MessageResponse"];
                     };
                 };
                 /** @description Bad Request */
@@ -3000,8 +3000,6 @@ export interface components {
         };
         RegisterRequest: {
             email: string;
-            password: string;
-            displayName: string;
         };
         ResetPasswordRequest: {
             token: string;

@@ -12,11 +12,7 @@ public final class AuthDtos {
     }
 
     @Schema(name = "RegisterRequest")
-    public record RegisterRequest(
-            @NotBlank @Email String email,
-            @NotBlank @Size(min = 8) String password,
-            @NotBlank String displayName
-    ) {
+    public record RegisterRequest(@NotBlank @Email String email) {
     }
 
     @Schema(name = "LoginRequest")

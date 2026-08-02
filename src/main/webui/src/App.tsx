@@ -39,6 +39,7 @@ export default function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/set-password" element={<ResetPasswordPage />} />
       <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
       <Route path="/join" element={<Protected><JoinPage /></Protected>} />
       <Route path="/app" element={<Protected><DashboardPage /></Protected>} />

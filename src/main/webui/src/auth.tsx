@@ -6,7 +6,7 @@ type AuthState = {
   refreshToken: string | null
   user: AuthUser | null
   login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string, displayName: string) => Promise<void>
+  register: (email: string) => Promise<string>
   completeOAuth: (code: string) => Promise<void>
   updateUser: (user: AuthUser) => void
   logout: () => Promise<void>
@@ -57,8 +57,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async login(email, password) {
       setStored(await authRequest('/api/auth/login', { email, password }))
     },
-    async register(email, password, displayName) {
-      setStored(await authRequest('/api/auth/register', { email, password, displayName }))
+    async register(email) {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(data.message || 'Request failed')
+      }
+      return typeof data.message === 'string' ? data.message : ''
     },
     async completeOAuth(code) {
       setStored(await authRequest('/api/auth/oauth/exchange', { code }))

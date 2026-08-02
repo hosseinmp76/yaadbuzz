@@ -206,7 +206,16 @@ public class AgentDiscoveryResource {
                 POST %s/api/auth/register
                 Content-Type: application/json
 
-                {"email":"you@example.com","password":"at-least-8-chars","displayName":"Your Name"}
+                {"email":"you@example.com"}
+                ```
+
+                A set-password email is sent. Complete with:
+
+                ```http
+                POST %s/api/auth/reset-password
+                Content-Type: application/json
+
+                {"token":"<from-email>","newPassword":"at-least-8-chars"}
                 ```
 
                 ## Login

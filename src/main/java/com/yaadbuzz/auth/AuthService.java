@@ -38,24 +38,35 @@ public class AuthService {
     @ConfigProperty(name = "yaadbuzz.password-reset.ttl", defaultValue = "PT1H")
     Duration passwordResetTtl;
 
+    @ConfigProperty(name = "yaadbuzz.account-setup.ttl", defaultValue = "PT24H")
+    Duration accountSetupTtl;
+
+    /**
+     * Start registration with email only. Creates a passwordless account (or resends the
+     * setup link for an unfinished signup) and emails a set-password link. Always succeeds
+     * with a generic outcome to avoid email enumeration when the account already has a password.
+     */
     @Transactional
-    public AuthTokens register(String email, String password, String displayName) {
+    public void register(String email) {
+        if (email == null || email.isBlank()) {
+            return;
+        }
         String normalized = email.trim().toLowerCase();
-        if (normalized.isBlank() || password == null || password.length() < 8) {
-            throw ApiException.badRequest("Valid email and password (min 8 chars) are required");
-        }
-        if (displayName == null || displayName.isBlank()) {
-            throw ApiException.badRequest("Display name is required");
-        }
-        if (User.findByEmail(normalized).isPresent()) {
-            throw ApiException.conflict("Email already registered");
+        Optional<User> existing = User.findByEmail(normalized);
+        if (existing.isPresent()) {
+            User user = existing.get();
+            if (user.hasPassword()) {
+                return;
+            }
+            issueAccountSetupToken(user);
+            return;
         }
         User user = new User();
         user.email = normalized;
-        user.passwordHash = BcryptUtil.bcryptHash(password);
-        user.displayName = displayName.trim();
+        user.passwordHash = null;
+        user.displayName = displayNameFromEmail(normalized);
         user.persist();
-        return tokensFor(user);
+        issueAccountSetupToken(user);
     }
 
     public AuthTokens login(String email, String password) {
@@ -165,6 +176,11 @@ public class AuthService {
         }
         String normalized = email.trim().toLowerCase();
         User.findByEmail(normalized).ifPresent(user -> {
+            if (!user.hasPassword()) {
+                // Unfinished signup: send setup mail instead of a reset.
+                issueAccountSetupToken(user);
+                return;
+            }
             String rawToken = generateToken();
             user.passwordResetTokenHash = hashToken(rawToken);
             user.passwordResetExpiresAt = Instant.now().plus(passwordResetTtl);
@@ -175,6 +191,24 @@ public class AuthService {
                 throw ApiException.badRequest("Could not send reset email. Try again later.");
             }
         });
+    }
+
+    private void issueAccountSetupToken(User user) {
+        String rawToken = generateToken();
+        user.passwordResetTokenHash = hashToken(rawToken);
+        user.passwordResetExpiresAt = Instant.now().plus(accountSetupTtl);
+        try {
+            emailService.sendAccountSetup(user.email, user.displayName, rawToken);
+        } catch (Exception e) {
+            LOG.errorf(e, "Account setup email failed for %s", user.email);
+            throw ApiException.badRequest("Could not send setup email. Try again later.");
+        }
+    }
+
+    private static String displayNameFromEmail(String email) {
+        int at = email.indexOf('@');
+        String local = at > 0 ? email.substring(0, at) : email;
+        return local.isBlank() ? "Yaadbuzz user" : local;
     }
 
     @Transactional

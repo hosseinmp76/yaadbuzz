@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
@@ -17,11 +17,8 @@ import { Seo } from '../seo/Seo'
 export default function RegisterPage() {
   const { t } = useTranslation()
   const { register: registerUser, accessToken } = useAuth()
-  const navigate = useNavigate()
   const schema = z.object({
-    displayName: z.string().min(2),
     email: z.email(t('login.emailRequired')),
-    password: z.string().min(8),
   })
   type FormValues = z.infer<typeof schema>
   const {
@@ -32,9 +29,7 @@ export default function RegisterPage() {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      displayName: '',
       email: '',
-      password: '',
     },
   })
 
@@ -42,9 +37,8 @@ export default function RegisterPage() {
 
   const onSubmit = handleSubmit(async (values) => {
     try {
-      await registerUser(values.email, values.password, values.displayName)
-      toast.success(t('register.submit'))
-      void navigate('/app')
+      const message = await registerUser(values.email)
+      toast.success(message || t('register.success'))
     } catch (err) {
       const message = err instanceof Error ? err.message : t('register.failed')
       setError('root', { message })
@@ -60,19 +54,9 @@ export default function RegisterPage() {
         <p className="text-muted">{t('register.subtitle')}</p>
         <form className={cn(panelClass, stackClass, 'mt-5')} onSubmit={onSubmit}>
           <Label>
-            {t('register.displayName')}
-            <Input autoComplete="name" {...register('displayName')} />
-            <FieldError message={errors.displayName?.message} />
-          </Label>
-          <Label>
             {t('register.email')}
             <Input type="email" autoComplete="email" {...register('email')} />
             <FieldError message={errors.email?.message} />
-          </Label>
-          <Label>
-            {t('register.password')}
-            <Input type="password" autoComplete="new-password" {...register('password')} />
-            <FieldError message={errors.password?.message} />
           </Label>
           <FieldError message={errors.root?.message} />
           <Button type="submit" className="w-full" disabled={isSubmitting}>

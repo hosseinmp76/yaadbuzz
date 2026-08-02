@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
@@ -15,8 +15,11 @@ import { Seo } from '../seo/Seo'
 export default function ResetPasswordPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const [params] = useSearchParams()
   const token = params.get('token') ?? ''
+  const isSetup = location.pathname.startsWith('/set-password')
+  const copy = isSetup ? 'setup' : 'reset'
 
   const schema = z
     .object({
@@ -24,7 +27,7 @@ export default function ResetPasswordPage() {
       confirm: z.string().min(8),
     })
     .refine((v) => v.newPassword === v.confirm, {
-      message: t('reset.mismatch'),
+      message: t(`${copy}.mismatch`),
       path: ['confirm'],
     })
   type FormValues = z.infer<typeof schema>
@@ -40,7 +43,7 @@ export default function ResetPasswordPage() {
 
   const onSubmit = handleSubmit(async (values) => {
     if (!token) {
-      toast.error(t('reset.missingToken'))
+      toast.error(t(`${copy}.missingToken`))
       return
     }
     const res = await fetch('/api/auth/reset-password', {
@@ -50,41 +53,41 @@ export default function ResetPasswordPage() {
     })
     const data = await res.json().catch(() => ({}))
     if (!res.ok) {
-      toast.error(data.message || t('reset.failed'))
+      toast.error(data.message || t(`${copy}.failed`))
       return
     }
-    toast.success(data.message || t('reset.success'))
+    toast.success(data.message || t(`${copy}.success`))
     void navigate('/login')
   })
 
   return (
     <Layout>
-      <Seo title={t('reset.seoTitle')} path="/reset-password" noIndex />
+      <Seo title={t(`${copy}.seoTitle`)} path={isSetup ? '/set-password' : '/reset-password'} noIndex />
       <div className="mx-auto max-w-md py-8">
-        <PageTitle>{t('reset.title')}</PageTitle>
-        <p className="text-muted">{t('reset.subtitle')}</p>
+        <PageTitle>{t(`${copy}.title`)}</PageTitle>
+        <p className="text-muted">{t(`${copy}.subtitle`)}</p>
         {!token ? (
-          <p className="mt-5 text-danger">{t('reset.missingToken')}</p>
+          <p className="mt-5 text-danger">{t(`${copy}.missingToken`)}</p>
         ) : (
           <form className={cn(panelClass, stackClass, 'mt-5')} onSubmit={onSubmit}>
             <Label>
-              {t('reset.password')}
+              {t(`${copy}.password`)}
               <Input type="password" autoComplete="new-password" {...register('newPassword')} />
               <FieldError message={errors.newPassword?.message} />
             </Label>
             <Label>
-              {t('reset.confirm')}
+              {t(`${copy}.confirm`)}
               <Input type="password" autoComplete="new-password" {...register('confirm')} />
               <FieldError message={errors.confirm?.message} />
             </Label>
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? t('reset.submitting') : t('reset.submit')}
+              {isSubmitting ? t(`${copy}.submitting`) : t(`${copy}.submit`)}
             </Button>
           </form>
         )}
         <p className="mt-4 text-muted">
           <Link to="/login" className="font-semibold text-brand">
-            {t('reset.login')}
+            {t(`${copy}.login`)}
           </Link>
         </p>
       </div>

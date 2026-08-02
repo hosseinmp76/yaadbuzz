@@ -22,6 +22,10 @@ public class EmailService {
     Template passwordResetTemplate;
 
     @Inject
+    @Location("mail/account-setup")
+    Template accountSetupTemplate;
+
+    @Inject
     @Location("mail/team-invite")
     Template teamInviteTemplate;
 
@@ -42,6 +46,16 @@ public class EmailService {
                 .data("publicUrl", publicUrl)
                 .render();
         send(toEmail, "Reset your Yaadbuzz password", html, "password-reset", resetUrl);
+    }
+
+    public void sendAccountSetup(String toEmail, String displayName, String rawToken) {
+        String setupUrl = publicUrl.replaceAll("/$", "") + "/set-password?token=" + rawToken;
+        String html = accountSetupTemplate
+                .data("displayName", displayName)
+                .data("setupUrl", setupUrl)
+                .data("publicUrl", publicUrl)
+                .render();
+        send(toEmail, "Set your Yaadbuzz password", html, "account-setup", setupUrl);
     }
 
     public void sendTeamInvite(

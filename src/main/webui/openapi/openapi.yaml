@@ -326,18 +326,10 @@ components:
       type: object
       required:
       - email
-      - password
-      - displayName
       properties:
         email:
           type: string
           pattern: \S
-        password:
-          type: string
-          pattern: \S
-          minLength: 8
-        displayName:
-          type: string
           pattern: \S
     ResetPasswordRequest:
       type: object
@@ -925,7 +917,7 @@ paths:
           description: Bad Request
   /api/auth/register:
     post:
-      summary: Register with email and password
+      summary: Start registration with email; a set-password link is emailed
       tags:
       - Auth
       requestBody:
@@ -940,7 +932,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthResponse"
+                $ref: "#/components/schemas/MessageResponse"
         "400":
           description: Bad Request
   /api/auth/reset-password:
