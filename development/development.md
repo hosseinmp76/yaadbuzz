@@ -65,7 +65,19 @@ Open:
 
 Vite’s managed port is **3000** (`quarkus.quinoa.dev-server.port`). Prefer using **8080** so auth and `/api` share one origin.
 
-Frontend domain calls live in `src/main/webui/src/api/` (`client.ts`, `http.ts`, `types.ts`, `useApi.ts`).
+Frontend domain calls use OpenAPI-generated types (`openapi-typescript` + `openapi-fetch`) under `src/main/webui/src/api/`.
+
+After changing backend REST APIs (Quarkus must be running):
+
+```bash
+./mvnw -Popenapi-codegen generate-sources
+# or:
+cd src/main/webui && npm run openapi:generate
+```
+
+- Schema snapshot: `src/main/webui/openapi/openapi.yaml`
+- Generated paths/schemas: `src/main/webui/src/api/generated/schema.d.ts`
+- App wrappers: `client.ts`, `openapiClient.ts`, `types.ts`, `useApi.ts`
 
 **Seed users** (dev seed enabled; password `password123`):
 
@@ -401,7 +413,7 @@ yaadbuzz/
 │   │       ├── vite.config.ts
 │   │       ├── index.html
 │   │       └── src/
-│   │           ├── api/                # typed REST fetch client
+│   │           ├── api/                # OpenAPI-typed REST client (openapi-fetch)
 │   │           ├── components/         # Layout, ThemePicker, UI primitives
 │   │           ├── theme/              # Theme presets + ThemeProvider
 │   │           ├── pages/              # Route screens

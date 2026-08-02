@@ -1,9 +1,10 @@
-import { apiFetch } from './http'
+import { openapi, unwrap } from './openapiClient'
 import type {
   Characteristic,
   Comment,
   Connection,
   Invite,
+  Media,
   Memory,
   Organization,
   SearchHit,
@@ -17,45 +18,40 @@ import type {
   YearbookExport,
 } from './types'
 
-function qs(params: Record<string, string | number | boolean | undefined | null>): string {
-  const sp = new URLSearchParams()
-  for (const [k, v] of Object.entries(params)) {
-    if (v === undefined || v === null || v === '') continue
-    sp.set(k, String(v))
-  }
-  const s = sp.toString()
-  return s ? `?${s}` : ''
-}
-
 export const api = {
-  me: () => apiFetch<User>('/api/me'),
+  me: () => unwrap(openapi.GET('/api/me')) as Promise<User>,
   updateMyProfile: (displayName: string) =>
-    apiFetch<User>('/api/me', {
-      method: 'PATCH',
-      body: JSON.stringify({ displayName }),
-    }),
+    unwrap(openapi.PATCH('/api/me', { body: { displayName } })) as Promise<User>,
 
-  myOrganizations: () => apiFetch<Organization[]>('/api/organizations'),
+  myOrganizations: () =>
+    unwrap(openapi.GET('/api/organizations')) as Promise<Organization[]>,
   createOrganization: (name: string, brandColor: string) =>
-    apiFetch<Organization>('/api/organizations', {
-      method: 'POST',
-      body: JSON.stringify({ name, brandColor }),
-    }),
-  organization: (id: string) => apiFetch<Organization>(`/api/organizations/${id}`),
+    unwrap(openapi.POST('/api/organizations', { body: { name, brandColor } })) as Promise<Organization>,
+  organization: (id: string) =>
+    unwrap(openapi.GET('/api/organizations/{id}', { params: { path: { id } } })) as Promise<Organization>,
   updateOrganizationBranding: (id: string, brandColor: string, logoId?: string | null) =>
-    apiFetch<Organization>(`/api/organizations/${id}/branding`, {
-      method: 'PATCH',
-      body: JSON.stringify({ brandColor, logoId }),
-    }),
+    unwrap(
+      openapi.PATCH('/api/organizations/{id}/branding', {
+        params: { path: { id } },
+        body: { brandColor, logoId: logoId ?? undefined },
+      }),
+    ) as Promise<Organization>,
 
   teams: (organizationId: string) =>
-    apiFetch<Team[]>(`/api/organizations/${organizationId}/teams`),
+    unwrap(
+      openapi.GET('/api/organizations/{orgId}/teams', {
+        params: { path: { orgId: organizationId } },
+      }),
+    ) as Promise<Team[]>,
   createTeam: (organizationId: string, name: string, brandColor: string) =>
-    apiFetch<Team>(`/api/organizations/${organizationId}/teams`, {
-      method: 'POST',
-      body: JSON.stringify({ name, brandColor }),
-    }),
-  team: (id: string) => apiFetch<Team>(`/api/teams/${id}`),
+    unwrap(
+      openapi.POST('/api/organizations/{orgId}/teams', {
+        params: { path: { orgId: organizationId } },
+        body: { name, brandColor },
+      }),
+    ) as Promise<Team>,
+  team: (id: string) =>
+    unwrap(openapi.GET('/api/teams/{id}', { params: { path: { id } } })) as Promise<Team>,
   updateTeamSettings: (
     teamId: string,
     body: {
@@ -65,10 +61,17 @@ export const api = {
       revealAt?: string | null
     },
   ) =>
-    apiFetch<Team>(`/api/teams/${teamId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(body),
-    }),
+    unwrap(
+      openapi.PATCH('/api/teams/{id}', {
+        params: { path: { id: teamId } },
+        body: {
+          brandColor: body.brandColor ?? undefined,
+          coverMediaId: body.coverMediaId ?? undefined,
+          revealTributes: body.revealTributes ?? undefined,
+          revealAt: body.revealAt ?? undefined,
+        },
+      }),
+    ) as Promise<Team>,
   updateYearbookSettings: (
     teamId: string,
     body: {
@@ -83,61 +86,105 @@ export const api = {
       showAwards?: boolean | null
     },
   ) =>
-    apiFetch<Team>(`/api/teams/${teamId}/yearbook-settings`, {
-      method: 'PATCH',
-      body: JSON.stringify(body),
-    }),
+    unwrap(
+      openapi.PATCH('/api/teams/{id}/yearbook-settings', {
+        params: { path: { id: teamId } },
+        body: {
+          title: body.title ?? undefined,
+          subtitle: body.subtitle ?? undefined,
+          dedication: body.dedication ?? undefined,
+          theme: body.theme as 'CLASSIC' | 'MODERN' | 'SCRAPBOOK' | 'MINIMAL' | undefined,
+          showMembers: body.showMembers ?? undefined,
+          showTributes: body.showTributes ?? undefined,
+          showCharacteristics: body.showCharacteristics ?? undefined,
+          showMemories: body.showMemories ?? undefined,
+          showAwards: body.showAwards ?? undefined,
+        },
+      }),
+    ) as Promise<Team>,
 
   teamMembers: (teamId: string, opts?: { first?: number; after?: string; query?: string }) =>
-    apiFetch<Connection<TeamMember>>(
-      `/api/teams/${teamId}/members${qs({
-        first: opts?.first,
-        after: opts?.after,
-        query: opts?.query,
-      })}`,
-    ),
+    unwrap(
+      openapi.GET('/api/teams/{id}/members', {
+        params: {
+          path: { id: teamId },
+          query: { first: opts?.first, after: opts?.after, query: opts?.query },
+        },
+      }),
+    ).then((page) => ({
+      items: page?.items ?? [],
+      nextCursor: page?.nextCursor,
+      hasNext: !!page?.hasNext,
+    })) as Promise<Connection<TeamMember>>,
   myTeamMembership: (teamId: string) =>
-    apiFetch<TeamMember>(`/api/teams/${teamId}/members/me`),
-  teamMember: (id: string) => apiFetch<TeamMember>(`/api/members/${id}`),
+    unwrap(
+      openapi.GET('/api/teams/{id}/members/me', { params: { path: { id: teamId } } }),
+    ) as Promise<TeamMember>,
+  teamMember: (id: string) =>
+    unwrap(openapi.GET('/api/members/{id}', { params: { path: { id } } })) as Promise<TeamMember>,
   upsertTeamMemberProfile: (
     teamId: string,
     body: { nickname?: string | null; bio?: string | null; avatarId?: string | null },
   ) =>
-    apiFetch<TeamMember>(`/api/teams/${teamId}/profile`, {
-      method: 'PATCH',
-      body: JSON.stringify(body),
-    }),
+    unwrap(
+      openapi.PATCH('/api/teams/{id}/profile', {
+        params: { path: { id: teamId } },
+        body: {
+          nickname: body.nickname ?? undefined,
+          bio: body.bio ?? undefined,
+          avatarId: body.avatarId ?? undefined,
+        },
+      }),
+    ) as Promise<TeamMember>,
 
   createInvite: (
     teamId: string,
     body: { role?: string | null; maxUses?: number | null; expiresAt?: string | null },
   ) =>
-    apiFetch<Invite>(`/api/teams/${teamId}/invites`, {
-      method: 'POST',
-      body: JSON.stringify(body),
-    }),
+    unwrap(
+      openapi.POST('/api/teams/{id}/invites', {
+        params: { path: { id: teamId } },
+        body: {
+          role: (body.role ?? undefined) as 'ADMIN' | 'MEMBER' | undefined,
+          maxUses: body.maxUses ?? undefined,
+          expiresAt: body.expiresAt ?? undefined,
+        },
+      }),
+    ) as Promise<Invite>,
   inviteByEmail: (teamId: string, email: string, role?: string | null) =>
-    apiFetch<Invite>(`/api/teams/${teamId}/invites/email`, {
-      method: 'POST',
-      body: JSON.stringify({ email, role }),
-    }),
+    unwrap(
+      openapi.POST('/api/teams/{id}/invites/email', {
+        params: { path: { id: teamId } },
+        body: {
+          email,
+          role: (role ?? undefined) as 'ADMIN' | 'MEMBER' | undefined,
+        },
+      }),
+    ) as Promise<Invite>,
   joinTeam: (code: string, nickname: string, bio?: string | null) =>
-    apiFetch<TeamMember>('/api/teams/join', {
-      method: 'POST',
-      body: JSON.stringify({ code, nickname, bio }),
-    }),
+    unwrap(
+      openapi.POST('/api/teams/join', {
+        body: { code, nickname, bio: bio ?? undefined },
+      }),
+    ) as Promise<TeamMember>,
 
-  tributes: (
-    teamId: string,
-    opts?: { recipientId?: string; first?: number; after?: string },
-  ) =>
-    apiFetch<Connection<Tribute>>(
-      `/api/teams/${teamId}/tributes${qs({
-        recipientId: opts?.recipientId,
-        first: opts?.first,
-        after: opts?.after,
-      })}`,
-    ),
+  tributes: (teamId: string, opts?: { recipientId?: string; first?: number; after?: string }) =>
+    unwrap(
+      openapi.GET('/api/teams/{id}/tributes', {
+        params: {
+          path: { id: teamId },
+          query: {
+            recipientId: opts?.recipientId,
+            first: opts?.first,
+            after: opts?.after,
+          },
+        },
+      }),
+    ).then((page) => ({
+      items: page?.items ?? [],
+      nextCursor: page?.nextCursor,
+      hasNext: !!page?.hasNext,
+    })) as Promise<Connection<Tribute>>,
   createTribute: (
     teamId: string,
     body: {
@@ -147,22 +194,37 @@ export const api = {
       privateTribute: boolean
     },
   ) =>
-    apiFetch<Tribute>(`/api/teams/${teamId}/tributes`, {
-      method: 'POST',
-      body: JSON.stringify(body),
-    }),
+    unwrap(
+      openapi.POST('/api/teams/{id}/tributes', {
+        params: { path: { id: teamId } },
+        body,
+      }),
+    ) as Promise<Tribute>,
   reportTribute: (tributeId: string, reason: string) =>
-    apiFetch<{ ok: boolean }>(`/api/tributes/${tributeId}/report`, {
-      method: 'POST',
-      body: JSON.stringify({ reason }),
-    }),
+    unwrap(
+      openapi.POST('/api/tributes/{id}/report', {
+        params: { path: { id: tributeId } },
+        body: { reason },
+      }),
+    ) as Promise<{ ok?: boolean }>,
   hideTribute: (tributeId: string) =>
-    apiFetch<Tribute>(`/api/tributes/${tributeId}/hide`, { method: 'POST' }),
+    unwrap(
+      openapi.POST('/api/tributes/{id}/hide', { params: { path: { id: tributeId } } }),
+    ) as Promise<Tribute>,
 
   memories: (teamId: string, opts?: { first?: number; after?: string }) =>
-    apiFetch<Connection<Memory>>(
-      `/api/teams/${teamId}/memories${qs({ first: opts?.first, after: opts?.after })}`,
-    ),
+    unwrap(
+      openapi.GET('/api/teams/{id}/memories', {
+        params: {
+          path: { id: teamId },
+          query: { first: opts?.first, after: opts?.after },
+        },
+      }),
+    ).then((page) => ({
+      items: page?.items ?? [],
+      nextCursor: page?.nextCursor,
+      hasNext: !!page?.hasNext,
+    })) as Promise<Connection<Memory>>,
   createMemory: (
     teamId: string,
     body: {
@@ -173,51 +235,111 @@ export const api = {
       mediaIds?: string[] | null
     },
   ) =>
-    apiFetch<Memory>(`/api/teams/${teamId}/memories`, {
-      method: 'POST',
-      body: JSON.stringify(body),
-    }),
+    unwrap(
+      openapi.POST('/api/teams/{id}/memories', {
+        params: { path: { id: teamId } },
+        body: {
+          title: body.title,
+          bodyText: body.bodyText,
+          privateMemory: body.privateMemory,
+          taggedIds: body.taggedIds ?? undefined,
+          mediaIds: body.mediaIds ?? undefined,
+        },
+      }),
+    ) as Promise<Memory>,
   comments: (memoryId: string) =>
-    apiFetch<Comment[]>(`/api/memories/${memoryId}/comments`),
+    unwrap(
+      openapi.GET('/api/memories/{id}/comments', { params: { path: { id: memoryId } } }),
+    ) as Promise<Comment[]>,
   addComment: (
     memoryId: string,
     body: { text: string; parentId?: string | null; mediaIds?: string[] | null },
   ) =>
-    apiFetch<Comment>(`/api/memories/${memoryId}/comments`, {
-      method: 'POST',
-      body: JSON.stringify(body),
-    }),
+    unwrap(
+      openapi.POST('/api/memories/{id}/comments', {
+        params: { path: { id: memoryId } },
+        body: {
+          text: body.text,
+          parentId: body.parentId ?? undefined,
+          mediaIds: body.mediaIds ?? undefined,
+        },
+      }),
+    ) as Promise<Comment>,
 
-  topics: (teamId: string) => apiFetch<Topic[]>(`/api/teams/${teamId}/topics`),
+  topics: (teamId: string) =>
+    unwrap(
+      openapi.GET('/api/teams/{id}/topics', { params: { path: { id: teamId } } }),
+    ) as Promise<Topic[]>,
   createTopic: (teamId: string, title: string) =>
-    apiFetch<Topic>(`/api/teams/${teamId}/topics`, {
-      method: 'POST',
-      body: JSON.stringify({ title }),
-    }),
+    unwrap(
+      openapi.POST('/api/teams/{id}/topics', {
+        params: { path: { id: teamId } },
+        body: { title },
+      }),
+    ) as Promise<Topic>,
   topicStandings: (topicId: string) =>
-    apiFetch<TopicStanding[]>(`/api/topics/${topicId}/standings`),
+    unwrap(
+      openapi.GET('/api/topics/{id}/standings', { params: { path: { id: topicId } } }),
+    ) as Promise<TopicStanding[]>,
   voteTopic: (topicId: string, nomineeId: string, repetitions?: number | null) =>
-    apiFetch<{ ok: boolean }>(`/api/topics/${topicId}/votes`, {
-      method: 'POST',
-      body: JSON.stringify({ nomineeId, repetitions }),
-    }),
+    unwrap(
+      openapi.POST('/api/topics/{id}/votes', {
+        params: { path: { id: topicId } },
+        body: { nomineeId, repetitions: repetitions ?? undefined },
+      }),
+    ) as Promise<{ ok?: boolean }>,
 
   characteristics: (teamMemberId: string) =>
-    apiFetch<Characteristic[]>(`/api/members/${teamMemberId}/characteristics`),
+    unwrap(
+      openapi.GET('/api/members/{id}/characteristics', {
+        params: { path: { id: teamMemberId } },
+      }),
+    ) as Promise<Characteristic[]>,
   addCharacteristic: (teamMemberId: string, title: string) =>
-    apiFetch<Characteristic>(`/api/members/${teamMemberId}/characteristics`, {
-      method: 'POST',
-      body: JSON.stringify({ title }),
-    }),
+    unwrap(
+      openapi.POST('/api/members/{id}/characteristics', {
+        params: { path: { id: teamMemberId } },
+        body: { title },
+      }),
+    ) as Promise<Characteristic>,
 
   search: (teamId: string, q: string, opts?: { first?: number; after?: string }) =>
-    apiFetch<Connection<SearchHit>>(
-      `/api/teams/${teamId}/search${qs({ q, first: opts?.first, after: opts?.after })}`,
-    ),
+    unwrap(
+      openapi.GET('/api/teams/{id}/search', {
+        params: {
+          path: { id: teamId },
+          query: { q, first: opts?.first, after: opts?.after },
+        },
+      }),
+    ).then((page) => ({
+      items: page?.items ?? [],
+      nextCursor: page?.nextCursor,
+      hasNext: !!page?.hasNext,
+    })) as Promise<Connection<SearchHit>>,
 
-  yearbook: (teamId: string) => apiFetch<Yearbook>(`/api/teams/${teamId}/yearbook`),
+  yearbook: (teamId: string) =>
+    unwrap(
+      openapi.GET('/api/teams/{id}/yearbook', { params: { path: { id: teamId } } }),
+    ) as Promise<Yearbook>,
   yearbookExports: (teamId: string) =>
-    apiFetch<YearbookExport[]>(`/api/teams/${teamId}/yearbook-exports`),
+    unwrap(
+      openapi.GET('/api/teams/{id}/yearbook-exports', { params: { path: { id: teamId } } }),
+    ) as Promise<YearbookExport[]>,
   requestYearbookExport: (teamId: string) =>
-    apiFetch<YearbookExport>(`/api/teams/${teamId}/yearbook-exports`, { method: 'POST' }),
+    unwrap(
+      openapi.POST('/api/teams/{id}/yearbook-exports', { params: { path: { id: teamId } } }),
+    ) as Promise<YearbookExport>,
+
+  uploadMedia: (file: File) =>
+    unwrap(
+      openapi.POST('/api/media', {
+        // Schema types multipart file as string; serialize to FormData at runtime.
+        body: { file: '' },
+        bodySerializer() {
+          const fd = new FormData()
+          fd.append('file', file)
+          return fd
+        },
+      }),
+    ) as Promise<Media>,
 }

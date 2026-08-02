@@ -39,6 +39,7 @@ Open:
 
 - App: http://localhost:8080
 - Swagger: http://localhost:8080/q/swagger-ui — authorize with Bearer JWT after login
+- Regenerate typed OpenAPI client (Quarkus must be running): `./mvnw -Popenapi-codegen generate-sources`
 
 Seed users (password `password123`):
 

@@ -18,6 +18,7 @@ Naming: use **Team** (not Department).
 | Frontend | React 19 + TypeScript + Vite via **Quinoa** (`src/main/webui`) |
 | App API | REST + OpenAPI (`/api/*`) |
 | Binary endpoints | Multipart media upload + yearbook PDF download under `/api` |
+| Frontend API types | Generated from OpenAPI via `openapi-typescript` + `openapi-fetch` |
 | DB | PostgreSQL + Flyway |
 | Search | Elasticsearch 8 via Hibernate Search |
 | Object storage | MinIO / S3-compatible |
@@ -54,7 +55,7 @@ com.yaadbuzz
 └── common/        # Errors, cursors, shared utilities
 ```
 
-Frontend lives in `src/main/webui/src/` (pages, components, theme, typed `fetch` client under `api/`).
+Frontend lives in `src/main/webui/src/` (pages, components, theme, OpenAPI-typed client under `api/`).
 
 ## API surface
 
@@ -67,6 +68,15 @@ Frontend lives in `src/main/webui/src/` (pages, components, theme, typed `fetch`
 | `GET /api/yearbooks/{id}/download` | PDF download |
 
 Swagger: `/q/swagger-ui` (Bearer JWT).
+
+After REST API changes: regenerate TS types (Quarkus must be up):
+
+```bash
+./mvnw -Popenapi-codegen generate-sources
+# or: cd src/main/webui && npm run openapi:generate
+```
+
+Writes `src/main/webui/openapi/openapi.yaml` and `src/main/webui/src/api/generated/schema.d.ts`.
 
 ## Dev / test conventions agents must respect
 

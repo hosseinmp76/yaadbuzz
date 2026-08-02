@@ -10,7 +10,10 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "lint": "npm run typecheck && eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "openapi:schema": "node scripts/fetch-openapi.mjs",
+    "openapi:codegen": "openapi-typescript openapi/openapi.yaml -o src/api/generated/schema.d.ts",
+    "openapi:generate": "npm run openapi:schema && npm run openapi:codegen"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -20,6 +23,7 @@
     "i18next": "^26.3.6",
     "i18next-browser-languagedetector": "^8.2.1",
     "motion": "^12.42.2",
+    "openapi-fetch": "^0.17.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.82.0",
@@ -40,6 +44,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.4.0",
+    "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.46.2",

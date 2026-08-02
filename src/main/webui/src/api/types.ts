@@ -1,130 +1,77 @@
-export type Media = {
-  id: string
-  url: string
-  mimeType: string
-}
+import type { components } from './generated/schema'
 
-export type User = {
-  id: string
-  email: string
-  displayName: string
-}
+type S = components['schemas']
 
-export type Organization = {
-  id: string
-  name: string
-  brandColor: string
-  logo?: Media | null
-}
+/** Require listed keys (OpenAPI marks most response fields optional). */
+type Req<T, K extends keyof T> = T & Required<Pick<T, K>>
 
-export type Team = {
-  id: string
-  organizationId: string
-  name: string
-  brandColor: string
-  coverMedia?: Media | null
-  revealTributes: boolean
-  revealAt?: string | null
-  tributesRevealed: boolean
-  yearbookTitle?: string | null
-  yearbookSubtitle?: string | null
-  yearbookDedication?: string | null
-  yearbookTheme?: string | null
-  yearbookShowMembers: boolean
-  yearbookShowTributes: boolean
-  yearbookShowCharacteristics: boolean
-  yearbookShowMemories: boolean
-  yearbookShowAwards: boolean
-}
-
-export type TeamMember = {
-  id: string
-  teamId: string
-  userId?: string | null
-  nickname: string
-  bio?: string | null
-  role?: string | null
-  avatar?: Media | null
-}
-
-export type Invite = {
-  id: string
-  teamId: string
-  code: string
-  role: string
-  maxUses?: number | null
-  useCount: number
-  expiresAt?: string | null
-  email?: string | null
-}
-
-export type Tribute = {
-  id: string
-  teamId: string
-  writer: TeamMember
-  recipient: TeamMember
-  text: string
-  anonymous: boolean
-  privateTribute: boolean
-  hidden: boolean
-  pictures: Media[]
-  createdAt: string
-}
-
-export type Memory = {
-  id: string
-  teamId: string
-  writer: TeamMember
-  title: string
-  bodyText: string
-  privateMemory: boolean
-  tagged: TeamMember[]
-  pictures: Media[]
-  createdAt: string
-}
-
-export type Comment = {
-  id: string
-  memoryId: string
-  writer: TeamMember
-  text: string
-  createdAt: string
-}
-
-export type Topic = {
-  id: string
-  teamId: string
-  title: string
-}
-
-export type TopicStanding = {
-  nominee: TeamMember
-  score: number
-}
-
-export type Characteristic = {
-  id: string
-  teamMemberId: string
-  title: string
-  count: number
-}
-
-export type YearbookExport = {
-  id: string
-  teamId: string
-  status: string
-  fileUrl?: string | null
-  errorMessage?: string | null
-  createdAt: string
-  completedAt?: string | null
-}
-
-export type SearchHit = {
-  type: string
-  id: string
-  title: string
-  snippet: string
-}
+export type Media = Req<S['MediaType'], 'id' | 'url' | 'mimeType'>
+export type User = Req<S['UserType'], 'id' | 'email' | 'displayName'>
+export type Organization = Req<S['OrganizationType'], 'id' | 'name' | 'brandColor'>
+export type Team = Req<
+  S['TeamType'],
+  | 'id'
+  | 'organizationId'
+  | 'name'
+  | 'brandColor'
+  | 'revealTributes'
+  | 'tributesRevealed'
+  | 'yearbookShowMembers'
+  | 'yearbookShowTributes'
+  | 'yearbookShowCharacteristics'
+  | 'yearbookShowMemories'
+  | 'yearbookShowAwards'
+>
+export type TeamMember = Req<S['TeamMemberType'], 'id' | 'teamId' | 'nickname'>
+export type Invite = Req<S['InviteType'], 'id' | 'teamId' | 'code' | 'role' | 'useCount'>
+export type Tribute = Req<
+  S['TributeType'],
+  | 'id'
+  | 'teamId'
+  | 'writer'
+  | 'recipient'
+  | 'text'
+  | 'anonymous'
+  | 'privateTribute'
+  | 'hidden'
+  | 'pictures'
+  | 'createdAt'
+>
+export type Memory = Req<
+  S['MemoryType'],
+  | 'id'
+  | 'teamId'
+  | 'writer'
+  | 'title'
+  | 'bodyText'
+  | 'privateMemory'
+  | 'tagged'
+  | 'pictures'
+  | 'createdAt'
+>
+export type Comment = Req<S['CommentType'], 'id' | 'memoryId' | 'writer' | 'text' | 'createdAt'>
+export type Topic = Req<S['TopicType'], 'id' | 'teamId' | 'title'>
+export type TopicStanding = Req<S['TopicStandingType'], 'nominee' | 'score'>
+export type Characteristic = Req<S['CharacteristicType'], 'id' | 'teamMemberId' | 'title' | 'count'>
+export type YearbookExport = Req<S['YearbookExportType'], 'id' | 'teamId' | 'status' | 'createdAt'>
+export type SearchHit = Req<S['SearchHitType'], 'type' | 'id' | 'title' | 'snippet'>
+export type Yearbook = Req<
+  S['YearbookType'],
+  | 'teamId'
+  | 'orgName'
+  | 'teamName'
+  | 'title'
+  | 'theme'
+  | 'brandColor'
+  | 'showMembers'
+  | 'showTributes'
+  | 'showCharacteristics'
+  | 'showMemories'
+  | 'showAwards'
+  | 'members'
+  | 'memories'
+  | 'topics'
+>
 
 export type Connection<T> = {
   items: T[]
@@ -132,37 +79,4 @@ export type Connection<T> = {
   hasNext: boolean
 }
 
-export type Yearbook = {
-  teamId: string
-  orgName: string
-  teamName: string
-  title: string
-  subtitle?: string | null
-  dedication?: string | null
-  theme: string
-  brandColor: string
-  logoUrl?: string | null
-  coverMediaUrl?: string | null
-  showMembers: boolean
-  showTributes: boolean
-  showCharacteristics: boolean
-  showMemories: boolean
-  showAwards: boolean
-  members: Array<{
-    nickname: string
-    bio?: string | null
-    avatarUrl?: string | null
-    characteristics: Array<{ title: string; count: number }>
-    tributes: Array<{ text: string; writer: string }>
-  }>
-  memories: Array<{
-    title: string
-    body: string
-    writer: string
-    imageUrls: string[]
-  }>
-  topics: Array<{
-    title: string
-    standings: Array<{ nickname: string; score: number }>
-  }>
-}
+export type { components, paths } from './generated/schema'

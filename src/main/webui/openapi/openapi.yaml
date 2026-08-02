@@ -1,0 +1,2114 @@
+---
+openapi: 3.1.0
+components:
+  schemas:
+    AddCharacteristicRequest:
+      type: object
+      properties:
+        title:
+          type: string
+    AddCommentRequest:
+      type: object
+      properties:
+        text:
+          type: string
+        parentId:
+          $ref: "#/components/schemas/UUID"
+        mediaIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+            pattern: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        userId:
+          $ref: "#/components/schemas/UUID"
+        email:
+          type: string
+        displayName:
+          type: string
+    ChangePasswordRequest:
+      type: object
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          pattern: \S
+          minLength: 8
+      required:
+      - newPassword
+    CharacteristicType:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        teamMemberId:
+          $ref: "#/components/schemas/UUID"
+        title:
+          type: string
+        count:
+          type: integer
+          format: int32
+    CommentType:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        memoryId:
+          $ref: "#/components/schemas/UUID"
+        writer:
+          $ref: "#/components/schemas/TeamMemberType"
+        text:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+    ConnectionMemory:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MemoryType"
+        nextCursor:
+          type: string
+        hasNext:
+          type: boolean
+    ConnectionSearch:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchHitType"
+        nextCursor:
+          type: string
+        hasNext:
+          type: boolean
+    ConnectionTeamMember:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeamMemberType"
+        nextCursor:
+          type: string
+        hasNext:
+          type: boolean
+    ConnectionTribute:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TributeType"
+        nextCursor:
+          type: string
+        hasNext:
+          type: boolean
+    CreateInviteRequest:
+      type: object
+      properties:
+        role:
+          $ref: "#/components/schemas/TeamRole"
+        maxUses:
+          type: integer
+          format: int32
+        expiresAt:
+          $ref: "#/components/schemas/Instant"
+    CreateMemoryRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        bodyText:
+          type: string
+        privateMemory:
+          type: boolean
+        taggedIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+            pattern: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+        mediaIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+            pattern: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+    CreateOrganizationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        brandColor:
+          type: string
+    CreateTeamRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        brandColor:
+          type: string
+    CreateTopicRequest:
+      type: object
+      properties:
+        title:
+          type: string
+    CreateTributeRequest:
+      type: object
+      properties:
+        recipientId:
+          $ref: "#/components/schemas/UUID"
+        text:
+          type: string
+        anonymous:
+          type: boolean
+        privateTribute:
+          type: boolean
+    ExportStatus:
+      type: string
+      enum:
+      - PENDING
+      - PROCESSING
+      - READY
+      - FAILED
+    ForgotPasswordRequest:
+      type: object
+      required:
+      - email
+      properties:
+        email:
+          type: string
+          pattern: \S
+    Instant:
+      type: string
+      format: date-time
+      examples:
+      - 2022-03-10T16:15:50Z
+    InviteByEmailRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        role:
+          $ref: "#/components/schemas/TeamRole"
+    InviteType:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        teamId:
+          $ref: "#/components/schemas/UUID"
+        code:
+          type: string
+        role:
+          $ref: "#/components/schemas/TeamRole"
+        maxUses:
+          type: integer
+          format: int32
+        useCount:
+          type: integer
+          format: int32
+        expiresAt:
+          $ref: "#/components/schemas/Instant"
+        email:
+          type: string
+    JoinTeamRequest:
+      type: object
+      properties:
+        code:
+          type: string
+        nickname:
+          type: string
+        bio:
+          type: string
+    LoginRequest:
+      type: object
+      required:
+      - email
+      - password
+      properties:
+        email:
+          type: string
+          pattern: \S
+        password:
+          type: string
+          pattern: \S
+    MediaType:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        url:
+          type: string
+        mimeType:
+          type: string
+    MemoryType:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        teamId:
+          $ref: "#/components/schemas/UUID"
+        writer:
+          $ref: "#/components/schemas/TeamMemberType"
+        title:
+          type: string
+        bodyText:
+          type: string
+        privateMemory:
+          type: boolean
+        tagged:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeamMemberType"
+        pictures:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaType"
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+    OAuthExchangeRequest:
+      type: object
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          pattern: \S
+    OAuthProvidersResponse:
+      type: object
+      properties:
+        google:
+          type: boolean
+        github:
+          type: boolean
+        telegram:
+          type: boolean
+    OrganizationType:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        name:
+          type: string
+        brandColor:
+          type: string
+        logo:
+          $ref: "#/components/schemas/MediaType"
+    RefreshRequest:
+      type: object
+      required:
+      - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          pattern: \S
+    RegisterRequest:
+      type: object
+      required:
+      - email
+      - password
+      - displayName
+      properties:
+        email:
+          type: string
+          pattern: \S
+        password:
+          type: string
+          pattern: \S
+          minLength: 8
+        displayName:
+          type: string
+          pattern: \S
+    ReportTributeRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+    ResetPasswordRequest:
+      type: object
+      required:
+      - token
+      - newPassword
+      properties:
+        token:
+          type: string
+          pattern: \S
+        newPassword:
+          type: string
+          pattern: \S
+          minLength: 8
+    SearchHitType:
+      type: object
+      properties:
+        type:
+          type: string
+        id:
+          $ref: "#/components/schemas/UUID"
+        title:
+          type: string
+        snippet:
+          type: string
+    TeamMemberType:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        teamId:
+          $ref: "#/components/schemas/UUID"
+        userId:
+          $ref: "#/components/schemas/UUID"
+        nickname:
+          type: string
+        bio:
+          type: string
+        role:
+          $ref: "#/components/schemas/TeamRole"
+        avatar:
+          $ref: "#/components/schemas/MediaType"
+    TeamRole:
+      type: string
+      enum:
+      - ADMIN
+      - MEMBER
+    TeamType:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        organizationId:
+          $ref: "#/components/schemas/UUID"
+        name:
+          type: string
+        brandColor:
+          type: string
+        coverMedia:
+          $ref: "#/components/schemas/MediaType"
+        revealTributes:
+          type: boolean
+        revealAt:
+          $ref: "#/components/schemas/Instant"
+        tributesRevealed:
+          type: boolean
+        yearbookTitle:
+          type: string
+        yearbookSubtitle:
+          type: string
+        yearbookDedication:
+          type: string
+        yearbookTheme:
+          $ref: "#/components/schemas/YearbookTheme"
+        yearbookShowMembers:
+          type: boolean
+        yearbookShowTributes:
+          type: boolean
+        yearbookShowCharacteristics:
+          type: boolean
+        yearbookShowMemories:
+          type: boolean
+        yearbookShowAwards:
+          type: boolean
+    TopicStandingType:
+      type: object
+      properties:
+        nominee:
+          $ref: "#/components/schemas/TeamMemberType"
+        score:
+          type: integer
+          format: int32
+    TopicType:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        teamId:
+          $ref: "#/components/schemas/UUID"
+        title:
+          type: string
+    TributeType:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        teamId:
+          $ref: "#/components/schemas/UUID"
+        writer:
+          $ref: "#/components/schemas/TeamMemberType"
+        recipient:
+          $ref: "#/components/schemas/TeamMemberType"
+        text:
+          type: string
+        anonymous:
+          type: boolean
+        privateTribute:
+          type: boolean
+        hidden:
+          type: boolean
+        pictures:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaType"
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+    UUID:
+      type: string
+      format: uuid
+      pattern: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+    UpdateOrganizationBrandingRequest:
+      type: object
+      properties:
+        brandColor:
+          type: string
+        logoId:
+          $ref: "#/components/schemas/UUID"
+    UpdateProfileRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+    UpdateTeamSettingsRequest:
+      type: object
+      properties:
+        brandColor:
+          type: string
+        coverMediaId:
+          $ref: "#/components/schemas/UUID"
+        revealTributes:
+          type: boolean
+        revealAt:
+          $ref: "#/components/schemas/Instant"
+    UpdateYearbookSettingsRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        subtitle:
+          type: string
+        dedication:
+          type: string
+        theme:
+          $ref: "#/components/schemas/YearbookTheme"
+        showMembers:
+          type: boolean
+        showTributes:
+          type: boolean
+        showCharacteristics:
+          type: boolean
+        showMemories:
+          type: boolean
+        showAwards:
+          type: boolean
+    UpsertTeamMemberProfileRequest:
+      type: object
+      properties:
+        nickname:
+          type: string
+        bio:
+          type: string
+        avatarId:
+          $ref: "#/components/schemas/UUID"
+    UserType:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        email:
+          type: string
+        displayName:
+          type: string
+    VoteTopicRequest:
+      type: object
+      properties:
+        nomineeId:
+          $ref: "#/components/schemas/UUID"
+        repetitions:
+          type: integer
+          format: int32
+    YearbookCharacteristicType:
+      type: object
+      properties:
+        title:
+          type: string
+        count:
+          type: integer
+          format: int32
+    YearbookExportType:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        teamId:
+          $ref: "#/components/schemas/UUID"
+        status:
+          $ref: "#/components/schemas/ExportStatus"
+        fileUrl:
+          type: string
+        errorMessage:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+        completedAt:
+          $ref: "#/components/schemas/Instant"
+    YearbookMemberType:
+      type: object
+      properties:
+        nickname:
+          type: string
+        bio:
+          type: string
+        avatarUrl:
+          type: string
+        characteristics:
+          type: array
+          items:
+            $ref: "#/components/schemas/YearbookCharacteristicType"
+        tributes:
+          type: array
+          items:
+            $ref: "#/components/schemas/YearbookTributeType"
+    YearbookMemoryType:
+      type: object
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        writer:
+          type: string
+        imageUrls:
+          type: array
+          items:
+            type: string
+    YearbookStandingType:
+      type: object
+      properties:
+        nickname:
+          type: string
+        score:
+          type: integer
+          format: int32
+    YearbookTheme:
+      type: string
+      enum:
+      - CLASSIC
+      - MODERN
+      - SCRAPBOOK
+      - MINIMAL
+    YearbookTopicType:
+      type: object
+      properties:
+        title:
+          type: string
+        standings:
+          type: array
+          items:
+            $ref: "#/components/schemas/YearbookStandingType"
+    YearbookTributeType:
+      type: object
+      properties:
+        text:
+          type: string
+        writer:
+          type: string
+    YearbookType:
+      type: object
+      properties:
+        teamId:
+          $ref: "#/components/schemas/UUID"
+        orgName:
+          type: string
+        teamName:
+          type: string
+        title:
+          type: string
+        subtitle:
+          type: string
+        dedication:
+          type: string
+        theme:
+          $ref: "#/components/schemas/YearbookTheme"
+        brandColor:
+          type: string
+        logoUrl:
+          type: string
+        coverMediaUrl:
+          type: string
+        showMembers:
+          type: boolean
+        showTributes:
+          type: boolean
+        showCharacteristics:
+          type: boolean
+        showMemories:
+          type: boolean
+        showAwards:
+          type: boolean
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/YearbookMemberType"
+        memories:
+          type: array
+          items:
+            $ref: "#/components/schemas/YearbookMemoryType"
+        topics:
+          type: array
+          items:
+            $ref: "#/components/schemas/YearbookTopicType"
+  securitySchemes:
+    SecurityScheme:
+      type: openIdConnect
+      description: Authentication
+tags:
+- name: AGPL
+- name: Agent discovery
+- name: Auth
+- name: Me
+- name: Media
+- name: Members
+- name: Memories
+- name: Organizations
+- name: SEO
+- name: Teams
+- name: Topics
+- name: Tributes
+- name: Yearbooks
+paths:
+  /.well-known/agent-skills/index.json:
+    get:
+      summary: Agent Skills discovery index
+      tags:
+      - Agent discovery
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: {}
+  /.well-known/api-catalog:
+    get:
+      summary: RFC 9727 API catalog
+      tags:
+      - Agent discovery
+      responses:
+        "200":
+          description: OK
+          content:
+            application/linkset+json: {}
+            application/json:
+              schema: {}
+  /.well-known/http-message-signatures-directory:
+    get:
+      summary: HTTP Message Signatures directory (Web Bot Auth)
+      tags:
+      - Agent discovery
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: {}
+  /.well-known/jwks.json:
+    get:
+      summary: Public JWKS placeholder note — JWT signed with app PEM keys
+      tags:
+      - Agent discovery
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: {}
+  /.well-known/mcp/server-card.json:
+    get:
+      summary: MCP server card (HTTP APIs; no dedicated MCP transport yet)
+      tags:
+      - Agent discovery
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: {}
+  /.well-known/oauth-protected-resource:
+    get:
+      summary: Protected resource metadata (JWT bearer; not a full OAuth AS)
+      tags:
+      - Agent discovery
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: {}
+  /api/auth/change-password:
+    post:
+      summary: Change password while authenticated
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - SecurityScheme:
+        - user
+  /api/auth/forgot-password:
+    post:
+      summary: Request a password reset email
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Bad Request
+  /api/auth/login:
+    post:
+      summary: Login with email and password
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Bad Request
+  /api/auth/logout:
+    post:
+      summary: Clear local session and OIDC cookies
+      tags:
+      - Auth
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: {}
+  /api/auth/oauth/exchange:
+    post:
+      summary: Exchange one-time OAuth code for app JWTs
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OAuthExchangeRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Bad Request
+  /api/auth/oauth/providers:
+    get:
+      summary: Which social login providers are configured
+      tags:
+      - Auth
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuthProvidersResponse"
+  /api/auth/oauth/{provider}:
+    get:
+      summary: Start or finish OAuth login (Google / GitHub / Telegram)
+      tags:
+      - Auth
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: {}
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme: []
+  /api/auth/refresh:
+    post:
+      summary: Refresh access token
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Bad Request
+  /api/auth/register:
+    post:
+      summary: Register with email and password
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Bad Request
+  /api/auth/reset-password:
+    post:
+      summary: Reset password using email token
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Bad Request
+  /api/me:
+    patch:
+      summary: Update the current user's display name
+      tags:
+      - Me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+    get:
+      summary: Current authenticated user
+      tags:
+      - Me
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/media:
+    post:
+      summary: Upload an image to object storage
+      tags:
+      - Media
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/members/{id}:
+    get:
+      summary: Get a team member
+      tags:
+      - Members
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamMemberType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/members/{id}/characteristics:
+    get:
+      summary: List characteristics for a member
+      tags:
+      - Members
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CharacteristicType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+    post:
+      summary: Add a characteristic
+      tags:
+      - Members
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddCharacteristicRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacteristicType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - SecurityScheme:
+        - user
+  /api/memories/{id}/comments:
+    get:
+      summary: List comments on a memory
+      tags:
+      - Memories
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommentType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+    post:
+      summary: Add a comment to a memory
+      tags:
+      - Memories
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddCommentRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommentType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - SecurityScheme:
+        - user
+  /api/organizations:
+    get:
+      summary: List organizations for the current user
+      tags:
+      - Organizations
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OrganizationType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+    post:
+      summary: Create an organization
+      tags:
+      - Organizations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrganizationRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - SecurityScheme:
+        - user
+  /api/organizations/{id}:
+    get:
+      summary: Get an organization
+      tags:
+      - Organizations
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/organizations/{id}/branding:
+    patch:
+      summary: Update organization branding
+      tags:
+      - Organizations
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrganizationBrandingRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/organizations/{orgId}/teams:
+    get:
+      summary: List teams in an organization
+      tags:
+      - Organizations
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeamType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+    post:
+      summary: Create a team in an organization
+      tags:
+      - Organizations
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTeamRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - SecurityScheme:
+        - user
+  /api/source:
+    get:
+      summary: AGPL corresponding source offer
+      tags:
+      - AGPL
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+  /api/source/redirect:
+    get:
+      summary: Redirect to corresponding source repository
+      tags:
+      - AGPL
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: {}
+  /api/teams/join:
+    post:
+      summary: Join a team with an invite code
+      tags:
+      - Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinTeamRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamMemberType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - SecurityScheme:
+        - user
+  /api/teams/{id}:
+    patch:
+      summary: Update team settings
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTeamSettingsRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+    get:
+      summary: Get a team
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/teams/{id}/invites:
+    post:
+      summary: Create an invite code
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInviteRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - SecurityScheme:
+        - user
+  /api/teams/{id}/invites/email:
+    post:
+      summary: Invite a member by email
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteByEmailRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - SecurityScheme:
+        - user
+  /api/teams/{id}/members:
+    get:
+      summary: List team members
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: after
+        in: query
+        schema:
+          type: string
+      - name: first
+        in: query
+        schema:
+          type: integer
+          format: int32
+      - name: query
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectionTeamMember"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/teams/{id}/members/me:
+    get:
+      summary: Current user's membership in a team
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamMemberType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/teams/{id}/memories:
+    get:
+      summary: List memories
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: after
+        in: query
+        schema:
+          type: string
+      - name: first
+        in: query
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectionMemory"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+    post:
+      summary: Create a memory
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMemoryRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - SecurityScheme:
+        - user
+  /api/teams/{id}/profile:
+    patch:
+      summary: Upsert current user's team profile
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertTeamMemberProfileRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamMemberType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/teams/{id}/search:
+    get:
+      summary: Search within a team
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: after
+        in: query
+        schema:
+          type: string
+      - name: first
+        in: query
+        schema:
+          type: integer
+          format: int32
+      - name: q
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectionSearch"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/teams/{id}/topics:
+    get:
+      summary: List topics
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopicType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+    post:
+      summary: Create a topic
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTopicRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TopicType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - SecurityScheme:
+        - user
+  /api/teams/{id}/tributes:
+    get:
+      summary: List tributes
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: after
+        in: query
+        schema:
+          type: string
+      - name: first
+        in: query
+        schema:
+          type: integer
+          format: int32
+      - name: recipientId
+        in: query
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectionTribute"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+    post:
+      summary: Create a tribute
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTributeRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TributeType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - SecurityScheme:
+        - user
+  /api/teams/{id}/yearbook:
+    get:
+      summary: Assembled yearbook for online viewing
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/YearbookType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/teams/{id}/yearbook-exports:
+    get:
+      summary: List yearbook PDF exports
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/YearbookExportType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+    post:
+      summary: Request a yearbook PDF export
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/YearbookExportType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/teams/{id}/yearbook-settings:
+    patch:
+      summary: Update yearbook layout settings
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateYearbookSettingsRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/topics/{id}/standings:
+    get:
+      summary: Topic vote standings
+      tags:
+      - Topics
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopicStandingType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/topics/{id}/votes:
+    post:
+      summary: Vote on a topic
+      tags:
+      - Topics
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VoteTopicRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: boolean
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - SecurityScheme:
+        - user
+  /api/tributes/{id}/hide:
+    post:
+      summary: Hide a tribute
+      tags:
+      - Tributes
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TributeType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/tributes/{id}/report:
+    post:
+      summary: Report a tribute
+      tags:
+      - Tributes
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportTributeRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: boolean
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - SecurityScheme:
+        - user
+  /api/yearbooks/{id}/download:
+    get:
+      summary: Download a generated yearbook PDF
+      tags:
+      - Yearbooks
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/pdf: {}
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /auth.md:
+    get:
+      summary: Agent authentication instructions
+      tags:
+      - Agent discovery
+      responses:
+        "200":
+          description: OK
+          content:
+            text/markdown; charset=UTF-8: {}
+  /robots.txt:
+    get:
+      summary: Robots exclusion file
+      tags:
+      - SEO
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain; charset=UTF-8: {}
+  /sitemap.xml:
+    get:
+      summary: Public sitemap
+      tags:
+      - SEO
+      responses:
+        "200":
+          description: OK
+          content:
+            application/xml; charset=UTF-8: {}
+info:
+  title: Yaadbuzz REST API
+  version: 1.0.0
+  description: "Auth, media, and yearbook domain REST APIs for Yaadbuzz."

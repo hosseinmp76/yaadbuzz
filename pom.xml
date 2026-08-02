@@ -28,6 +28,7 @@
         <surefire-plugin.version>3.5.6</surefire-plugin.version>
         <aws.sdk.version>2.31.78</aws.sdk.version>
         <openhtmltopdf.version>1.0.10</openhtmltopdf.version>
+        <yaadbuzz.openapi.url>http://127.0.0.1:8080</yaadbuzz.openapi.url>
     </properties>
 
     <dependencyManagement>
@@ -207,6 +208,37 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>openapi-codegen</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>openapi-generate</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <workingDirectory>${project.basedir}/src/main/webui</workingDirectory>
+                                    <executable>npm</executable>
+                                    <arguments>
+                                        <argument>run</argument>
+                                        <argument>openapi:generate</argument>
+                                    </arguments>
+                                    <environmentVariables>
+                                        <YAADBUZZ_OPENAPI_URL>${yaadbuzz.openapi.url}</YAADBUZZ_OPENAPI_URL>
+                                    </environmentVariables>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>native</id>
             <activation>

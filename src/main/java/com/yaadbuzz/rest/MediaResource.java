@@ -4,6 +4,7 @@ import com.yaadbuzz.auth.CurrentUserService;
 import com.yaadbuzz.common.ApiException;
 import com.yaadbuzz.domain.MediaAsset;
 import com.yaadbuzz.domain.User;
+import com.yaadbuzz.rest.dto.ApiDtos.MediaType;
 import com.yaadbuzz.storage.ObjectStorageService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -12,11 +13,8 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
-import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.resteasy.reactive.RestForm;
@@ -36,11 +34,11 @@ public class MediaResource {
     ObjectStorageService storageService;
 
     @POST
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(jakarta.ws.rs.core.MediaType.MULTIPART_FORM_DATA)
+    @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
     @Operation(summary = "Upload an image to object storage")
     @Transactional
-    public Map<String, Object> upload(@RestForm("file") FileUpload file) throws IOException {
+    public MediaType upload(@RestForm("file") FileUpload file) throws IOException {
         User user = currentUserService.requireUser();
         if (file == null) {
             throw ApiException.badRequest("file is required");
@@ -61,10 +59,6 @@ public class MediaResource {
         asset.sizeBytes = bytes.length;
         asset.uploadedBy = user;
         asset.persist();
-        return Map.of(
-                "id", asset.id,
-                "url", asset.url,
-                "mimeType", asset.mimeType
-        );
+        return MediaType.from(asset);
     }
 }
