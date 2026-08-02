@@ -62,7 +62,7 @@ export default function OrgPage() {
       </Link>
       <PageTitle>{t('org.teams')}</PageTitle>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <Panel className={stackClass}>
+        <Panel className={stackClass} data-tour="teams-list">
           <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
             <UsersThree size={22} weight="duotone" className="text-brand" />
             {t('org.yourTeams')}
@@ -85,7 +85,7 @@ export default function OrgPage() {
             )}
           </Stack>
         </Panel>
-        <Panel>
+        <Panel data-tour="create-team">
           <h2 className="mb-3 font-display text-xl tracking-tight">{t('org.createTeam')}</h2>
           <form className={stackClass} onSubmit={onCreate}>
             <Label>

@@ -12,9 +12,88 @@
     "login": "Log in",
     "getStarted": "Get started",
     "preferences": "Preferences",
+    "tour": "Tour",
     "logout": "Log out",
     "skip": "Skip to content",
     "back": "Back"
+  },
+  "onboarding": {
+    "progress": "{{current}} / {{total}}",
+    "skip": "Skip",
+    "next": "Next",
+    "back": "Back",
+    "finish": "Finish",
+    "prompt": {
+      "eyebrow": "Getting started",
+      "title": "Want a quick tour?",
+      "body": "We’ll walk through organizations, teams, and the yearbook tools — with a spotlight on each piece.",
+      "start": "Start tour",
+      "notNow": "Not now"
+    },
+    "steps": {
+      "orgsList": {
+        "title": "Your organizations",
+        "body": "Organizations group your teams. Open one to manage teams and yearbooks."
+      },
+      "createOrg": {
+        "title": "Create an organization",
+        "body": "Start here when you’re setting up a new class, club, or company space."
+      },
+      "joinTeam": {
+        "title": "Join with an invite",
+        "body": "Already have a code? Join a team without creating a new organization."
+      },
+      "teamsList": {
+        "title": "Teams",
+        "body": "Each team has its own members, tributes, memories, and yearbook."
+      },
+      "createTeam": {
+        "title": "Create a team",
+        "body": "Add a team under this organization, then invite people to it."
+      },
+      "emptyContinue": {
+        "title": "Create something to explore",
+        "body": "Once you have an organization and a team, replay the tour from the header to see every tab."
+      },
+      "tabs": {
+        "members": {
+          "title": "Members",
+          "body": "See who’s on the team and open a member’s page for tributes and characteristics."
+        },
+        "tributes": {
+          "title": "Tributes",
+          "body": "Messages between teammates — public, anonymous, or private to the recipient."
+        },
+        "characteristics": {
+          "title": "Characteristics",
+          "body": "Short tags about a person (“always late”, “best laugh”) that show up in the yearbook."
+        },
+        "memories": {
+          "title": "Memories",
+          "body": "Shared moments with photos and comments that the whole team can revisit."
+        },
+        "topics": {
+          "title": "Topics",
+          "body": "Fun awards and polls — vote for who fits each topic."
+        },
+        "search": {
+          "title": "Search",
+          "body": "Find tributes, memories, and more inside this team."
+        },
+        "yearbook": {
+          "title": "Yearbook",
+          "body": "Preview the online yearbook, tweak the cover, and export a PDF."
+        },
+        "preferences": {
+          "title": "Team preferences",
+          "body": "Your profile on this team — how you appear to others."
+        },
+        "settings": {
+          "title": "Team settings",
+          "body": "Admins manage invites, reveal day, and yearbook options here."
+        }
+      }
+    }
   },
   "footer": {
     "copy": "© {{year}} Yaadbuzz · free & open source under the",

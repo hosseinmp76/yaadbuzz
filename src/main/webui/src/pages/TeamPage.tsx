@@ -95,7 +95,12 @@ export default function TeamPage() {
             'settings',
           ] as Tab[]
         ).map((tabKey) => (
-          <TabButton key={tabKey} active={tab === tabKey} onClick={() => setTab(tabKey)}>
+          <TabButton
+            key={tabKey}
+            active={tab === tabKey}
+            data-tour={`tab-${tabKey}`}
+            onClick={() => setTab(tabKey)}
+          >
             {t(`team.tabs.${tabKey}`)}
           </TabButton>
         ))}

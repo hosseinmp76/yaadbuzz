@@ -1,8 +1,9 @@
-import { SignOut, UserCircle } from '@phosphor-icons/react'
+import { MapTrifold, SignOut, UserCircle } from '@phosphor-icons/react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth'
+import { useTourOptional } from '../onboarding/useTour'
 import { BrandMark } from './BrandMark'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { SiteFooter } from './SiteFooter'
@@ -12,6 +13,7 @@ import { appShellClass } from './ui/styles'
 export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
   const { t } = useTranslation()
+  const tour = useTourOptional()
 
   return (
     <div className={appShellClass}>
@@ -39,6 +41,20 @@ export default function Layout({ children }: { children: ReactNode }) {
           </Link>
           {user ? (
             <>
+              {tour && (
+                <Button
+                  variant="ghost"
+                  className="px-2 py-2 text-sm font-semibold text-muted hover:text-ink sm:px-2.5"
+                  aria-label={t('nav.tour')}
+                  disabled={tour.active}
+                  onClick={() => {
+                    void tour.startTour()
+                  }}
+                >
+                  <MapTrifold size={20} weight="duotone" />
+                  <span className="hidden sm:inline">{t('nav.tour')}</span>
+                </Button>
+              )}
               <Link
                 to="/preferences"
                 className="inline-flex items-center gap-1.5 px-2 text-sm font-semibold text-muted hover:text-ink sm:text-base"

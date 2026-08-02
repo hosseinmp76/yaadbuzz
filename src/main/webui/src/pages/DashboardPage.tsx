@@ -15,6 +15,7 @@ import { PageTitle } from '../components/ui/PageTitle'
 import { Panel } from '../components/ui/Panel'
 import { Stack } from '../components/ui/Stack'
 import { stackClass } from '../components/ui/styles'
+import { FirstVisitPrompt } from '../onboarding/FirstVisitPrompt'
 import { CREATE_ORG, MY_ORGS } from '../api/queries'
 
 type FormValues = { name: string }
@@ -49,10 +50,11 @@ export default function DashboardPage() {
 
   return (
     <Layout>
+      <FirstVisitPrompt />
       <PageTitle>{t('dashboard.title')}</PageTitle>
       <p className="text-muted">{t('dashboard.subtitle')}</p>
       <div className="mt-5 grid gap-4 md:grid-cols-2">
-        <Panel className={stackClass}>
+        <Panel className={stackClass} data-tour="orgs-list">
           <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
             <Buildings size={22} weight="duotone" className="text-brand" />
             {t('dashboard.organizations')}
@@ -70,11 +72,11 @@ export default function DashboardPage() {
               </ListItemLink>
             ))}
           </Stack>
-          <Link to="/join">
+          <Link to="/join" data-tour="join-team">
             <Button variant="secondary">{t('dashboard.joinTeam')}</Button>
           </Link>
         </Panel>
-        <Panel>
+        <Panel data-tour="create-org">
           <h2 className="mb-3 flex items-center gap-2 font-display text-xl tracking-tight">
             <Plus size={22} weight="bold" className="text-brand" />
             {t('dashboard.createOrg')}

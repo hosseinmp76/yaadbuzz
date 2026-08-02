@@ -5,6 +5,7 @@ import { Provider as UrqlProvider } from 'urql'
 import { Toaster } from 'sonner'
 import App from './App'
 import { AuthProvider } from './auth'
+import { TourProvider } from './onboarding/TourContext'
 import { ThemeProvider } from './theme/ThemeProvider'
 import { client } from './api/graphql'
 import { initSentry } from './sentry'
@@ -19,8 +20,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <UrqlProvider value={client}>
         <AuthProvider>
           <BrowserRouter>
-            <App />
-            <Toaster richColors position="top-center" closeButton />
+            <TourProvider>
+              <App />
+              <Toaster richColors position="top-center" closeButton />
+            </TourProvider>
           </BrowserRouter>
         </AuthProvider>
       </UrqlProvider>
