@@ -90,7 +90,7 @@ export default function MemberPage() {
     const result = await createTribute(member.teamId, {
       recipientId: member.id,
       text,
-      anonymous,
+      anonymous: isOwnProfile ? false : anonymous,
       privateTribute,
     })
     if (result.error) {
@@ -220,14 +220,16 @@ export default function MemberPage() {
                 required
               />
             </Label>
-            <label className="flex items-center gap-2 font-semibold">
-              <input
-                type="checkbox"
-                checked={anonymous}
-                onChange={(e) => setAnonymous(e.target.checked)}
-              />
-              {t('member.anonymous')}
-            </label>
+            {!isOwnProfile && (
+              <label className="flex items-center gap-2 font-semibold">
+                <input
+                  type="checkbox"
+                  checked={anonymous}
+                  onChange={(e) => setAnonymous(e.target.checked)}
+                />
+                {t('member.anonymous')}
+              </label>
+            )}
             <label className="flex items-center gap-2 font-semibold">
               <input
                 type="checkbox"
@@ -262,7 +264,7 @@ export default function MemberPage() {
           <p className="text-sm text-muted">
             {t('member.editHintBefore')}{' '}
             <Link
-              to={`/teams/${member.teamId}?tab=preferences`}
+              to={`/teams/${member.teamId}?tab=settings`}
               className="font-semibold text-brand hover:underline"
             >
               {t('member.preferences')}

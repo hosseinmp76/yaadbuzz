@@ -1,4 +1,5 @@
-import { openapi, unwrap } from './openapiClient'
+import { openapi, unwrap, isMembershipForbidden, redirectToAppIfNeeded, isStaleAuthError, clearStoredAuthAndReload } from './openapiClient'
+import { ApiError, authHeaders } from './authHeaders'
 import type {
   Characteristic,
   Comment,
@@ -7,6 +8,7 @@ import type {
   Media,
   Memory,
   Organization,
+  PendingInvite,
   SearchHit,
   Team,
   TeamMember,
@@ -15,8 +17,29 @@ import type {
   Tribute,
   User,
   Yearbook,
-  YearbookExport,
 } from './types'
+
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(path, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders(init?.headers),
+    },
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    const message = (data as { message?: string }).message || res.statusText || 'Request failed'
+    if (isStaleAuthError(message, res.status)) {
+      clearStoredAuthAndReload()
+    }
+    if (isMembershipForbidden(message, res.status)) {
+      redirectToAppIfNeeded()
+    }
+    throw new ApiError(res.status, message)
+  }
+  return data as T
+}
 
 export const api = {
   me: () => unwrap(openapi.GET('/api/me')) as Promise<User>,
@@ -120,6 +143,8 @@ export const api = {
     unwrap(
       openapi.GET('/api/teams/{id}/members/me', { params: { path: { id: teamId } } }),
     ) as Promise<TeamMember>,
+  leaveTeam: (teamId: string) =>
+    apiFetch<{ message: string }>(`/api/teams/${teamId}/members/me`, { method: 'DELETE' }),
   teamMember: (id: string) =>
     unwrap(openapi.GET('/api/members/{id}', { params: { path: { id } } })) as Promise<TeamMember>,
   upsertTeamMemberProfile: (
@@ -167,6 +192,16 @@ export const api = {
         body: { code, nickname, bio: bio ?? undefined },
       }),
     ) as Promise<TeamMember>,
+
+  pendingInvites: () =>
+    apiFetch<PendingInvite[]>('/api/invites/pending'),
+  acceptInvite: (id: string, nickname?: string | null, bio?: string | null) =>
+    apiFetch<TeamMember>(`/api/invites/${id}/accept`, {
+      method: 'POST',
+      body: JSON.stringify({ nickname: nickname ?? undefined, bio: bio ?? undefined }),
+    }),
+  rejectInvite: (id: string) =>
+    apiFetch<{ message: string }>(`/api/invites/${id}/reject`, { method: 'POST' }),
 
   tributes: (teamId: string, opts?: { recipientId?: string; first?: number; after?: string }) =>
     unwrap(
@@ -317,14 +352,6 @@ export const api = {
     unwrap(
       openapi.GET('/api/teams/{id}/yearbook', { params: { path: { id: teamId } } }),
     ) as Promise<Yearbook>,
-  yearbookExports: (teamId: string) =>
-    unwrap(
-      openapi.GET('/api/teams/{id}/yearbook-exports', { params: { path: { id: teamId } } }),
-    ) as Promise<YearbookExport[]>,
-  requestYearbookExport: (teamId: string) =>
-    unwrap(
-      openapi.POST('/api/teams/{id}/yearbook-exports', { params: { path: { id: teamId } } }),
-    ) as Promise<YearbookExport>,
 
   uploadMedia: (file: File) =>
     unwrap(

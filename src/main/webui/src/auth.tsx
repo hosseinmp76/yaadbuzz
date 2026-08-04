@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { AUTH_STORAGE_KEY, type AuthUser, type StoredAuth } from './authStorage'
+import { clearClientSession } from './clearClientSession'
 
 type AuthState = {
   accessToken: string | null
@@ -13,6 +14,14 @@ type AuthState = {
 }
 
 const AuthContext = createContext<AuthState | null>(null)
+
+function persistAuth(next: StoredAuth | null) {
+  if (next) {
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(next))
+  } else {
+    localStorage.removeItem(AUTH_STORAGE_KEY)
+  }
+}
 
 async function authRequest(path: string, body: unknown): Promise<StoredAuth> {
   const res = await fetch(path, {
@@ -43,11 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   })
 
   useEffect(() => {
-    if (stored) {
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(stored))
-    } else {
-      localStorage.removeItem(AUTH_STORAGE_KEY)
-    }
+    persistAuth(stored)
   }, [stored])
 
   const value = useMemo<AuthState>(() => ({
@@ -55,7 +60,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshToken: stored?.refreshToken ?? null,
     user: stored?.user ?? null,
     async login(email, password) {
-      setStored(await authRequest('/api/auth/login', { email, password }))
+      const next = await authRequest('/api/auth/login', { email, password })
+      // Sync to localStorage before React re-renders so API middleware sees the token.
+      persistAuth(next)
+      setStored(next)
     },
     async register(email) {
       const res = await fetch('/api/auth/register', {
@@ -70,12 +78,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return typeof data.message === 'string' ? data.message : ''
     },
     async completeOAuth(code) {
-      setStored(await authRequest('/api/auth/oauth/exchange', { code }))
+      const next = await authRequest('/api/auth/oauth/exchange', { code })
+      persistAuth(next)
+      setStored(next)
     },
     updateUser(nextUser) {
-      setStored((prev) => (prev ? { ...prev, user: nextUser } : prev))
+      setStored((prev) => {
+        if (!prev) return prev
+        const next = { ...prev, user: nextUser }
+        persistAuth(next)
+        return next
+      })
     },
     async logout() {
+      clearClientSession()
       setStored(null)
       try {
         await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
@@ -85,7 +101,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   }), [stored])
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={value}>
+      {/* Remount the tree per user so page state cannot leak across accounts. */}
+      <div key={stored?.user.userId ?? 'signed-out'}>{children}</div>
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth() {

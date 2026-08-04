@@ -12,7 +12,6 @@ import com.yaadbuzz.rest.dto.ApiDtos.TeamMemberType;
 import com.yaadbuzz.rest.dto.ApiDtos.TeamType;
 import com.yaadbuzz.rest.dto.ApiDtos.TopicType;
 import com.yaadbuzz.rest.dto.ApiDtos.TributeType;
-import com.yaadbuzz.rest.dto.ApiDtos.YearbookExportType;
 import com.yaadbuzz.rest.dto.ApiDtos.YearbookType;
 import com.yaadbuzz.rest.dto.ApiRequests.CreateInviteRequest;
 import com.yaadbuzz.rest.dto.ApiRequests.CreateMemoryRequest;
@@ -23,8 +22,8 @@ import com.yaadbuzz.rest.dto.ApiRequests.JoinTeamRequest;
 import com.yaadbuzz.rest.dto.ApiRequests.UpdateTeamSettingsRequest;
 import com.yaadbuzz.rest.dto.ApiRequests.UpdateYearbookSettingsRequest;
 import com.yaadbuzz.rest.dto.ApiRequests.UpsertTeamMemberProfileRequest;
-import com.yaadbuzz.pdf.YearbookContentService;
-import com.yaadbuzz.pdf.YearbookPdfService;
+import com.yaadbuzz.rest.dto.AuthDtos.MessageResponse;
+import com.yaadbuzz.yearbook.YearbookContentService;
 import com.yaadbuzz.search.SearchService;
 import com.yaadbuzz.service.MemoryService;
 import com.yaadbuzz.service.TeamService;
@@ -33,6 +32,7 @@ import com.yaadbuzz.service.TributeService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
@@ -65,8 +65,6 @@ public class TeamResource {
     TopicService topicService;
     @Inject
     SearchService searchService;
-    @Inject
-    YearbookPdfService yearbookPdfService;
     @Inject
     YearbookContentService yearbookContentService;
 
@@ -137,6 +135,14 @@ public class TeamResource {
     @Operation(summary = "Current user's membership in a team")
     public TeamMemberType myMembership(@PathParam("id") UUID id) {
         return TeamMemberType.from(teamService.myMembership(id, currentUserService.requireUser()));
+    }
+
+    @DELETE
+    @Path("/{id}/members/me")
+    @Operation(summary = "Leave a team; also leave the organization if no other teams remain")
+    public MessageResponse leave(@PathParam("id") UUID id) {
+        teamService.leaveTeam(id, currentUserService.requireUser());
+        return new MessageResponse("Left the team.");
     }
 
     @PATCH
@@ -256,21 +262,5 @@ public class TeamResource {
     @Operation(summary = "Assembled yearbook for online viewing")
     public YearbookType yearbook(@PathParam("id") UUID id) {
         return YearbookType.from(yearbookContentService.loadForTeam(id, currentUserService.requireUser()));
-    }
-
-    @GET
-    @Path("/{id}/yearbook-exports")
-    @Operation(summary = "List yearbook PDF exports")
-    public List<YearbookExportType> yearbookExports(@PathParam("id") UUID id) {
-        return yearbookPdfService.listExports(id, currentUserService.requireUser()).stream()
-                .map(YearbookExportType::from)
-                .toList();
-    }
-
-    @POST
-    @Path("/{id}/yearbook-exports")
-    @Operation(summary = "Request a yearbook PDF export")
-    public YearbookExportType requestYearbookExport(@PathParam("id") UUID id) {
-        return YearbookExportType.from(yearbookPdfService.requestExport(id, currentUserService.requireUser()));
     }
 }

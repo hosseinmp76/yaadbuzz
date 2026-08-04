@@ -20,7 +20,11 @@ import { Seo } from './seo/Seo'
 
 function Protected({ children }: { children: ReactNode }) {
   const { accessToken } = useAuth()
-  if (!accessToken) return <Navigate to="/login" replace />
+  if (!accessToken) {
+    // Do not preserve deep links (e.g. another user's team) across logout/login.
+    // Invite flows carry `next` explicitly via /join → login links.
+    return <Navigate to="/login" replace />
+  }
   return (
     <>
       <Seo title="Yaadbuzz" path="/app" noIndex />
@@ -41,7 +45,7 @@ export default function App() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/set-password" element={<ResetPasswordPage />} />
       <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
-      <Route path="/join" element={<Protected><JoinPage /></Protected>} />
+      <Route path="/join" element={<JoinPage />} />
       <Route path="/app" element={<Protected><DashboardPage /></Protected>} />
       <Route path="/preferences" element={<Protected><PreferencesPage /></Protected>} />
       <Route path="/orgs/:orgId" element={<Protected><OrgPage /></Protected>} />

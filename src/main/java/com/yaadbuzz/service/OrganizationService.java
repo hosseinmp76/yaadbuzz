@@ -4,13 +4,17 @@ import com.yaadbuzz.common.ApiException;
 import com.yaadbuzz.domain.MediaAsset;
 import com.yaadbuzz.domain.Organization;
 import com.yaadbuzz.domain.OrganizationMembership;
+import com.yaadbuzz.domain.TeamMember;
 import com.yaadbuzz.domain.User;
 import com.yaadbuzz.enums.OrgRole;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import org.hibernate.Hibernate;
 
 @ApplicationScoped
 public class OrganizationService {
@@ -38,15 +42,39 @@ public class OrganizationService {
     }
 
     public List<Organization> listMine(User user) {
-        return OrganizationMembership.listByUser(user.id).stream()
-                .map(m -> m.organization)
-                .filter(o -> !o.isDeleted())
-                .toList();
+        Map<UUID, Organization> byId = new LinkedHashMap<>();
+        for (OrganizationMembership membership : OrganizationMembership.listByUser(user.id)) {
+            Organization org = membership.organization;
+            if (org != null && !org.isDeleted()) {
+                byId.put(org.id, org);
+            }
+        }
+        List<TeamMember> teamMemberships = TeamMember.find(
+                "user.id = ?1 and deletedAt is null and team.deletedAt is null",
+                user.id
+        ).list();
+        for (TeamMember membership : teamMemberships) {
+            Hibernate.initialize(membership.team);
+            Hibernate.initialize(membership.team.organization);
+            Organization org = membership.team.organization;
+            if (org != null && !org.isDeleted()) {
+                byId.putIfAbsent(org.id, org);
+            }
+        }
+        return List.copyOf(byId.values());
     }
 
     public Organization get(UUID id, User user) {
         Organization org = accessService.requireOrganization(id);
-        accessService.requireOrgMember(id, user);
+        boolean orgMember = OrganizationMembership.findByOrgAndUser(id, user.id).isPresent();
+        boolean teamMember = TeamMember.count(
+                "user.id = ?1 and team.organization.id = ?2 and deletedAt is null",
+                user.id,
+                id
+        ) > 0;
+        if (!orgMember && !teamMember) {
+            throw ApiException.forbidden("Not a member of this organization");
+        }
         return org;
     }
 

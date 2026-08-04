@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import Layout from '../components/Layout'
 import { PageTitle } from '../components/ui/PageTitle'
 import { useAuth } from '../auth'
+import { resolvePostAuthPath } from '../authRedirect'
 import { Seo } from '../seo/Seo'
 
 export default function OAuthCallbackPage() {
@@ -13,6 +14,7 @@ export default function OAuthCallbackPage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
+  const [donePath, setDonePath] = useState<string | null>(null)
 
   useEffect(() => {
     const code = params.get('code')
@@ -25,7 +27,9 @@ export default function OAuthCallbackPage() {
       .then(() => {
         if (cancelled) return
         toast.success(t('login.success'))
-        void navigate('/app', { replace: true })
+        const next = resolvePostAuthPath('')
+        setDonePath(next)
+        void navigate(next, { replace: true })
       })
       .catch((err: unknown) => {
         if (cancelled) return
@@ -38,8 +42,8 @@ export default function OAuthCallbackPage() {
     }
   }, [completeOAuth, navigate, params, t])
 
-  if (accessToken && !error) {
-    return <Navigate to="/app" replace />
+  if (accessToken && !error && donePath) {
+    return <Navigate to={donePath} replace />
   }
 
   return (

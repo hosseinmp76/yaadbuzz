@@ -13,7 +13,7 @@ Online yearbook generator built with **Quarkus**, **React (Quinoa)**, **REST/Ope
 - Topic awards and characteristics tags
 - Elasticsearch search
 - Cursor-based infinite scroll
-- Async PDF yearbook export + download
+- Online yearbook view with browser print / Save as PDF
 - Swagger UI for the full REST API
 
 ## Quick start (dev)
@@ -111,7 +111,6 @@ npm run lint:fix   # auto-fix where possible
 | `GET /api/auth/oauth/{google\|github}` | Social login (OIDC redirect) |
 | `POST /api/auth/oauth/exchange` | Exchange one-time OAuth code for JWTs |
 | `POST /api/media` | Image upload |
-| `GET /api/yearbooks/{id}/download` | PDF download |
 | `/api/organizations`, `/api/teams`, … | Yearbook domain operations |
 
 ## Project layout

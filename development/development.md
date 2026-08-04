@@ -32,7 +32,7 @@ docker compose up -d postgres elasticsearch minio minio-init
 |---|---|---|
 | Postgres | `5432` | Primary DB (`yaadbuzz` / `yaadbuzz` / `yaadbuzz`) |
 | Elasticsearch | `9200` | Hibernate Search (8.15.5) |
-| MinIO API | `9000` | S3-compatible media + PDF storage |
+| MinIO API | `9000` | S3-compatible media storage |
 | MinIO console | `9001` | Optional browser UI |
 
 Stop infra:
@@ -395,13 +395,13 @@ yaadbuzz/
 │   │   │   ├── service/      # Domain services / access control
 │   │   │   ├── search/       # Elasticsearch / Hibernate Search
 │   │   │   ├── storage/      # S3/MinIO client
-│   │   │   ├── pdf/          # Yearbook PDF generation worker
+│   │   │   ├── yearbook/     # Assembled yearbook content for online/print view
 │   │   │   └── common/       # Shared errors, cursors, mappers
 │   │   ├── resources/
 │   │   │   ├── application.properties
 │   │   │   ├── db/migration/           # Flyway SQL
 │   │   │   ├── jwt/                    # Dev JWT key pair
-│   │   │   ├── templates/yearbook/     # Qute HTML for PDF
+│   │   │   ├── templates/mail/         # Qute HTML for email
 │   │   │   └── META-INF/native-image/  # Native-image hints
 │   │   ├── docker/
 │   │   │   ├── Dockerfile.compose      # Multi-stage for Compose
@@ -430,8 +430,7 @@ yaadbuzz/
 ```text
 Browser
   ├─ SPA (Quinoa / Vite) ──REST──► /api/* ──► services ──► Postgres / ES / MinIO
-  ├─ SPA /teams/:id/yearbook ──GET /api/teams/:id/yearbook──► online view → browser Print → PDF
-  └─ scheduler/worker ──► server PDF in MinIO (download via /api/yearbooks/*/download)
+  └─ SPA /teams/:id/yearbook ──GET /api/teams/:id/yearbook──► online view → browser Print → PDF
 ```
 
 ---

@@ -1,4 +1,4 @@
-package com.yaadbuzz.pdf;
+package com.yaadbuzz.yearbook;
 
 import com.yaadbuzz.domain.Characteristic;
 import com.yaadbuzz.domain.Comment;

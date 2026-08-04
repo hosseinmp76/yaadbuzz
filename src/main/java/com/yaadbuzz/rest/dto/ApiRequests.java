@@ -53,6 +53,9 @@ public final class ApiRequests {
     public record JoinTeamRequest(String code, String nickname, String bio) {
     }
 
+    public record AcceptInviteRequest(String nickname, String bio) {
+    }
+
     public record UpsertTeamMemberProfileRequest(String nickname, String bio, UUID avatarId) {
     }
 

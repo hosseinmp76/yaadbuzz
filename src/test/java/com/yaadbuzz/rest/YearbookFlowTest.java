@@ -144,11 +144,6 @@ class YearbookFlowTest {
         assertEquals("MODERN", yearbook.get("theme"));
         assertFalse(((List<?>) yearbook.get("members")).isEmpty());
         assertFalse(((List<?>) yearbook.get("memories")).isEmpty());
-
-        Map<String, Object> export = ApiClient.json(
-                ApiClient.post(alice.accessToken(), "/api/teams/" + teamId + "/yearbook-exports", Map.of()),
-                200);
-        assertEquals("PENDING", export.get("status"));
     }
 
     @Test

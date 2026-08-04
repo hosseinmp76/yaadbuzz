@@ -1,4 +1,4 @@
-package com.yaadbuzz.pdf;
+package com.yaadbuzz.yearbook;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

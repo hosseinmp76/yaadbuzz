@@ -178,13 +178,6 @@ components:
           type: boolean
         privateTribute:
           type: boolean
-    ExportStatus:
-      type: string
-      enum:
-      - PENDING
-      - PROCESSING
-      - READY
-      - FAILED
     ForgotPasswordRequest:
       type: object
       required:
@@ -549,23 +542,6 @@ components:
           type: array
           items:
             type: string
-    YearbookExportType:
-      type: object
-      properties:
-        id:
-          $ref: "#/components/schemas/UUID"
-        teamId:
-          $ref: "#/components/schemas/UUID"
-        status:
-          $ref: "#/components/schemas/ExportStatus"
-        fileUrl:
-          type: string
-        errorMessage:
-          type: string
-        createdAt:
-          $ref: "#/components/schemas/Instant"
-        completedAt:
-          $ref: "#/components/schemas/Instant"
     YearbookMemberType:
       type: object
       properties:
@@ -1857,57 +1833,6 @@ paths:
       security:
       - SecurityScheme:
         - user
-  /api/teams/{id}/yearbook-exports:
-    get:
-      summary: List yearbook PDF exports
-      tags:
-      - Teams
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          $ref: "#/components/schemas/UUID"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/YearbookExportType"
-        "401":
-          description: Not Authorized
-        "403":
-          description: Not Allowed
-      security:
-      - SecurityScheme:
-        - user
-    post:
-      summary: Request a yearbook PDF export
-      tags:
-      - Teams
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          $ref: "#/components/schemas/UUID"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/YearbookExportType"
-        "401":
-          description: Not Authorized
-        "403":
-          description: Not Allowed
-      security:
-      - SecurityScheme:
-        - user
   /api/teams/{id}/yearbook-settings:
     patch:
       summary: Update yearbook layout settings
@@ -2044,29 +1969,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TributeType"
-        "401":
-          description: Not Authorized
-        "403":
-          description: Not Allowed
-      security:
-      - SecurityScheme:
-        - user
-  /api/yearbooks/{id}/download:
-    get:
-      summary: Download a generated yearbook PDF
-      tags:
-      - Yearbooks
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          $ref: "#/components/schemas/UUID"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/pdf: {}
         "401":
           description: Not Authorized
         "403":

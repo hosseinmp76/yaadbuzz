@@ -84,13 +84,9 @@
           "title": "Yearbook",
           "body": "Preview the online yearbook, tweak the cover, and export a PDF."
         },
-        "preferences": {
-          "title": "Team preferences",
-          "body": "Your profile on this team — how you appear to others."
-        },
         "settings": {
           "title": "Team settings",
-          "body": "Admins manage invites, reveal day, and yearbook options here."
+          "body": "Update your team profile, leave the team, manage invites, and brand color."
         }
       }
     }
@@ -261,6 +257,12 @@
     "title": "Your organizations",
     "subtitle": "Start an organization, then create teams for each yearbook.",
     "organizations": "Organizations",
+    "invitations": "Team invitations",
+    "inviteFromOrg": "{{org}}",
+    "acceptInvite": "Accept",
+    "rejectInvite": "Decline",
+    "inviteAccepted": "Invitation accepted",
+    "inviteRejected": "Invitation declined",
     "joinTeam": "Join a team with invite code",
     "createOrg": "Create organization",
     "name": "Name",
@@ -278,7 +280,11 @@
     "nickname": "Nickname",
     "bio": "Bio",
     "submit": "Join",
-    "success": "Joined team"
+    "submitting": "Joining…",
+    "success": "Joined team",
+    "signedOutBody": "Sign in or create an account to accept this invitation. We’ll bring you right back here.",
+    "loginToContinue": "Log in",
+    "registerToContinue": "Create account"
   },
   "org": {
     "back": "← Back to organizations",
@@ -304,7 +310,6 @@
       "topics": "Topics",
       "search": "Search",
       "yearbook": "Yearbook",
-      "preferences": "Preferences",
       "settings": "Settings"
     },
     "searchMembers": "Search members…",
@@ -372,6 +377,7 @@
     "inviteSent": "Invitation sent to {{email}}",
     "teamSettings": "Team settings",
     "brandColor": "Brand color",
+    "brandColorInvalid": "Enter a valid hex color like #0F766E",
     "save": "Save",
     "settingsSaved": "Settings saved",
     "yourProfile": "Your team profile",
@@ -385,6 +391,12 @@
     "photoUpdated": "Photo updated",
     "uploadFailed": "Upload failed",
     "loadingProfile": "Loading your profile…",
+    "leaveTitle": "Leave this team",
+    "leaveHint": "You will lose access to this yearbook. If this is your only team in the organization, you will leave the organization too.",
+    "leave": "Leave team",
+    "leaving": "Leaving…",
+    "leaveConfirm": "Leave this team? If you have no other teams in the organization, you will leave the organization as well.",
+    "leaveSuccess": "You left the team",
     "awardTopics": "Award topics",
     "newTopic": "New topic",
     "addTopic": "Add topic",
@@ -400,13 +412,8 @@
     "viewPrintHint": "Open the live yearbook in your browser, then use Print → Save as PDF. Current form values are saved before opening.",
     "openYearbook": "Open yearbook",
     "printReady": "Print-ready page",
-    "serverPdf": "Server PDF export",
-    "serverPdfHint": "Generate a downloadable PDF on the server (uses the same customization).",
-    "generatePdf": "Generate yearbook PDF",
-    "generationStarted": "Yearbook generation started",
-    "download": "Download",
     "customize": "Customize yearbook",
-    "customizeHint": "Team admins can change cover copy, theme, and which sections appear online and in PDFs.",
+    "customizeHint": "Team admins can change cover copy, theme, and which sections appear in the yearbook.",
     "coverTitle": "Cover title",
     "coverSubtitle": "Cover subtitle",
     "dedicationLabel": "Dedication / cover message",

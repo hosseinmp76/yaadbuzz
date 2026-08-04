@@ -1,5 +1,6 @@
 package com.yaadbuzz.domain;
 
+import com.yaadbuzz.enums.InviteStatus;
 import com.yaadbuzz.enums.TeamRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -45,6 +47,10 @@ public class Invite extends io.quarkus.hibernate.orm.panache.PanacheEntityBase {
     @Column(length = 320)
     public String email;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    public InviteStatus status = InviteStatus.PENDING;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id", nullable = false)
     public User createdBy;
@@ -60,9 +66,15 @@ public class Invite extends io.quarkus.hibernate.orm.panache.PanacheEntityBase {
         if (createdAt == null) {
             createdAt = Instant.now();
         }
+        if (status == null) {
+            status = InviteStatus.PENDING;
+        }
     }
 
     public boolean isValid() {
+        if (status == InviteStatus.REJECTED) {
+            return false;
+        }
         if (expiresAt != null && expiresAt.isBefore(Instant.now())) {
             return false;
         }
@@ -71,5 +83,20 @@ public class Invite extends io.quarkus.hibernate.orm.panache.PanacheEntityBase {
 
     public static Optional<Invite> findByCode(String code) {
         return find("code", code).firstResultOptional();
+    }
+
+    public static Optional<Invite> findActiveById(UUID id) {
+        return find("id", id).firstResultOptional();
+    }
+
+    /** Email-targeted invites waiting for this address. */
+    public static List<Invite> listPendingByEmail(String email) {
+        return list(
+                "email = ?1 and status = ?2 and (expiresAt is null or expiresAt > ?3) "
+                        + "and (maxUses is null or useCount < maxUses) order by createdAt desc",
+                email.toLowerCase(),
+                InviteStatus.PENDING,
+                Instant.now()
+        );
     }
 }

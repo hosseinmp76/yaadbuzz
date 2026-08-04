@@ -18,7 +18,6 @@ const TEAM_TABS = [
   'topics',
   'search',
   'yearbook',
-  'preferences',
   'settings',
 ] as const
 

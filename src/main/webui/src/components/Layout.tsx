@@ -127,7 +127,9 @@ function AccountMenu({ displayName }: { displayName: string }) {
             className={menuItemClass}
             onClick={() => {
               close()
-              void logout()
+              void logout().finally(() => {
+                window.location.replace('/login')
+              })
             }}
           >
             <SignOut size={18} className="shrink-0" />

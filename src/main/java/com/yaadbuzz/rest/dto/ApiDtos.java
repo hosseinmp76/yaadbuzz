@@ -11,11 +11,9 @@ import com.yaadbuzz.domain.TeamMember;
 import com.yaadbuzz.domain.Topic;
 import com.yaadbuzz.domain.Tribute;
 import com.yaadbuzz.domain.User;
-import com.yaadbuzz.domain.YearbookExport;
-import com.yaadbuzz.enums.ExportStatus;
 import com.yaadbuzz.enums.TeamRole;
 import com.yaadbuzz.enums.YearbookTheme;
-import com.yaadbuzz.pdf.YearbookContent;
+import com.yaadbuzz.yearbook.YearbookContent;
 import com.yaadbuzz.search.SearchService;
 import com.yaadbuzz.service.TopicService;
 import java.time.Instant;
@@ -136,6 +134,28 @@ public final class ApiDtos {
         }
     }
 
+    public record PendingInviteType(
+            UUID id,
+            UUID teamId,
+            String teamName,
+            UUID organizationId,
+            String organizationName,
+            TeamRole role,
+            Instant createdAt
+    ) {
+        public static PendingInviteType from(Invite invite) {
+            return new PendingInviteType(
+                    invite.id,
+                    invite.team.id,
+                    invite.team.name,
+                    invite.team.organization.id,
+                    invite.team.organization.name,
+                    invite.role,
+                    invite.createdAt
+            );
+        }
+    }
+
     public record TributeType(
             UUID id,
             UUID teamId,
@@ -238,28 +258,6 @@ public final class ApiDtos {
                     characteristic.teamMember.id,
                     characteristic.title,
                     characteristic.count
-            );
-        }
-    }
-
-    public record YearbookExportType(
-            UUID id,
-            UUID teamId,
-            ExportStatus status,
-            String fileUrl,
-            String errorMessage,
-            Instant createdAt,
-            Instant completedAt
-    ) {
-        public static YearbookExportType from(YearbookExport export) {
-            return new YearbookExportType(
-                    export.id,
-                    export.team.id,
-                    export.status,
-                    export.fileUrl,
-                    export.errorMessage,
-                    export.createdAt,
-                    export.completedAt
             );
         }
     }

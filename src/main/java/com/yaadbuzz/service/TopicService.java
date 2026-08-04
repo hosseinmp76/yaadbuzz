@@ -80,6 +80,7 @@ public class TopicService {
         }
         return map.values().stream()
                 .sorted(Comparator.comparingInt(TopicStanding::score).reversed())
+                .limit(3)
                 .toList();
     }
 

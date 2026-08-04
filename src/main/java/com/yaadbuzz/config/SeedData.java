@@ -13,8 +13,6 @@ import com.yaadbuzz.domain.Topic;
 import com.yaadbuzz.domain.TopicVote;
 import com.yaadbuzz.domain.Tribute;
 import com.yaadbuzz.domain.User;
-import com.yaadbuzz.domain.YearbookExport;
-import com.yaadbuzz.enums.ExportStatus;
 import com.yaadbuzz.enums.OrgRole;
 import com.yaadbuzz.enums.TeamRole;
 import com.yaadbuzz.enums.YearbookTheme;
@@ -339,19 +337,6 @@ public class SeedData {
             }
         }
 
-        export(team, alice, ExportStatus.READY,
-                "seed/yearbooks/class-2026.pdf",
-                publicUrl("seed/yearbooks/class-2026.pdf"),
-                null,
-                Instant.now().minus(2, ChronoUnit.HOURS));
-        export(team, alice, ExportStatus.FAILED,
-                null,
-                null,
-                "Seeded failure example: missing cover asset",
-                Instant.now().minus(1, ChronoUnit.HOURS));
-        export(team, alice, ExportStatus.PENDING, null, null, null, null);
-        export(alumni, alice, ExportStatus.PROCESSING, null, null, null, null);
-
         Log.infof(
                 "Seeded Yaadbuzz demo data. Users alice|bob|cara|dana|eve@yaadbuzz.local / %s. "
                         + "Manual test users a|b|c@test.com / %s. Invite: %s. "
@@ -524,25 +509,5 @@ public class SeedData {
                     return c;
                 });
         characteristic.count += 1;
-    }
-
-    private void export(
-            Team team,
-            User requestedBy,
-            ExportStatus status,
-            String storageKey,
-            String fileUrl,
-            String errorMessage,
-            Instant completedAt
-    ) {
-        YearbookExport export = new YearbookExport();
-        export.team = team;
-        export.requestedBy = requestedBy;
-        export.status = status;
-        export.storageKey = storageKey;
-        export.fileUrl = fileUrl;
-        export.errorMessage = errorMessage;
-        export.completedAt = completedAt;
-        export.persist();
     }
 }

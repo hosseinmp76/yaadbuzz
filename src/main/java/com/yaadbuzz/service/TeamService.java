@@ -6,9 +6,12 @@ import com.yaadbuzz.common.CursorUtil;
 import com.yaadbuzz.domain.Invite;
 import com.yaadbuzz.domain.MediaAsset;
 import com.yaadbuzz.domain.Organization;
+import com.yaadbuzz.domain.OrganizationMembership;
 import com.yaadbuzz.domain.Team;
 import com.yaadbuzz.domain.TeamMember;
 import com.yaadbuzz.domain.User;
+import com.yaadbuzz.enums.InviteStatus;
+import com.yaadbuzz.enums.OrgRole;
 import com.yaadbuzz.enums.TeamRole;
 import com.yaadbuzz.enums.YearbookTheme;
 import com.yaadbuzz.mail.EmailService;
@@ -16,6 +19,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.hibernate.Hibernate;
@@ -53,9 +57,20 @@ public class TeamService {
 
     @Transactional
     public List<Team> listByOrganization(UUID organizationId, User user) {
-        accessService.requireOrgMember(organizationId, user);
-        List<Team> teams = Team.listByOrganization(organizationId);
-        teams.forEach(this::initializeTeamGraph);
+        accessService.requireOrganization(organizationId);
+        boolean orgMember = OrganizationMembership.findByOrgAndUser(organizationId, user.id).isPresent();
+        List<TeamMember> memberships = TeamMember.find(
+                "user.id = ?1 and team.organization.id = ?2 and deletedAt is null and team.deletedAt is null",
+                user.id,
+                organizationId
+        ).list();
+        if (!orgMember && memberships.isEmpty()) {
+            throw ApiException.forbidden("Not a member of this organization");
+        }
+        List<Team> teams = new ArrayList<>();
+        for (TeamMember membership : memberships) {
+            teams.add(initializeTeamGraph(membership.team));
+        }
         return teams;
     }
 
@@ -146,6 +161,7 @@ public class TeamService {
         invite.role = role == null ? TeamRole.MEMBER : role;
         invite.maxUses = maxUses;
         invite.expiresAt = expiresAt;
+        invite.status = InviteStatus.PENDING;
         invite.createdBy = user;
         invite.persist();
         return invite;
@@ -176,6 +192,7 @@ public class TeamService {
         invite.role = role == null ? TeamRole.MEMBER : role;
         invite.maxUses = 1;
         invite.email = normalized;
+        invite.status = InviteStatus.PENDING;
         invite.createdBy = user;
         invite.persist();
 
@@ -194,15 +211,69 @@ public class TeamService {
     }
 
     @Transactional
+    public List<Invite> listPendingInvites(User user) {
+        List<Invite> invites = Invite.listPendingByEmail(user.email);
+        List<Invite> pending = new ArrayList<>();
+        for (Invite invite : invites) {
+            if (TeamMember.findByTeamAndUser(invite.team.id, user.id).isPresent()) {
+                continue;
+            }
+            Hibernate.initialize(invite.team);
+            Hibernate.initialize(invite.team.organization);
+            pending.add(invite);
+        }
+        return pending;
+    }
+
+    @Transactional
+    public TeamMember acceptInvite(User user, UUID inviteId, String nickname, String bio) {
+        Invite invite = Invite.findActiveById(inviteId)
+                .orElseThrow(() -> ApiException.notFound("Invite not found"));
+        requireEmailInviteForUser(invite, user);
+        return consumeInvite(user, invite, nickname, bio);
+    }
+
+    @Transactional
+    public void rejectInvite(User user, UUID inviteId) {
+        Invite invite = Invite.findActiveById(inviteId)
+                .orElseThrow(() -> ApiException.notFound("Invite not found"));
+        requireEmailInviteForUser(invite, user);
+        if (invite.status != InviteStatus.PENDING || !invite.isValid()) {
+            throw ApiException.badRequest("Invite is no longer pending");
+        }
+        invite.status = InviteStatus.REJECTED;
+    }
+
+    @Transactional
     public TeamMember joinTeam(User user, String code, String nickname, String bio) {
         Invite invite = Invite.findByCode(code.trim())
                 .orElseThrow(() -> ApiException.notFound("Invite not found"));
+        if (invite.email != null && !invite.email.isBlank()
+                && !invite.email.equalsIgnoreCase(user.email)) {
+            throw ApiException.forbidden("This invitation was sent to a different email address");
+        }
+        return consumeInvite(user, invite, nickname, bio);
+    }
+
+    private void requireEmailInviteForUser(Invite invite, User user) {
+        if (invite.email == null || invite.email.isBlank()) {
+            throw ApiException.badRequest("This invite cannot be managed from your inbox");
+        }
+        if (!invite.email.equalsIgnoreCase(user.email)) {
+            throw ApiException.forbidden("This invitation was sent to a different email address");
+        }
+    }
+
+    private TeamMember consumeInvite(User user, Invite invite, String nickname, String bio) {
         if (!invite.isValid()) {
-            throw ApiException.badRequest("Invite is expired or exhausted");
+            throw ApiException.badRequest("Invite is expired, declined, or exhausted");
         }
         if (TeamMember.findByTeamAndUser(invite.team.id, user.id).isPresent()) {
             throw ApiException.conflict("Already a member of this team");
         }
+        Hibernate.initialize(invite.team);
+        Hibernate.initialize(invite.team.organization);
+
         String nick = nickname == null || nickname.isBlank() ? user.displayName : nickname.trim();
         if (TeamMember.count("team.id = ?1 and nickname = ?2 and deletedAt is null", invite.team.id, nick) > 0) {
             throw ApiException.conflict("Nickname already taken in this team");
@@ -214,8 +285,65 @@ public class TeamService {
         member.bio = bio;
         member.role = invite.role;
         member.persist();
+
+        ensureOrgMembership(invite.team.organization, user);
+
         invite.useCount += 1;
+        if (invite.email != null && !invite.email.isBlank()) {
+            invite.status = InviteStatus.ACCEPTED;
+        } else if (invite.maxUses != null && invite.useCount >= invite.maxUses) {
+            invite.status = InviteStatus.ACCEPTED;
+        }
         return member;
+    }
+
+    private void ensureOrgMembership(Organization org, User user) {
+        if (OrganizationMembership.findByOrgAndUser(org.id, user.id).isPresent()) {
+            return;
+        }
+        OrganizationMembership membership = new OrganizationMembership();
+        membership.organization = org;
+        membership.user = user;
+        membership.role = OrgRole.MEMBER;
+        membership.persist();
+    }
+
+    /**
+     * Leave a team. If the user has no remaining teams in the parent organization,
+     * their organization membership is removed as well.
+     */
+    @Transactional
+    public void leaveTeam(UUID teamId, User user) {
+        TeamMember member = accessService.requireTeamMember(teamId, user);
+        Team team = accessService.requireTeam(teamId);
+        Hibernate.initialize(team.organization);
+
+        if (member.role == TeamRole.ADMIN) {
+            long otherAdmins = TeamMember.count(
+                    "team.id = ?1 and role = ?2 and deletedAt is null and id <> ?3",
+                    teamId,
+                    TeamRole.ADMIN,
+                    member.id
+            );
+            if (otherAdmins == 0) {
+                throw ApiException.badRequest(
+                        "Cannot leave as the only team admin. Promote another member first."
+                );
+            }
+        }
+
+        member.softDelete();
+
+        UUID orgId = team.organization.id;
+        long remainingInOrg = TeamMember.count(
+                "user.id = ?1 and team.organization.id = ?2 and deletedAt is null and team.deletedAt is null",
+                user.id,
+                orgId
+        );
+        if (remainingInOrg == 0) {
+            OrganizationMembership.findByOrgAndUser(orgId, user.id)
+                    .ifPresent(OrganizationMembership::delete);
+        }
     }
 
     @Transactional

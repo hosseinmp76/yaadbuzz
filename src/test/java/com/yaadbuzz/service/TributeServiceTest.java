@@ -34,16 +34,20 @@ class TributeServiceTest {
 
     @Test
     @Transactional
-    void cannotWriteTributeToSelf() {
+    void cannotWriteAnonymousTributeToSelf() {
         User user = User.findByEmail(createUserEmail()).orElseThrow();
         var org = organizationService.create(user, "Tribute Org", "#123456");
         Team team = teamService.create(user, org.id, "Tribute Team", null);
         TeamMember member = TeamMember.findByTeamAndUser(team.id, user.id).orElseThrow();
 
         ApiException ex = assertThrows(ApiException.class, () -> tributeService.create(
-                team.id, user, member.id, "Nope", false, false
+                team.id, user, member.id, "Nope", true, false
         ));
         assertEquals(400, ex.status);
+
+        Tribute self = tributeService.create(team.id, user, member.id, "For me", false, false);
+        assertFalse(self.anonymous);
+        assertEquals(member.id, self.recipient.id);
     }
 
     @Test

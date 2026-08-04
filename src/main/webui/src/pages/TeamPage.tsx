@@ -1,16 +1,17 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { BookOpenText, DownloadSimple, MagnifyingGlass, Printer, Sparkle } from '@phosphor-icons/react'
+import { BookOpenText, MagnifyingGlass, Printer } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { api } from '../api/client'
-import { downloadYearbook, uploadMedia } from '../api/http'
-import type { Team, TeamMember, Tribute, Memory, Topic, TopicStanding, SearchHit, YearbookExport } from '../api/types'
+import { uploadMedia } from '../api/http'
+import type { Team, TeamMember, Tribute, Memory, Topic, TopicStanding, SearchHit } from '../api/types'
 import { useApiMutation, useApiQuery } from '../api/useApi'
 import Layout from '../components/Layout'
 import { Button } from '../components/ui/Button'
 import { Chip } from '../components/ui/Chip'
 import { Input, Label, Select, Textarea } from '../components/ui/Field'
+import { ColorPicker, normalizeHexColor } from '../components/ui/ColorPicker'
 import { InfiniteSentinel } from '../components/ui/InfiniteSentinel'
 import { ListItem, ListItemLink } from '../components/ui/ListItem'
 import { PageTitle } from '../components/ui/PageTitle'
@@ -32,14 +33,15 @@ type Tab =
   | 'topics'
   | 'search'
   | 'yearbook'
-  | 'preferences'
   | 'settings'
 
 export default function TeamPage() {
   const { t } = useTranslation()
   const { teamId = '' } = useParams()
   const [params, setParams] = useSearchParams()
-  const tab = (params.get('tab') as Tab) || 'members'
+  const rawTab = params.get('tab') || 'members'
+  // Legacy ?tab=preferences redirects into the merged settings tab.
+  const tab = (rawTab === 'preferences' ? 'settings' : rawTab) as Tab
   const setTab = (next: Tab) => setParams({ tab: next })
 
   const [{ data: team }, reTeam] = useApiQuery(!!teamId, () => api.team(teamId), [teamId])
@@ -64,7 +66,6 @@ export default function TeamPage() {
             'topics',
             'search',
             'yearbook',
-            'preferences',
             'settings',
           ] as Tab[]
         ).map((tabKey) => (
@@ -85,9 +86,11 @@ export default function TeamPage() {
       {tab === 'topics' && <TopicsTab teamId={teamId} />}
       {tab === 'search' && <SearchTab teamId={teamId} />}
       {tab === 'yearbook' && <YearbookTab teamId={teamId} team={team} reTeam={reTeam} />}
-      {tab === 'preferences' && <PreferencesTab teamId={teamId} />}
       {tab === 'settings' && (
-        <SettingsTab teamId={teamId} brandColor={team?.brandColor ?? '#0F766E'} />
+        <div className={stackClass}>
+          <PreferencesTab teamId={teamId} />
+          <SettingsTab teamId={teamId} />
+        </div>
       )}
     </Layout>
   )
@@ -207,16 +210,21 @@ function TributesTab({ teamId }: { teamId: string }) {
   const [privateTribute, setPrivateTribute] = useState(false)
   const cursorRef = useRef<string | null>(null)
   const members = membersPage?.items ?? []
+  const writingToSelf = !!me && recipientId === me.id
 
   useEffect(() => {
     cursorRef.current = cursor
   }, [cursor])
 
   useEffect(() => {
-    if (!recipientId && members[0]?.id) {
-      setRecipientId(members[0].id)
-    }
-  }, [members, recipientId])
+    if (recipientId) return
+    const other = members.find((m) => m.id !== me?.id)
+    setRecipientId(other?.id ?? members[0]?.id ?? '')
+  }, [members, recipientId, me?.id])
+
+  useEffect(() => {
+    if (writingToSelf) setAnonymous(false)
+  }, [writingToSelf])
 
   const load = useCallback(
     async (reset = false) => {
@@ -247,7 +255,7 @@ function TributesTab({ teamId }: { teamId: string }) {
     const result = await createTribute(teamId, {
       recipientId,
       text,
-      anonymous,
+      anonymous: writingToSelf ? false : anonymous,
       privateTribute,
     })
     if (result.error) {
@@ -372,14 +380,16 @@ function TributesTab({ teamId }: { teamId: string }) {
             required
           />
         </Label>
-        <label className="flex items-center gap-2 font-semibold">
-          <input
-            type="checkbox"
-            checked={anonymous}
-            onChange={(e) => setAnonymous(e.target.checked)}
-          />
-          {t('team.anonymous')}
-        </label>
+        {!writingToSelf && (
+          <label className="flex items-center gap-2 font-semibold">
+            <input
+              type="checkbox"
+              checked={anonymous}
+              onChange={(e) => setAnonymous(e.target.checked)}
+            />
+            {t('team.anonymous')}
+          </label>
+        )}
         <label className="flex items-center gap-2 font-semibold">
           <input
             type="checkbox"
@@ -837,12 +847,6 @@ function YearbookTab({
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [{ data: exports }, reexecute] = useApiQuery(
-    !!teamId,
-    () => api.yearbookExports(teamId),
-    [teamId],
-  )
-  const [, requestExport] = useApiMutation((id: string) => api.requestYearbookExport(id))
   const [, updateYearbook] = useApiMutation(
     (
       id: string,
@@ -859,6 +863,9 @@ function YearbookTab({
       },
     ) => api.updateYearbookSettings(id, body),
   )
+  const [, updateSettings] = useApiMutation(
+    (id: string, body: { brandColor?: string | null }) => api.updateTeamSettings(id, body),
+  )
 
   const [title, setTitle] = useState(team?.yearbookTitle ?? '')
   const [subtitle, setSubtitle] = useState(team?.yearbookSubtitle ?? '')
@@ -866,6 +873,7 @@ function YearbookTab({
   const [theme, setTheme] = useState<YearbookThemeOption>(
     (team?.yearbookTheme as YearbookThemeOption | undefined) ?? 'CLASSIC',
   )
+  const [brandColor, setBrandColor] = useState(team?.brandColor ?? '#0F766E')
   const [showMembers, setShowMembers] = useState(team?.yearbookShowMembers ?? true)
   const [showTributes, setShowTributes] = useState(team?.yearbookShowTributes ?? true)
   const [showCharacteristics, setShowCharacteristics] = useState(
@@ -880,6 +888,7 @@ function YearbookTab({
     setSubtitle(team?.yearbookSubtitle ?? '')
     setDedication(team?.yearbookDedication ?? '')
     setTheme((team?.yearbookTheme as YearbookThemeOption | undefined) ?? 'CLASSIC')
+    setBrandColor(team?.brandColor ?? '#0F766E')
     setShowMembers(team?.yearbookShowMembers ?? true)
     setShowTributes(team?.yearbookShowTributes ?? true)
     setShowCharacteristics(team?.yearbookShowCharacteristics ?? true)
@@ -887,37 +896,35 @@ function YearbookTab({
     setShowAwards(team?.yearbookShowAwards ?? true)
   }, [team])
 
-  useEffect(() => {
-    const id = setInterval(() => reexecute(), 5000)
-    return () => clearInterval(id)
-  }, [reexecute])
-
-  async function onGenerate() {
-    const result = await requestExport(teamId)
-    if (result.error) {
-      toast.error(result.error.message)
-      return
-    }
-    toast.success(t('team.generationStarted'))
-    reexecute()
-  }
-
   async function saveCustomization(showToast = true) {
-    const result = await updateYearbook(teamId, {
-      title,
-      subtitle,
-      dedication,
-      theme,
-      showMembers,
-      showTributes,
-      showCharacteristics,
-      showMemories,
-      showAwards,
-    })
-    if (result.error) {
-      toast.error(result.error.message)
+    const normalizedColor = normalizeHexColor(brandColor)
+    if (!normalizedColor) {
+      toast.error(t('team.brandColorInvalid'))
       return false
     }
+    const [yearbookResult, settingsResult] = await Promise.all([
+      updateYearbook(teamId, {
+        title,
+        subtitle,
+        dedication,
+        theme,
+        showMembers,
+        showTributes,
+        showCharacteristics,
+        showMemories,
+        showAwards,
+      }),
+      updateSettings(teamId, { brandColor: normalizedColor }),
+    ])
+    if (yearbookResult.error) {
+      toast.error(yearbookResult.error.message)
+      return false
+    }
+    if (settingsResult.error) {
+      toast.error(settingsResult.error.message)
+      return false
+    }
+    setBrandColor(normalizedColor)
     // Refresh team + assembled yearbook so the print page never shows a stale theme.
     reTeam()
     await api.yearbook(teamId)
@@ -947,7 +954,7 @@ function YearbookTab({
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid gap-4">
       <section className={cn(panelClass, stackClass)}>
         <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
           <BookOpenText size={22} weight="duotone" className="text-brand" />
@@ -966,39 +973,7 @@ function YearbookTab({
         </div>
       </section>
 
-      <section className={cn(panelClass, stackClass)}>
-        <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
-          <Sparkle size={22} weight="duotone" className="text-accent" />
-          {t('team.serverPdf')}
-        </h2>
-        <p className="text-muted">{t('team.serverPdfHint')}</p>
-        <Button onClick={onGenerate}>{t('team.generatePdf')}</Button>
-        <div className={stackClass}>
-          {(exports ?? []).map((exp: YearbookExport) => (
-            <ListItem key={exp.id}>
-              <div>
-                <strong>{exp.status}</strong>
-                <div className="text-sm text-muted">
-                  {new Date(exp.createdAt).toLocaleString()}
-                </div>
-                {exp.errorMessage && <div className="text-danger">{exp.errorMessage}</div>}
-              </div>
-              {exp.status === 'READY' && (
-                <Button
-                  variant="secondary"
-                  className="w-full sm:w-auto"
-                  onClick={() => downloadYearbook(exp.id)}
-                >
-                  <DownloadSimple size={18} />
-                  {t('team.download')}
-                </Button>
-              )}
-            </ListItem>
-          ))}
-        </div>
-      </section>
-
-      <form className={cn(panelClass, stackClass, 'lg:col-span-2')} onSubmit={onSaveCustomization}>
+      <form className={cn(panelClass, stackClass)} onSubmit={onSaveCustomization}>
         <h2 className="font-display text-xl tracking-tight">{t('team.customize')}</h2>
         <p className="text-muted">{t('team.customizeHint')}</p>
         <div className="grid gap-4 md:grid-cols-2">
@@ -1041,6 +1016,14 @@ function YearbookTab({
             ))}
           </Select>
         </Label>
+        <Label>
+          {t('team.brandColor')}
+          <ColorPicker
+            value={brandColor}
+            aria-label={t('team.brandColor')}
+            onChange={setBrandColor}
+          />
+        </Label>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           <Toggle label={t('team.showMembers')} checked={showMembers} onChange={setShowMembers} />
           <Toggle label={t('team.showTributes')} checked={showTributes} onChange={setShowTributes} />
@@ -1079,6 +1062,7 @@ function Toggle({
 
 function PreferencesTab({ teamId }: { teamId: string }) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [{ data: membership, fetching, error }, reexecute] = useApiQuery(
     !!teamId,
     () => api.myTeamMembership(teamId),
@@ -1090,9 +1074,11 @@ function PreferencesTab({ teamId }: { teamId: string }) {
       body: { nickname?: string | null; bio?: string | null; avatarId?: string | null },
     ) => api.upsertTeamMemberProfile(id, body),
   )
+  const [, leaveTeam] = useApiMutation((id: string) => api.leaveTeam(id))
   const [nickname, setNickname] = useState('')
   const [bio, setBio] = useState('')
   const [saving, setSaving] = useState(false)
+  const [leaving, setLeaving] = useState(false)
 
   useEffect(() => {
     if (!membership) return
@@ -1140,6 +1126,22 @@ function PreferencesTab({ teamId }: { teamId: string }) {
     }
   }
 
+  async function onLeave() {
+    if (!window.confirm(t('team.leaveConfirm'))) return
+    setLeaving(true)
+    try {
+      const result = await leaveTeam(teamId)
+      if (result.error) {
+        toast.error(result.error.message)
+        return
+      }
+      toast.success(result.data?.message || t('team.leaveSuccess'))
+      void navigate('/app')
+    } finally {
+      setLeaving(false)
+    }
+  }
+
   if (fetching && !membership) {
     return <p className="text-muted">{t('team.loadingProfile')}</p>
   }
@@ -1148,46 +1150,57 @@ function PreferencesTab({ teamId }: { teamId: string }) {
   }
 
   return (
-    <form className={cn(panelClass, stackClass, 'max-w-lg')} onSubmit={onSave}>
-      <h2 className="font-display text-xl tracking-tight">{t('team.yourProfile')}</h2>
-      <p className="text-muted">
-        {t('team.profileHintBefore')}{' '}
-        <Link to="/preferences" className="font-semibold text-brand hover:underline">
-          {t('nav.preferences')}
-        </Link>
-        {t('team.profileHintAfter')}
-      </p>
-      <Avatar name={membership?.nickname ?? 'M'} src={membership?.avatar?.url} size="lg" />
-      <Label>
-        {t('team.displayNickname')}
-        <Input value={nickname} onChange={(e) => setNickname(e.target.value)} required />
-      </Label>
-      <Label>
-        {t('team.bio')}
-        <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} />
-      </Label>
-      <Label>
-        {t('team.profilePhoto')}
-        <Input
-          type="file"
-          accept="image/*"
-          onChange={(e) => void onAvatar(e.target.files?.[0] ?? null)}
-        />
-      </Label>
-      <Button type="submit" disabled={saving}>
-        {saving ? t('common.saving') : t('team.saveProfile')}
-      </Button>
-    </form>
+    <div className={cn(stackClass, 'max-w-lg')}>
+      <form className={cn(panelClass, stackClass)} onSubmit={onSave}>
+        <h2 className="font-display text-xl tracking-tight">{t('team.yourProfile')}</h2>
+        <p className="text-muted">
+          {t('team.profileHintBefore')}{' '}
+          <Link to="/preferences" className="font-semibold text-brand hover:underline">
+            {t('nav.preferences')}
+          </Link>
+          {t('team.profileHintAfter')}
+        </p>
+        <Avatar name={membership?.nickname ?? 'M'} src={membership?.avatar?.url} size="lg" />
+        <Label>
+          {t('team.displayNickname')}
+          <Input value={nickname} onChange={(e) => setNickname(e.target.value)} required />
+        </Label>
+        <Label>
+          {t('team.bio')}
+          <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} />
+        </Label>
+        <Label>
+          {t('team.profilePhoto')}
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={(e) => void onAvatar(e.target.files?.[0] ?? null)}
+          />
+        </Label>
+        <Button type="submit" disabled={saving}>
+          {saving ? t('common.saving') : t('team.saveProfile')}
+        </Button>
+      </form>
+      <div className={cn(panelClass, stackClass)}>
+        <h2 className="font-display text-xl tracking-tight">{t('team.leaveTitle')}</h2>
+        <p className="text-muted">{t('team.leaveHint')}</p>
+        <Button
+          type="button"
+          variant="secondary"
+          className="border-danger text-danger hover:bg-danger/10"
+          disabled={leaving}
+          onClick={() => {
+            void onLeave()
+          }}
+        >
+          {leaving ? t('team.leaving') : t('team.leave')}
+        </Button>
+      </div>
+    </div>
   )
 }
 
-function SettingsTab({
-  teamId,
-  brandColor,
-}: {
-  teamId: string
-  brandColor: string
-}) {
+function SettingsTab({ teamId }: { teamId: string }) {
   const { t } = useTranslation()
   const [, createInvite] = useApiMutation(
     (id: string, body: { role?: string | null; maxUses?: number | null }) =>
@@ -1196,17 +1209,9 @@ function SettingsTab({
   const [, inviteByEmail] = useApiMutation(
     (id: string, email: string, role: string) => api.inviteByEmail(id, email, role),
   )
-  const [, updateSettings] = useApiMutation(
-    (id: string, body: { brandColor?: string | null }) => api.updateTeamSettings(id, body),
-  )
   const [inviteCode, setInviteCode] = useState<string | null>(null)
   const [inviteEmail, setInviteEmail] = useState('')
   const [sendingEmail, setSendingEmail] = useState(false)
-  const [color, setColor] = useState(brandColor)
-
-  useEffect(() => {
-    setColor(brandColor)
-  }, [brandColor])
 
   async function onInvite() {
     const result = await createInvite(teamId, { role: 'MEMBER', maxUses: 50 })
@@ -1239,55 +1244,35 @@ function SettingsTab({
     }
   }
 
-  async function onSave(e: FormEvent) {
-    e.preventDefault()
-    const result = await updateSettings(teamId, { brandColor: color })
-    if (result.error) {
-      toast.error(result.error.message)
-      return
-    }
-    toast.success(t('team.settingsSaved'))
-  }
-
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <section className={cn(panelClass, stackClass)}>
-        <h2 className="font-display text-xl tracking-tight">{t('team.invites')}</h2>
-        <p className="text-sm text-muted">{t('team.invitesHint')}</p>
-        <Button onClick={onInvite}>{t('team.createInvite')}</Button>
-        {inviteCode && (
-          <p>
-            {t('team.latestCode')} <strong>{inviteCode}</strong>
-            <br />
-            <span className="text-sm text-muted">
-              {t('team.joinLink')} /join?code={inviteCode}
-            </span>
-          </p>
-        )}
-        <form className={stackClass} onSubmit={onInviteEmail}>
-          <Label>
-            {t('team.inviteByEmail')}
-            <Input
-              type="email"
-              required
-              placeholder={t('team.inviteEmailPlaceholder')}
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-            />
-          </Label>
-          <Button type="submit" disabled={sendingEmail}>
-            {sendingEmail ? t('team.sending') : t('team.sendInvite')}
-          </Button>
-        </form>
-      </section>
-      <form className={cn(panelClass, stackClass)} onSubmit={onSave}>
-        <h2 className="font-display text-xl tracking-tight">{t('team.teamSettings')}</h2>
+    <section className={cn(panelClass, stackClass, 'max-w-xl')}>
+      <h2 className="font-display text-xl tracking-tight">{t('team.invites')}</h2>
+      <p className="text-sm text-muted">{t('team.invitesHint')}</p>
+      <Button onClick={onInvite}>{t('team.createInvite')}</Button>
+      {inviteCode && (
+        <p>
+          {t('team.latestCode')} <strong>{inviteCode}</strong>
+          <br />
+          <span className="text-sm text-muted">
+            {t('team.joinLink')} /join?code={inviteCode}
+          </span>
+        </p>
+      )}
+      <form className={stackClass} onSubmit={onInviteEmail}>
         <Label>
-          {t('team.brandColor')}
-          <Input value={color} onChange={(e) => setColor(e.target.value)} />
+          {t('team.inviteByEmail')}
+          <Input
+            type="email"
+            required
+            placeholder={t('team.inviteEmailPlaceholder')}
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+          />
         </Label>
-        <Button type="submit">{t('team.save')}</Button>
+        <Button type="submit" disabled={sendingEmail}>
+          {sendingEmail ? t('team.sending') : t('team.sendInvite')}
+        </Button>
       </form>
-    </div>
+    </section>
   )
 }

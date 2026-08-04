@@ -2314,94 +2314,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/teams/{id}/yearbook-exports": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List yearbook PDF exports */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: components["schemas"]["UUID"];
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["YearbookExportType"][];
-                    };
-                };
-                /** @description Not Authorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not Allowed */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        /** Request a yearbook PDF export */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: components["schemas"]["UUID"];
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["YearbookExportType"];
-                    };
-                };
-                /** @description Not Authorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not Allowed */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/teams/{id}/yearbook-settings": {
         parameters: {
             query?: never;
@@ -2679,58 +2591,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/yearbooks/{id}/download": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Download a generated yearbook PDF */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: components["schemas"]["UUID"];
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/pdf": unknown;
-                    };
-                };
-                /** @description Not Authorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not Allowed */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/auth.md": {
         parameters: {
             query?: never;
@@ -2928,7 +2788,6 @@ export interface components {
             privateTribute?: boolean;
         };
         /** @enum {string} */
-        ExportStatus: "PENDING" | "PROCESSING" | "READY" | "FAILED";
         ForgotPasswordRequest: {
             email: string;
         };
@@ -3113,15 +2972,6 @@ export interface components {
             text?: string;
             writer?: string;
             imageUrls?: string[];
-        };
-        YearbookExportType: {
-            id?: components["schemas"]["UUID"];
-            teamId?: components["schemas"]["UUID"];
-            status?: components["schemas"]["ExportStatus"];
-            fileUrl?: string;
-            errorMessage?: string;
-            createdAt?: components["schemas"]["Instant"];
-            completedAt?: components["schemas"]["Instant"];
         };
         YearbookMemberType: {
             nickname?: string;

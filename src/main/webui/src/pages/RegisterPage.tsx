@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
@@ -11,12 +12,14 @@ import { PageTitle } from '../components/ui/PageTitle'
 import { cn } from '../lib/cn'
 import { panelClass, stackClass } from '../components/ui/styles'
 import { useAuth } from '../auth'
+import { rememberNext, peekRememberedNext, readNextParam, withNext } from '../authRedirect'
 import { SocialLoginButtons } from '../components/SocialLoginButtons'
 import { Seo } from '../seo/Seo'
 
 export default function RegisterPage() {
   const { t } = useTranslation()
   const { register: registerUser, accessToken } = useAuth()
+  const location = useLocation()
   const schema = z.object({
     email: z.email(t('login.emailRequired')),
   })
@@ -33,10 +36,17 @@ export default function RegisterPage() {
     },
   })
 
-  if (accessToken) return <Navigate to="/app" replace />
+  useEffect(() => {
+    rememberNext(new URLSearchParams(location.search).get('next'))
+  }, [location.search])
+
+  if (accessToken) {
+    return <Navigate to={readNextParam(location.search) ?? peekRememberedNext() ?? '/app'} replace />
+  }
 
   const onSubmit = handleSubmit(async (values) => {
     try {
+      rememberNext(new URLSearchParams(location.search).get('next'))
       const message = await registerUser(values.email)
       toast.success(message || t('register.success'))
     } catch (err) {
@@ -66,7 +76,10 @@ export default function RegisterPage() {
         </form>
         <p className="mt-4 text-muted">
           {t('register.haveAccount')}{' '}
-          <Link to="/login" className="font-semibold text-brand">
+          <Link
+            to={withNext('/login', new URLSearchParams(location.search).get('next'))}
+            className="font-semibold text-brand"
+          >
             {t('register.login')}
           </Link>
         </p>

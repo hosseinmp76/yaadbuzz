@@ -6,7 +6,7 @@ Guidance for AI coding agents working in this repository. For human-oriented loc
 
 **Yaadbuzz** is an online yearbook app:
 
-register → create organization → create **team** → invite members → tributes / memories / topics / characteristics → generate & download PDF.
+register → create organization → create **team** → invite members → tributes / memories / topics / characteristics → view & print yearbook.
 
 Naming: use **Team** (not Department).
 
@@ -17,12 +17,11 @@ Naming: use **Team** (not Department).
 | Backend | Quarkus **3.37.4**, Java **25**, Maven Wrapper (`./mvnw`) |
 | Frontend | React 19 + TypeScript + Vite via **Quinoa** (`src/main/webui`) |
 | App API | REST + OpenAPI (`/api/*`) |
-| Binary endpoints | Multipart media upload + yearbook PDF download under `/api` |
+| Binary endpoints | Multipart media upload under `/api` |
 | Frontend API types | Generated from OpenAPI via `openapi-typescript` + `openapi-fetch` |
 | DB | PostgreSQL + Flyway |
 | Search | Elasticsearch 8 via Hibernate Search |
 | Object storage | MinIO / S3-compatible |
-| PDF | OpenHTMLToPDF + Qute template |
 | Auth | Local email/password JWT + optional Google/GitHub OAuth (OIDC); keep boundaries OIDC-ready |
 
 Frontend UI libs in use: Tailwind CSS v4, Motion, React Hook Form, Zod, Phosphor icons, Sonner, clsx. Themes are user-selectable CSS-variable presets (`src/main/webui/src/theme/`).
@@ -31,12 +30,12 @@ Frontend UI libs in use: Tailwind CSS v4, Motion, React Hook Form, Zod, Phosphor
 
 Key entities under `src/main/java/com/yaadbuzz/domain/`:
 
-User, Organization, Team, Invite, TeamMember, Tribute, Memory, Comment, Topic, TopicVote, Characteristic, YearbookExport, MediaAsset.
+User, Organization, Team, Invite, TeamMember, Tribute, Memory, Comment, Topic, TopicVote, Characteristic, MediaAsset.
 
 Important product rules:
 
 - Tributes support anonymous / private / reveal modes.
-- Yearbooks support two PDF paths: (1) online view at `/teams/:teamId/yearbook` + browser print, (2) async server PDF via `requestYearbookExport` + REST download. Both use `YearbookContentService` and team yearbook customization (`updateYearbookSettings`).
+- Yearbooks: online view at `/teams/:teamId/yearbook` + browser print (`YearbookContentService` + team customization via `updateYearbookSettings`).
 - Search is team-scoped and backed by Elasticsearch.
 
 ## Package map (backend)
@@ -51,7 +50,7 @@ com.yaadbuzz
 ├── service/       # Business logic / access control
 ├── search/        # Hibernate Search indexing/query
 ├── storage/       # S3/MinIO
-├── pdf/           # Async PDF worker + rendering
+├── yearbook/      # Assembled yearbook content for online/print view
 └── common/        # Errors, cursors, shared utilities
 ```
 
@@ -65,7 +64,6 @@ Frontend lives in `src/main/webui/src/` (pages, components, theme, OpenAPI-typed
 | `GET/PATCH /api/me` | Current user |
 | `/api/organizations`, `/api/teams`, `/api/members`, … | Yearbook domain CRUD/read |
 | `POST /api/media` | Image upload |
-| `GET /api/yearbooks/{id}/download` | PDF download |
 
 Swagger: `/q/swagger-ui` (Bearer JWT).
 

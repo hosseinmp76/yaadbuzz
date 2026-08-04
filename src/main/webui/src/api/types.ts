@@ -24,6 +24,15 @@ export type Team = Req<
 >
 export type TeamMember = Req<S['TeamMemberType'], 'id' | 'teamId' | 'nickname'>
 export type Invite = Req<S['InviteType'], 'id' | 'teamId' | 'code' | 'role' | 'useCount'>
+export type PendingInvite = {
+  id: string
+  teamId: string
+  teamName: string
+  organizationId: string
+  organizationName: string
+  role?: string
+  createdAt?: string
+}
 export type Tribute = Req<
   S['TributeType'],
   | 'id'
@@ -56,7 +65,6 @@ export type Comment = Req<
 export type Topic = Req<S['TopicType'], 'id' | 'teamId' | 'title'>
 export type TopicStanding = Req<S['TopicStandingType'], 'nominee' | 'score'>
 export type Characteristic = Req<S['CharacteristicType'], 'id' | 'teamMemberId' | 'title' | 'count'>
-export type YearbookExport = Req<S['YearbookExportType'], 'id' | 'teamId' | 'status' | 'createdAt'>
 export type SearchHit = Req<S['SearchHitType'], 'type' | 'id' | 'title' | 'snippet'>
 export type Yearbook = Req<
   S['YearbookType'],

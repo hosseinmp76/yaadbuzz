@@ -1,9 +1,9 @@
-package com.yaadbuzz.pdf;
+package com.yaadbuzz.yearbook;
 
 import java.util.List;
 import java.util.UUID;
 
-/** Assembled yearbook view model shared by PDF export and online preview. */
+/** Assembled yearbook view model for online viewing and print. */
 public record YearbookContent(
         UUID teamId,
         String orgName,
@@ -34,7 +34,14 @@ public record YearbookContent(
             String avatarUrl,
             List<Characteristic> characteristics,
             List<Tribute> tributes
-    ) {}
+    ) {
+        public String initial() {
+            if (nickname == null || nickname.isBlank()) {
+                return "?";
+            }
+            return nickname.trim().substring(0, 1).toUpperCase();
+        }
+    }
 
     public record Comment(String text, String writer, List<String> imageUrls) {}
 

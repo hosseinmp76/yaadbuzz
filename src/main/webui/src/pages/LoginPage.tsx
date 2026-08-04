@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
@@ -11,13 +11,16 @@ import { PageTitle } from '../components/ui/PageTitle'
 import { cn } from '../lib/cn'
 import { panelClass, stackClass } from '../components/ui/styles'
 import { useAuth } from '../auth'
+import { rememberNext, peekRememberedNext, readNextParam, resolvePostAuthPath, withNext } from '../authRedirect'
 import { SocialLoginButtons } from '../components/SocialLoginButtons'
 import { Seo } from '../seo/Seo'
+import { useEffect } from 'react'
 
 export default function LoginPage() {
   const { t } = useTranslation()
   const { login, accessToken } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const schema = z.object({
     email: z.email(t('login.emailRequired')),
     password: z.string().min(1, t('login.passwordRequired')),
@@ -31,18 +34,24 @@ export default function LoginPage() {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      email: 'alice@yaadbuzz.local',
-      password: 'password123',
+      email: '',
+      password: '',
     },
   })
 
-  if (accessToken) return <Navigate to="/app" replace />
+  useEffect(() => {
+    rememberNext(new URLSearchParams(location.search).get('next'))
+  }, [location.search])
+
+  if (accessToken) {
+    return <Navigate to={readNextParam(location.search) ?? peekRememberedNext() ?? '/app'} replace />
+  }
 
   const onSubmit = handleSubmit(async (values) => {
     try {
       await login(values.email, values.password)
       toast.success(t('login.success'))
-      void navigate('/app')
+      void navigate(resolvePostAuthPath(location.search))
     } catch (err) {
       const message = err instanceof Error ? err.message : t('login.failed')
       setError('root', { message })
@@ -84,7 +93,10 @@ export default function LoginPage() {
         </p>
         <p className="mt-2 text-muted">
           {t('login.noAccount')}{' '}
-          <Link to="/register" className="font-semibold text-brand">
+          <Link
+            to={withNext('/register', new URLSearchParams(location.search).get('next'))}
+            className="font-semibold text-brand"
+          >
             {t('login.register')}
           </Link>
         </p>

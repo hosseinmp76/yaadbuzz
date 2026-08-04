@@ -11,6 +11,7 @@ import { PageTitle } from '../components/ui/PageTitle'
 import { cn } from '../lib/cn'
 import { panelClass, stackClass } from '../components/ui/styles'
 import { Seo } from '../seo/Seo'
+import { peekRememberedNext, withNext } from '../authRedirect'
 
 export default function ResetPasswordPage() {
   const { t } = useTranslation()
@@ -20,6 +21,7 @@ export default function ResetPasswordPage() {
   const token = params.get('token') ?? ''
   const isSetup = location.pathname.startsWith('/set-password')
   const copy = isSetup ? 'setup' : 'reset'
+  const loginPath = withNext('/login', peekRememberedNext())
 
   const schema = z
     .object({
@@ -57,7 +59,7 @@ export default function ResetPasswordPage() {
       return
     }
     toast.success(data.message || t(`${copy}.success`))
-    void navigate('/login')
+    void navigate(withNext('/login', peekRememberedNext()))
   })
 
   return (
@@ -86,7 +88,7 @@ export default function ResetPasswordPage() {
           </form>
         )}
         <p className="mt-4 text-muted">
-          <Link to="/login" className="font-semibold text-brand">
+          <Link to={loginPath} className="font-semibold text-brand">
             {t(`${copy}.login`)}
           </Link>
         </p>

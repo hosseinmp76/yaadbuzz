@@ -29,8 +29,8 @@ public class TributeService {
         if (!recipient.team.id.equals(teamId)) {
             throw ApiException.badRequest("Recipient must be in the same team");
         }
-        if (writer.id.equals(recipient.id)) {
-            throw ApiException.badRequest("Cannot write a tribute to yourself");
+        if (writer.id.equals(recipient.id) && anonymous) {
+            throw ApiException.badRequest("You cannot write an anonymous tribute to yourself");
         }
         if (text == null || text.isBlank()) {
             throw ApiException.badRequest("Tribute text is required");
