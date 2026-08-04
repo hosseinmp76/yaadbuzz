@@ -5,7 +5,7 @@ export function Tabs({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        '-mx-1 my-4 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]',
+        '-mx-0 my-4 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain px-0.5 pb-1 [scrollbar-width:thin]',
         className,
       )}
       {...props}

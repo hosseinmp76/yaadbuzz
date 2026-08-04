@@ -61,14 +61,16 @@
   body,
   #root {
     min-height: 100%;
+    max-width: 100%;
   }
 
   html {
-    overflow-x: clip;
+    overflow-x: hidden;
   }
 
   body {
     margin: 0;
+    overflow-x: hidden;
     color: var(--ink);
     font-family: var(--font-body-family);
     -webkit-text-size-adjust: 100%;
@@ -80,6 +82,10 @@
       radial-gradient(circle at 90% 0%, var(--glow-2), transparent 30%),
       linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
     background-attachment: fixed;
+  }
+
+  #root {
+    overflow-x: clip;
   }
 
   @media (max-width: 640px) {

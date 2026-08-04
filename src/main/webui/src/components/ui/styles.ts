@@ -14,4 +14,4 @@ export const listItemClass =
   'flex flex-col items-stretch gap-3 rounded-[14px] border border-line bg-panel px-3.5 py-3 transition hover:border-brand/35 sm:flex-row sm:items-center sm:justify-between [&_>_:first-child]:min-w-0'
 
 export const appShellClass =
-  'mx-auto w-[min(1100px,calc(100%-1.25rem))] pb-[max(4rem,env(safe-area-inset-bottom))] sm:w-[min(1100px,calc(100%-2rem))]'
+  'mx-auto w-full max-w-[1100px] min-w-0 px-2.5 pb-[max(4rem,env(safe-area-inset-bottom))] sm:px-4'
