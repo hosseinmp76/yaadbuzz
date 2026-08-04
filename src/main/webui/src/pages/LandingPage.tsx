@@ -41,16 +41,9 @@ export default function LandingPage() {
                 <Button className="w-full sm:w-auto">{t('landing.openDashboard')}</Button>
               </Link>
             ) : (
-              <>
-                <Link to="/register" className="sm:w-auto">
-                  <Button className="w-full sm:w-auto">{t('landing.startYearbook')}</Button>
-                </Link>
-                <Link to="/login" className="sm:w-auto">
-                  <Button variant="secondary" className="w-full sm:w-auto">
-                    {t('landing.haveAccount')}
-                  </Button>
-                </Link>
-              </>
+              <Link to="/register" className="sm:w-auto">
+                <Button className="w-full sm:w-auto">{t('landing.startYearbook')}</Button>
+              </Link>
             )}
           </div>
         </motion.div>

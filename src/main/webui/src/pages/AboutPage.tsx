@@ -8,6 +8,7 @@ import { Seo } from '../seo/Seo'
 import { SITE_URL } from '../seo/site'
 
 const X_URL = 'https://x.com/yaadbuzz_ir'
+const TELEGRAM_URL = 'https://t.me/+ULagP7xFJEpuHgh9'
 
 export default function AboutPage() {
   const { t } = useTranslation()
@@ -43,6 +44,28 @@ export default function AboutPage() {
             {t('about.p3License')}
           </a>
           {t('about.p3After')}
+        </p>
+        <p>{t('about.p4')}</p>
+        <p>
+          {t('about.originLinksBefore')}{' '}
+          <a
+            href={TELEGRAM_URL}
+            className="font-semibold text-brand underline-offset-2 hover:underline"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {t('about.telegramChannel')}
+          </a>
+          {t('about.originLinksMiddle')}{' '}
+          <a
+            href={X_URL}
+            className="font-semibold text-brand underline-offset-2 hover:underline"
+            rel="noopener noreferrer me"
+            target="_blank"
+          >
+            @yaadbuzz_ir
+          </a>
+          {t('about.originLinksAfter')}
         </p>
       </article>
 
@@ -91,6 +114,15 @@ export default function AboutPage() {
           >
             @yaadbuzz_ir
           </a>
+          {t('about.followBodyMiddle')}{' '}
+          <a
+            href={TELEGRAM_URL}
+            className="font-semibold text-brand underline-offset-2 hover:underline"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {t('about.telegramChannel')}
+          </a>
           {t('about.followBodyAfter')}
         </p>
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -100,9 +132,12 @@ export default function AboutPage() {
               <ArrowUpRight size={18} />
             </Button>
           </a>
-          <Link to="/register">
-            <Button className="w-full sm:w-auto">{t('about.startYearbook')}</Button>
-          </Link>
+          <a href={TELEGRAM_URL} rel="noopener noreferrer" target="_blank">
+            <Button variant="secondary" className="w-full sm:w-auto">
+              {t('about.onTelegram')}
+              <ArrowUpRight size={18} />
+            </Button>
+          </a>
         </div>
         <p className="pt-2 text-sm text-muted">
           {t('about.site')}{' '}
