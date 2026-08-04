@@ -35,13 +35,15 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Dev seed covering every domain entity when the DB is empty.
- * Password for all seed users: {@code password123}
+ * Password for demo users (alice|bob|cara|dana|eve): {@code password123}
+ * Manual test users (a|b|c@test.com): {@code 12341234}
  * Join invite code: {@code welcome2026}
  */
 @ApplicationScoped
 public class SeedData {
 
     public static final String SEED_PASSWORD = "password123";
+    public static final String TEST_PASSWORD = "12341234";
     public static final String SEED_INVITE_CODE = "welcome2026";
 
     private static final String[] CHAR_TITLES = {
@@ -112,15 +114,21 @@ public class SeedData {
         if (User.count() > 0) {
             return;
         }
+        // Always available for manual QA (idempotent).
+        ensureTestUsers();
+
+        if (User.findByEmail("alice@yaadbuzz.local").isPresent()) {
+            return;
+        }
 
         // Fixed seed so demo data is reproducible across restarts of empty DBs.
         Random random = new Random(2026);
 
-        User alice = user("alice@yaadbuzz.local", "Alice");
-        User bob = user("bob@yaadbuzz.local", "Bob");
-        User cara = user("cara@yaadbuzz.local", "Cara");
-        User dana = user("dana@yaadbuzz.local", "Dana");
-        User eve = user("eve@yaadbuzz.local", "Eve");
+        User alice = user("alice@yaadbuzz.local", "Alice", SEED_PASSWORD);
+        User bob = user("bob@yaadbuzz.local", "Bob", SEED_PASSWORD);
+        User cara = user("cara@yaadbuzz.local", "Cara", SEED_PASSWORD);
+        User dana = user("dana@yaadbuzz.local", "Dana", SEED_PASSWORD);
+        User eve = user("eve@yaadbuzz.local", "Eve", SEED_PASSWORD);
         List<User> users = List.of(alice, bob, cara, dana, eve);
 
         MediaAsset orgLogo = picsum(alice, "org-logo", 400, 400);
@@ -345,9 +353,11 @@ public class SeedData {
         export(alumni, alice, ExportStatus.PROCESSING, null, null, null, null);
 
         Log.infof(
-                "Seeded Yaadbuzz demo data. Users alice|bob|cara|dana|eve@yaadbuzz.local / %s. Invite: %s. "
+                "Seeded Yaadbuzz demo data. Users alice|bob|cara|dana|eve@yaadbuzz.local / %s. "
+                        + "Manual test users a|b|c@test.com / %s. Invite: %s. "
                         + "Members=%d tributes=%d memories=%d comments=%d topics=%d votes=%d characteristics=%d",
                 SEED_PASSWORD,
+                TEST_PASSWORD,
                 SEED_INVITE_CODE,
                 members.size(),
                 Tribute.count(),
@@ -358,10 +368,24 @@ public class SeedData {
                 Characteristic.count());
     }
 
-    private User user(String email, String displayName) {
+    private void ensureTestUsers() {
+        ensureUser("a@test.com", "Test A", TEST_PASSWORD);
+        ensureUser("b@test.com", "Test B", TEST_PASSWORD);
+        ensureUser("c@test.com", "Test C", TEST_PASSWORD);
+    }
+
+    private void ensureUser(String email, String displayName, String password) {
+        if (User.findByEmail(email).isPresent()) {
+            return;
+        }
+        user(email, displayName, password);
+        Log.infof("Seeded manual test user %s / %s", email, password);
+    }
+
+    private User user(String email, String displayName, String password) {
         User user = new User();
         user.email = email;
-        user.passwordHash = BcryptUtil.bcryptHash(SEED_PASSWORD);
+        user.passwordHash = BcryptUtil.bcryptHash(password);
         user.displayName = displayName;
         user.persist();
         return user;
