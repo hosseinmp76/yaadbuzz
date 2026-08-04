@@ -14,6 +14,7 @@ import MemberPage from './pages/MemberPage'
 import JoinPage from './pages/JoinPage'
 import YearbookPage from './pages/YearbookPage'
 import AboutPage from './pages/AboutPage'
+import FeaturesPage from './pages/FeaturesPage'
 import OAuthCallbackPage from './pages/OAuthCallbackPage'
 import PreferencesPage from './pages/PreferencesPage'
 import SourcePage from './pages/SourcePage'
@@ -49,6 +50,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/features" element={<FeaturesPage />} />
         <Route path="/source" element={<SourcePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />

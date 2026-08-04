@@ -25,14 +25,14 @@ export default function AboutPage() {
         <p className="text-sm font-semibold tracking-[0.08em] uppercase text-muted">
           {t('about.eyebrow')}
         </p>
-        <h1 className="mt-2 font-display text-[clamp(2.4rem,8vw,3.8rem)] leading-[0.95] tracking-[-0.04em]">
+        <h1 className="mt-2 font-display text-[clamp(2.4rem,8vw,3.8rem)] leading-[0.95] tracking-[-0.04em] text-brand">
           <BrandMark />
         </h1>
         <p className="mt-4 text-lg text-muted">{t('about.lead')}</p>
       </section>
 
       <article className="max-w-2xl space-y-6 border-t border-line py-10 text-base leading-relaxed text-ink sm:text-lg">
-        <h2 className="font-display text-2xl tracking-tight sm:text-3xl">{t('about.storyTitle')}</h2>
+        <h2 className="font-display text-2xl tracking-tight text-brand sm:text-3xl">{t('about.storyTitle')}</h2>
         <p>{t('about.p1')}</p>
         <p>{t('about.p2')}</p>
         <p>
@@ -70,7 +70,7 @@ export default function AboutPage() {
       </article>
 
       <section className="max-w-2xl space-y-4 border-t border-line py-10" aria-labelledby="license-heading">
-        <h2 id="license-heading" className="font-display text-2xl tracking-tight">
+        <h2 id="license-heading" className="font-display text-2xl tracking-tight text-brand">
           {t('about.licenseTitle')}
         </h2>
         <p className="text-muted leading-relaxed">
@@ -103,7 +103,7 @@ export default function AboutPage() {
       </section>
 
       <section className="max-w-2xl space-y-4 border-t border-line py-10">
-        <h2 className="font-display text-2xl tracking-tight">{t('about.followTitle')}</h2>
+        <h2 className="font-display text-2xl tracking-tight text-brand">{t('about.followTitle')}</h2>
         <p className="text-muted">
           {t('about.followBodyBefore')}{' '}
           <a

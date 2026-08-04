@@ -9,7 +9,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
     <label className={cn('inline-flex items-center gap-1.5 text-sm font-semibold text-muted', className)}>
       <span className="sr-only">{t('preferences.language')}</span>
       <select
-        className="rounded-full border border-line bg-panel px-2.5 py-1 text-ink"
+        className="rounded-2xl border border-line bg-panel-strong px-2.5 py-1.5 text-ink shadow-sm"
         value={current}
         aria-label={t('preferences.language')}
         onChange={(e) => {

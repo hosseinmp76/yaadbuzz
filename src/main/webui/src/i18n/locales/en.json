@@ -95,16 +95,19 @@
     "copy": "© {{year}} Yaadbuzz · free & open source under the",
     "licenseName": "GNU Affero GPL v3",
     "about": "About",
+    "features": "Features",
     "license": "License",
     "source": "Source",
     "agpl": "AGPL-3.0"
   },
   "landing": {
     "seoTitle": "Yaadbuzz — Online yearbooks for teams",
-    "seoDescription": "Create an organization, gather your team, collect memories, and print a yearbook worth keeping.",
+    "seoDescription": "Create an organization, gather your team, collect memories, and print a yearbook worth keeping. A FOSS (Free Open Source Software) to save the memories.",
     "hero": "Create an organization, gather your team, collect memories, and print a yearbook worth keeping.",
+    "heroFoss": "A FOSS (Free Open Source Software) to save the memories.",
     "openDashboard": "Open dashboard",
     "startYearbook": "Start your yearbook",
+    "seeFeatures": "See features",
     "visualTeams": "Teams",
     "visualYearbooks": "Yearbooks",
     "howTitle": "How Yaadbuzz works",
@@ -116,6 +119,42 @@
     "step3Title": "Print the keepsake",
     "step3Body": "Open the online yearbook, customize the cover, then print or export a PDF for the shelf.",
     "curious": "Curious how it started?",
+    "readStory": "Read the story",
+    "previewTitle": "Built like a keepsake",
+    "previewBody": "Teams, tributes, and memories — the same calm workspace you’ll use after you sign in."
+  },
+  "features": {
+    "seoTitle": "Features",
+    "seoDescription": "Teams, tributes, memories, awards, and a print-ready online yearbook — see what Yaadbuzz offers before you sign in.",
+    "eyebrow": "Features",
+    "lead": "Everything you need to gather a year together — then open it online and print when you are ready.",
+    "examplePdf": "View example yearbook PDF",
+    "items": {
+      "teams": {
+        "title": "Organizations, teams & invites",
+        "body": "Create an organization, spin up teams, and invite people with a code or email. Everyone lands in one shared space."
+      },
+      "tributes": {
+        "title": "Tributes about teammates",
+        "body": "Write messages for each other — public, anonymous, or private. Reveal them together when the moment is right."
+      },
+      "memories": {
+        "title": "Shared memories",
+        "body": "Collect moments with photos and comments so the whole team can revisit the year in one place."
+      },
+      "awards": {
+        "title": "Topics & awards",
+        "body": "Run fun polls like “most likely to…” and show the top standings in the yearbook."
+      },
+      "yearbook": {
+        "title": "Online yearbook & print",
+        "body": "Customize the cover and sections, preview the live yearbook, then Print → Save as PDF from your browser."
+      }
+    },
+    "ctaTitle": "Ready to start?",
+    "ctaBody": "Create a free account and begin your team yearbook — or read how Yaadbuzz began.",
+    "openDashboard": "Open dashboard",
+    "startYearbook": "Start your yearbook",
     "readStory": "Read the story"
   },
   "about": {

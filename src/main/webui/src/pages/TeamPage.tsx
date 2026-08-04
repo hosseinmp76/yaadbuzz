@@ -1,6 +1,17 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { BookOpenText, MagnifyingGlass, Printer } from '@phosphor-icons/react'
+import {
+  BookOpenText,
+  Camera,
+  ChatCircleText,
+  GearSix,
+  MagnifyingGlass,
+  Printer,
+  Tag,
+  Trophy,
+  UsersThree,
+  type Icon,
+} from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { api } from '../api/client'
@@ -8,17 +19,21 @@ import { uploadMedia } from '../api/http'
 import type { Team, TeamMember, Tribute, Memory, Topic, TopicStanding, SearchHit } from '../api/types'
 import { useApiMutation, useApiQuery } from '../api/useApi'
 import Layout from '../components/Layout'
+import {
+  AppSidebarChrome,
+  SidebarNavButton,
+  sidebarNavClass,
+} from '../components/AppSidebar'
 import { Button } from '../components/ui/Button'
 import { Chip } from '../components/ui/Chip'
 import { Input, Label, Select, Textarea } from '../components/ui/Field'
 import { ColorPicker, normalizeHexColor } from '../components/ui/ColorPicker'
 import { InfiniteSentinel } from '../components/ui/InfiniteSentinel'
-import { ListItem, ListItemLink } from '../components/ui/ListItem'
+import { ListItem } from '../components/ui/ListItem'
 import { PageTitle } from '../components/ui/PageTitle'
 import { Avatar } from '../components/ui/Avatar'
-import { Tabs, TabButton } from '../components/ui/Tabs'
 import { cn } from '../lib/cn'
-import { panelClass, stackClass } from '../components/ui/styles'
+import { panelClass, stackClass, backLinkClass, sectionTitleClass, tributeCardClass } from '../components/ui/styles'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 import { MemoryComments } from '../components/MemoryComments'
 
@@ -35,6 +50,17 @@ type Tab =
   | 'yearbook'
   | 'settings'
 
+const TEAM_TABS: { id: Tab; icon: Icon }[] = [
+  { id: 'members', icon: UsersThree },
+  { id: 'tributes', icon: ChatCircleText },
+  { id: 'characteristics', icon: Tag },
+  { id: 'memories', icon: Camera },
+  { id: 'topics', icon: Trophy },
+  { id: 'search', icon: MagnifyingGlass },
+  { id: 'yearbook', icon: BookOpenText },
+  { id: 'settings', icon: GearSix },
+]
+
 export default function TeamPage() {
   const { t } = useTranslation()
   const { teamId = '' } = useParams()
@@ -46,39 +72,63 @@ export default function TeamPage() {
 
   const [{ data: team }, reTeam] = useApiQuery(!!teamId, () => api.team(teamId), [teamId])
 
+  const tabButtons = (stacked: boolean) => (
+    <nav
+      aria-label={team?.name ?? t('team.fallbackTitle')}
+      className={sidebarNavClass(stacked)}
+    >
+      {TEAM_TABS.map(({ id, icon }) => (
+        <SidebarNavButton
+          key={id}
+          active={tab === id}
+          icon={icon}
+          stacked={stacked}
+          data-tour={`tab-${id}`}
+          onClick={() => setTab(id)}
+        >
+          {t(`team.tabs.${id}`)}
+        </SidebarNavButton>
+      ))}
+    </nav>
+  )
+
   return (
-    <Layout>
+    <Layout
+      sidebar={
+        <AppSidebarChrome subtitle={team?.name ?? t('team.fallbackTitle')}>
+          {tabButtons(true)}
+        </AppSidebarChrome>
+      }
+      mobileNav={tabButtons(false)}
+    >
       <Link
         to={team ? `/orgs/${team.organizationId}` : '/app'}
-        className="text-sm font-semibold text-muted hover:text-ink"
+        className={backLinkClass}
       >
-        {t('team.back')}
+        ← {t('team.back')}
       </Link>
-      <PageTitle>{team?.name ?? t('team.fallbackTitle')}</PageTitle>
-      <p className="text-muted">{t('team.tributesPublishHint')}</p>
-      <Tabs>
-        {(
-          [
-            'members',
-            'tributes',
-            'characteristics',
-            'memories',
-            'topics',
-            'search',
-            'yearbook',
-            'settings',
-          ] as Tab[]
-        ).map((tabKey) => (
-          <TabButton
-            key={tabKey}
-            active={tab === tabKey}
-            data-tour={`tab-${tabKey}`}
-            onClick={() => setTab(tabKey)}
-          >
-            {t(`team.tabs.${tabKey}`)}
-          </TabButton>
-        ))}
-      </Tabs>
+
+      <section className="mt-5 mb-6 flex flex-col gap-5 sm:flex-row sm:items-center">
+        {team?.coverMedia?.url ? (
+          <img
+            src={team.coverMedia.url}
+            alt=""
+            className="aspect-square w-full max-w-[11rem] shrink-0 rounded-3xl object-cover shadow-panel sm:w-44"
+          />
+        ) : (
+          <div
+            className="aspect-square w-full max-w-[11rem] shrink-0 rounded-3xl shadow-panel sm:w-44"
+            style={{
+              background: `linear-gradient(145deg, ${team?.brandColor || 'var(--brand)'} 0%, color-mix(in oklab, ${team?.brandColor || 'var(--brand)'} 45%, #0a4541) 100%)`,
+            }}
+          />
+        )}
+        <div className="min-w-0 flex-1">
+          <PageTitle className="!mt-0">{team?.name ?? t('team.fallbackTitle')}</PageTitle>
+          <p className="mt-2 max-w-xl text-muted">{t('team.tributesPublishHint')}</p>
+        </div>
+      </section>
+
       {tab === 'members' && <MembersTab teamId={teamId} />}
       {tab === 'tributes' && <TributesTab teamId={teamId} />}
       {tab === 'characteristics' && <CharacteristicsTab teamId={teamId} />}
@@ -142,35 +192,52 @@ function MembersTab({ teamId }: { teamId: string }) {
   }, hasNext && !loading)
 
   return (
-    <section className={stackClass}>
-      <Label className="mb-0">
-        <span className="sr-only">{t('team.searchMembers')}</span>
-        <div className="relative">
-          <MagnifyingGlass
-            size={18}
-            className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-muted"
-          />
-          <Input
-            className="ps-10"
-            placeholder={t('team.searchMembers')}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
-      </Label>
-      <div className={stackClass}>
+    <section className={cn(panelClass, stackClass)}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className={sectionTitleClass}>
+          {t('team.tabs.members')}
+          {items.length > 0 && (
+            <span className="ms-2 text-base font-sans font-semibold text-muted">
+              ({items.length}{hasNext ? '+' : ''})
+            </span>
+          )}
+        </h2>
+        <Label className="mb-0 w-full sm:max-w-xs">
+          <span className="sr-only">{t('team.searchMembers')}</span>
+          <div className="relative">
+            <MagnifyingGlass
+              size={18}
+              className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-muted"
+            />
+            <Input
+              className="ps-10"
+              placeholder={t('team.searchMembers')}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+        </Label>
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {items.map((m) => (
-          <ListItemLink key={m.id} to={`/members/${m.id}`}>
-            <div className="flex min-w-0 items-center gap-3">
-              <Avatar name={m.nickname} src={m.avatar?.url} size="sm" />
-              <div className="min-w-0">
-                <strong>{m.nickname}</strong>
-                <div className="text-sm text-muted">{m.bio || t('team.noBio')}</div>
-                <div className="mt-1 text-xs font-semibold text-brand">{t('team.openProfile')}</div>
-              </div>
-            </div>
-            <Chip>{m.role}</Chip>
-          </ListItemLink>
+          <Link
+            key={m.id}
+            to={`/members/${m.id}`}
+            className="group flex flex-col items-center rounded-2xl px-2 py-4 text-center transition hover:bg-[color-mix(in_oklab,var(--brand)_6%,transparent)]"
+          >
+            <Avatar name={m.nickname} src={m.avatar?.url} size="md" className="!h-20 !w-20 !text-2xl" />
+            <strong className="mt-3 line-clamp-1 text-sm text-ink group-hover:text-brand">
+              {m.nickname}
+            </strong>
+            <span
+              className={cn(
+                'mt-1 text-xs capitalize',
+                m.role === 'ADMIN' ? 'font-semibold text-brand' : 'text-muted',
+              )}
+            >
+              {(m.role ?? 'member').toLowerCase()}
+            </span>
+          </Link>
         ))}
       </div>
       <InfiniteSentinel ref={sentinelRef}>
@@ -271,13 +338,13 @@ function TributesTab({ teamId }: { teamId: string }) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <section className={stackClass}>
-        <h2 className="font-display text-xl tracking-tight">{t('team.tributes')}</h2>
+    <div className="grid gap-4 lg:grid-cols-2">
+      <section className={cn(panelClass, stackClass)}>
+        <h2 className={sectionTitleClass}>{t('team.tributes')}</h2>
         {items.length === 0 && <p className="text-muted">{t('team.noTributes')}</p>}
         {items.map((tribute) => (
-          <article key={tribute.id} className={panelClass}>
-            <p className="whitespace-pre-wrap">{tribute.text}</p>
+          <article key={tribute.id} className={tributeCardClass}>
+            <p className="whitespace-pre-wrap text-ink">{tribute.text}</p>
             {tribute.pictures?.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {tribute.pictures.map((pic) => (
@@ -353,7 +420,7 @@ function TributesTab({ teamId }: { teamId: string }) {
       </section>
 
       <form className={cn(panelClass, stackClass)} onSubmit={onCreate}>
-        <h2 className="font-display text-xl tracking-tight">{t('team.writeTribute')}</h2>
+        <h2 className={sectionTitleClass}>{t('team.writeTribute')}</h2>
         <Label>
           {t('team.forMember')}
           <Select
@@ -473,43 +540,45 @@ function CharacteristicsTab({ teamId }: { teamId: string }) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-5 md:grid-cols-2">
       <section className={stackClass}>
-        <h2 className="font-display text-xl tracking-tight">{t('team.characteristics')}</h2>
+        <h2 className={sectionTitleClass}>{t('team.characteristics')}</h2>
         {loading && <p className="text-muted">{t('team.loading')}</p>}
         {!loading && rows.length === 0 && (
           <p className="text-muted">{t('team.noCharacteristics')}</p>
         )}
-        {rows.map((row) => (
-          <article key={row.id} className={panelClass}>
-            <div className="flex items-center gap-3">
-              <Avatar name={row.nickname} src={row.avatarUrl ?? undefined} size="sm" />
-              <div className="min-w-0">
-                <Link
-                  to={`/members/${row.id}`}
-                  className="font-semibold text-ink hover:text-brand"
-                >
-                  {row.nickname}
-                </Link>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {rows.map((row) => (
+            <article key={row.id} className={panelClass}>
+              <div className="flex items-center gap-3">
+                <Avatar name={row.nickname} src={row.avatarUrl ?? undefined} size="sm" />
+                <div className="min-w-0">
+                  <Link
+                    to={`/members/${row.id}`}
+                    className="font-semibold text-ink hover:text-brand"
+                  >
+                    {row.nickname}
+                  </Link>
+                </div>
               </div>
-            </div>
-            {row.characteristics.length === 0 ? (
-              <p className="mt-3 text-sm text-muted">{t('team.noMemberCharacteristics')}</p>
-            ) : (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {row.characteristics.map((c) => (
-                  <Chip key={c.id}>
-                    {c.title} × {c.count}
-                  </Chip>
-                ))}
-              </div>
-            )}
-          </article>
-        ))}
+              {row.characteristics.length === 0 ? (
+                <p className="mt-3 text-sm text-muted">{t('team.noMemberCharacteristics')}</p>
+              ) : (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {row.characteristics.map((c) => (
+                    <Chip key={c.id}>
+                      {c.title} × {c.count}
+                    </Chip>
+                  ))}
+                </div>
+              )}
+            </article>
+          ))}
+        </div>
       </section>
 
-      <form className={cn(panelClass, stackClass)} onSubmit={onAdd}>
-        <h2 className="font-display text-xl tracking-tight">{t('team.addCharacteristic')}</h2>
+      <form className={cn(panelClass, stackClass, 'h-fit')} onSubmit={onAdd}>
+        <h2 className={sectionTitleClass}>{t('team.addCharacteristic')}</h2>
         <Label>
           {t('team.forMember')}
           <Select value={memberId} onChange={(e) => setMemberId(e.target.value)} required>
@@ -620,35 +689,51 @@ function MemoriesTab({ teamId }: { teamId: string }) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
       <section className={stackClass}>
-        {items.map((m) => (
-          <article key={m.id} className={panelClass}>
-            <strong>{m.title || t('team.untitledMemory')}</strong>
-            <p className="mt-2 whitespace-pre-wrap">{m.bodyText}</p>
-            {m.pictures?.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {m.pictures.map((pic) => (
-                  <a key={pic.id} href={pic.url} target="_blank" rel="noopener noreferrer">
-                    <img
-                      src={pic.url}
-                      alt=""
-                      className="h-28 w-28 rounded-xl border border-line object-cover"
-                    />
-                  </a>
-                ))}
+        {items.map((m) => {
+          const hero = m.pictures?.[0]
+          return (
+            <article key={m.id} className={cn(panelClass, '!overflow-hidden !p-0')}>
+              {hero && (
+                <a href={hero.url} target="_blank" rel="noopener noreferrer">
+                  <img
+                    src={hero.url}
+                    alt=""
+                    className="aspect-[16/9] w-full object-cover"
+                  />
+                </a>
+              )}
+              <div className="p-5 sm:p-6">
+                <h3 className="font-display text-xl tracking-tight text-brand sm:text-2xl">
+                  {m.title || t('team.untitledMemory')}
+                </h3>
+                <p className="mt-2 whitespace-pre-wrap text-ink">{m.bodyText}</p>
+                {m.pictures && m.pictures.length > 1 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {m.pictures.slice(1).map((pic) => (
+                      <a key={pic.id} href={pic.url} target="_blank" rel="noopener noreferrer">
+                        <img
+                          src={pic.url}
+                          alt=""
+                          className="h-20 w-20 rounded-xl border border-line object-cover"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-3 text-sm font-semibold text-brand">— {m.writer.nickname}</div>
+                <MemoryComments memoryId={m.id} />
               </div>
-            )}
-            <div className="mt-2 text-sm text-muted">— {m.writer.nickname}</div>
-            <MemoryComments memoryId={m.id} />
-          </article>
-        ))}
+            </article>
+          )
+        })}
         <InfiniteSentinel ref={sentinelRef}>
           {hasNext ? t('team.moreMemories') : t('team.noMoreMemories')}
         </InfiniteSentinel>
       </section>
-      <form className={cn(panelClass, stackClass)} onSubmit={onCreate}>
-        <h2 className="font-display text-xl tracking-tight">{t('team.shareMemory')}</h2>
+      <form className={cn(panelClass, stackClass, 'h-fit')} onSubmit={onCreate}>
+        <h2 className={sectionTitleClass}>{t('team.shareMemory')}</h2>
         <Label>
           {t('team.title')}
           <Input value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -736,18 +821,25 @@ function TopicsTab({ teamId }: { teamId: string }) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-5 lg:grid-cols-[1fr_1.1fr]">
       <section className={cn(panelClass, stackClass)}>
-        <h2 className="font-display text-xl tracking-tight">{t('team.awardTopics')}</h2>
-        <div className={stackClass}>
+        <h2 className={sectionTitleClass}>{t('team.awardTopics')}</h2>
+        <div className="grid gap-3 sm:grid-cols-2">
           {(topics ?? []).map((topic: Topic) => (
-            <Button
+            <button
               key={topic.id}
-              variant={selectedTopic === topic.id ? 'primary' : 'secondary'}
+              type="button"
               onClick={() => setSelectedTopic(topic.id)}
+              className={cn(
+                'rounded-2xl border p-4 text-start transition',
+                selectedTopic === topic.id
+                  ? 'border-brand bg-[color-mix(in_oklab,var(--brand)_8%,white)] shadow-panel'
+                  : 'border-line bg-panel-strong hover:border-brand/35',
+              )}
             >
-              {topic.title}
-            </Button>
+              <strong className="font-display text-lg tracking-tight text-brand">{topic.title}</strong>
+              <p className="mt-1 text-xs font-semibold text-muted">{t('team.voteStandings')} →</p>
+            </button>
           ))}
         </div>
         <form className={stackClass} onSubmit={onCreate}>
@@ -759,7 +851,7 @@ function TopicsTab({ teamId }: { teamId: string }) {
         </form>
       </section>
       <section className={cn(panelClass, stackClass)}>
-        <h2 className="font-display text-xl tracking-tight">{t('team.voteStandings')}</h2>
+        <h2 className={sectionTitleClass}>{t('team.voteStandings')}</h2>
         <form className={stackClass} onSubmit={onVote}>
           <Label>
             {t('team.nominee')}
@@ -776,14 +868,27 @@ function TopicsTab({ teamId }: { teamId: string }) {
             {t('team.castVote')}
           </Button>
         </form>
-        <div className={stackClass}>
-          {(standings ?? []).map((s: TopicStanding) => (
-            <ListItem key={s.nominee.id}>
-              <strong>{s.nominee.nickname}</strong>
-              <Chip>{s.score}</Chip>
-            </ListItem>
+        <ol className={stackClass}>
+          {(standings ?? []).map((s: TopicStanding, index: number) => (
+            <li
+              key={s.nominee.id}
+              className="flex items-center gap-3 rounded-2xl border border-line bg-[color-mix(in_oklab,var(--panel-strong)_80%,var(--paper))] px-3 py-2.5"
+            >
+              <span
+                className={cn(
+                  'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold',
+                  index === 0
+                    ? 'bg-brand text-on-brand'
+                    : 'bg-[color-mix(in_oklab,var(--brand)_12%,white)] text-brand',
+                )}
+              >
+                {index + 1}
+              </span>
+              <strong className="min-w-0 flex-1 truncate">{s.nominee.nickname}</strong>
+              <span className="text-sm font-semibold text-muted">{s.score}</span>
+            </li>
           ))}
-        </div>
+        </ol>
       </section>
     </div>
   )
@@ -956,7 +1061,7 @@ function YearbookTab({
   return (
     <div className="grid gap-4">
       <section className={cn(panelClass, stackClass)}>
-        <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
+        <h2 className={cn(sectionTitleClass, "flex items-center gap-2")}>
           <BookOpenText size={22} weight="duotone" className="text-brand" />
           {t('team.viewPrint')}
         </h2>
@@ -974,7 +1079,7 @@ function YearbookTab({
       </section>
 
       <form className={cn(panelClass, stackClass)} onSubmit={onSaveCustomization}>
-        <h2 className="font-display text-xl tracking-tight">{t('team.customize')}</h2>
+        <h2 className={sectionTitleClass}>{t('team.customize')}</h2>
         <p className="text-muted">{t('team.customizeHint')}</p>
         <div className="grid gap-4 md:grid-cols-2">
           <Label>
@@ -1152,7 +1257,7 @@ function PreferencesTab({ teamId }: { teamId: string }) {
   return (
     <div className={cn(stackClass, 'max-w-lg')}>
       <form className={cn(panelClass, stackClass)} onSubmit={onSave}>
-        <h2 className="font-display text-xl tracking-tight">{t('team.yourProfile')}</h2>
+        <h2 className={sectionTitleClass}>{t('team.yourProfile')}</h2>
         <p className="text-muted">
           {t('team.profileHintBefore')}{' '}
           <Link to="/preferences" className="font-semibold text-brand hover:underline">
@@ -1182,7 +1287,7 @@ function PreferencesTab({ teamId }: { teamId: string }) {
         </Button>
       </form>
       <div className={cn(panelClass, stackClass)}>
-        <h2 className="font-display text-xl tracking-tight">{t('team.leaveTitle')}</h2>
+        <h2 className={sectionTitleClass}>{t('team.leaveTitle')}</h2>
         <p className="text-muted">{t('team.leaveHint')}</p>
         <Button
           type="button"
@@ -1246,7 +1351,7 @@ function SettingsTab({ teamId }: { teamId: string }) {
 
   return (
     <section className={cn(panelClass, stackClass, 'max-w-xl')}>
-      <h2 className="font-display text-xl tracking-tight">{t('team.invites')}</h2>
+      <h2 className={sectionTitleClass}>{t('team.invites')}</h2>
       <p className="text-sm text-muted">{t('team.invitesHint')}</p>
       <Button onClick={onInvite}>{t('team.createInvite')}</Button>
       {inviteCode && (

@@ -7,7 +7,7 @@ import type {
 import { cn } from '../../lib/cn'
 
 const fieldClass =
-  'w-full min-h-11 touch-manipulation rounded-xl border border-line bg-panel-strong px-3.5 py-3 text-base text-ink outline-none transition placeholder:text-muted focus:border-brand'
+  'w-full min-h-11 touch-manipulation rounded-2xl border border-line bg-panel-strong px-3.5 py-3 text-base text-ink outline-none transition placeholder:text-muted focus:border-brand focus:shadow-sm'
 
 export function Label({
   children,

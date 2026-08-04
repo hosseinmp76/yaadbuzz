@@ -7,8 +7,8 @@ export function SiteFooter() {
   const { t } = useTranslation()
   const year = new Date().getFullYear()
   return (
-    <footer className="mt-16 border-t border-line pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-sm text-muted">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <footer className="mt-20 border-t border-line pt-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-sm text-muted">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p>
           {t('footer.copy', { year })}{' '}
           <a
@@ -18,9 +18,12 @@ export function SiteFooter() {
             {t('footer.licenseName')}
           </a>
         </p>
-        <nav aria-label="Legal" className="flex flex-wrap gap-x-4 gap-y-1">
+        <nav aria-label="Legal" className="flex flex-wrap gap-x-5 gap-y-2">
           <Link to="/about" className="font-semibold text-ink hover:text-brand">
             {t('footer.about')}
+          </Link>
+          <Link to="/features" className="font-semibold text-ink hover:text-brand">
+            {t('footer.features')}
           </Link>
           <Link to="/source" className="font-semibold text-ink hover:text-brand">
             {t('footer.source')}

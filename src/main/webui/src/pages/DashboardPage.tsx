@@ -1,4 +1,4 @@
-import { Buildings, EnvelopeSimple, Plus } from '@phosphor-icons/react'
+import { Buildings, EnvelopeSimple, Plus, SignIn } from '@phosphor-icons/react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
@@ -7,15 +7,18 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 import { api } from '../api/client'
 import { useApiMutation, useApiQuery } from '../api/useApi'
-import Layout from '../components/Layout'
+import {
+  AppSidebarLayout,
+  SidebarNavLink,
+  sidebarNavClass,
+} from '../components/AppSidebar'
 import { Button } from '../components/ui/Button'
-import { Chip } from '../components/ui/Chip'
 import { FieldError, Input, Label } from '../components/ui/Field'
-import { ListItem, ListItemLink } from '../components/ui/ListItem'
+import { ListItem } from '../components/ui/ListItem'
 import { PageTitle } from '../components/ui/PageTitle'
 import { Panel } from '../components/ui/Panel'
 import { Stack } from '../components/ui/Stack'
-import { stackClass } from '../components/ui/styles'
+import { sectionTitleClass, stackClass } from '../components/ui/styles'
 import { FirstVisitPrompt } from '../onboarding/FirstVisitPrompt'
 
 type FormValues = { name: string }
@@ -48,7 +51,7 @@ export default function DashboardPage() {
   })
 
   const onCreate = handleSubmit(async (values) => {
-    const result = await createOrg(values.name, '#0F766E')
+    const result = await createOrg(values.name, '#0f5f5a')
     if (result.error) {
       toast.error(result.error.message)
       return
@@ -81,14 +84,36 @@ export default function DashboardPage() {
     reexecuteInvites()
   }
 
+  const orgs = data ?? []
+
+  const nav = (stacked: boolean) => (
+    <nav aria-label={t('dashboard.organizations')} className={sidebarNavClass(stacked)}>
+      <SidebarNavLink to="/app" active icon={Buildings} stacked={stacked} data-tour="orgs-list">
+        {t('dashboard.organizations')}
+      </SidebarNavLink>
+      {orgs.map((org) => (
+        <SidebarNavLink key={org.id} to={`/orgs/${org.id}`} icon={Buildings} stacked={stacked}>
+          {org.name}
+        </SidebarNavLink>
+      ))}
+      <SidebarNavLink to="/join" icon={SignIn} stacked={stacked} data-tour="join-team">
+        {t('dashboard.joinTeam')}
+      </SidebarNavLink>
+    </nav>
+  )
+
   return (
-    <Layout>
+    <AppSidebarLayout
+      subtitle={t('dashboard.organizations')}
+      nav={nav(true)}
+      mobileNav={nav(false)}
+    >
       <FirstVisitPrompt />
       <PageTitle>{t('dashboard.title')}</PageTitle>
       <p className="text-muted">{t('dashboard.subtitle')}</p>
       {(invitesLoading || (invites && invites.length > 0)) && (
-        <Panel className={cnStack('mt-5')} data-tour="pending-invites">
-          <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
+        <Panel className={`${stackClass} mt-6`} data-tour="pending-invites">
+          <h2 className={`${sectionTitleClass} flex items-center gap-2`}>
             <EnvelopeSimple size={22} weight="duotone" className="text-brand" />
             {t('dashboard.invitations')}
           </h2>
@@ -97,7 +122,7 @@ export default function DashboardPage() {
             {(invites ?? []).map((invite) => (
               <ListItem key={invite.id}>
                 <div className="min-w-0">
-                  <strong>{invite.teamName}</strong>
+                  <strong className="font-display text-lg text-brand">{invite.teamName}</strong>
                   <div className="text-sm text-muted">
                     {t('dashboard.inviteFromOrg', { org: invite.organizationName })}
                   </div>
@@ -126,31 +151,45 @@ export default function DashboardPage() {
           </Stack>
         </Panel>
       )}
-      <div className="mt-5 grid gap-4 md:grid-cols-2">
+      <div className="mt-6 grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         <Panel className={stackClass} data-tour="orgs-list">
-          <h2 className="flex items-center gap-2 font-display text-xl tracking-tight">
+          <h2 className={`${sectionTitleClass} flex items-center gap-2`}>
             <Buildings size={22} weight="duotone" className="text-brand" />
             {t('dashboard.organizations')}
+            {orgs.length > 0 && (
+              <span className="ms-1 text-base font-sans font-semibold text-muted">
+                ({orgs.length})
+              </span>
+            )}
           </h2>
           {fetching && <p className="text-muted">{t('dashboard.loading')}</p>}
           {error && <p className="text-danger">{error.message}</p>}
-          <Stack>
-            {(data ?? []).map((org) => (
-              <ListItemLink key={org.id} to={`/orgs/${org.id}`}>
-                <div>
-                  <strong>{org.name}</strong>
-                  <div className="text-sm text-muted">{t('dashboard.openTeams')}</div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {orgs.map((org) => (
+              <Link
+                key={org.id}
+                to={`/orgs/${org.id}`}
+                className="group overflow-hidden rounded-3xl border border-line bg-panel-strong shadow-sm transition hover:border-brand/30 hover:shadow-panel"
+              >
+                <div
+                  className="h-20 w-full"
+                  style={{
+                    background: `linear-gradient(145deg, ${org.brandColor || 'var(--brand)'} 0%, color-mix(in oklab, ${org.brandColor || 'var(--brand)'} 45%, #0a4541) 100%)`,
+                  }}
+                />
+                <div className="p-4">
+                  <strong className="font-display text-xl tracking-tight text-brand">{org.name}</strong>
+                  <p className="mt-1 text-sm text-muted">{t('dashboard.openTeams')}</p>
+                  <span className="mt-3 inline-block text-sm font-semibold text-brand group-hover:underline">
+                    {t('dashboard.view')} →
+                  </span>
                 </div>
-                <Chip>{t('dashboard.view')}</Chip>
-              </ListItemLink>
+              </Link>
             ))}
-          </Stack>
-          <Link to="/join" data-tour="join-team">
-            <Button variant="secondary">{t('dashboard.joinTeam')}</Button>
-          </Link>
+          </div>
         </Panel>
-        <Panel data-tour="create-org">
-          <h2 className="mb-3 flex items-center gap-2 font-display text-xl tracking-tight">
+        <Panel data-tour="create-org" className="h-fit">
+          <h2 className={`mb-4 ${sectionTitleClass} flex items-center gap-2`}>
             <Plus size={22} weight="bold" className="text-brand" />
             {t('dashboard.createOrg')}
           </h2>
@@ -166,10 +205,6 @@ export default function DashboardPage() {
           </form>
         </Panel>
       </div>
-    </Layout>
+    </AppSidebarLayout>
   )
-}
-
-function cnStack(extra: string) {
-  return `${stackClass} ${extra}`
 }

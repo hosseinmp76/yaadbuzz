@@ -9,10 +9,10 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const variants: Record<Variant, string> = {
   primary:
-    'bg-brand text-on-brand hover:bg-brand-deep border border-transparent shadow-sm',
+    'bg-brand text-on-brand hover:bg-brand-deep border border-transparent shadow-panel',
   secondary:
-    'bg-transparent text-ink border border-line hover:bg-panel-strong',
-  ghost: 'bg-transparent text-ink border border-transparent hover:bg-panel',
+    'bg-panel-strong text-ink border border-line hover:bg-panel shadow-sm',
+  ghost: 'bg-transparent text-ink border border-transparent hover:bg-panel-strong',
 }
 
 export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
@@ -24,7 +24,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
       ref={ref}
       type={type}
       className={cn(
-        'inline-flex min-h-11 touch-manipulation items-center justify-center gap-2 rounded-full px-5 py-3 font-bold transition disabled:cursor-not-allowed disabled:opacity-55',
+        'inline-flex min-h-11 touch-manipulation items-center justify-center gap-2 rounded-2xl px-5 py-3 font-semibold tracking-[-0.01em] transition disabled:cursor-not-allowed disabled:opacity-55',
         variants[variant],
         className,
       )}

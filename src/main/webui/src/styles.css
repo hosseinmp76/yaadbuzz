@@ -19,25 +19,25 @@
   --color-on-brand: var(--on-brand);
   --font-display: var(--font-display-family);
   --font-body: var(--font-body-family);
-  --radius-panel: 1.125rem;
+  --radius-panel: 1.25rem;
   --shadow-panel: var(--shadow);
 }
 
 @layer base {
   :root {
-    --ink: #1c1917;
-    --muted: #57534e;
-    --paper: #faf7f2;
-    --paper-2: #f0ebe3;
-    --brand: #0f766e;
-    --brand-deep: #115e59;
-    --accent: #c2410c;
-    --line: rgba(28, 25, 23, 0.12);
-    --panel: rgba(255, 255, 255, 0.66);
-    --panel-strong: rgba(255, 255, 255, 0.82);
-    --shadow: 0 18px 50px rgba(28, 25, 23, 0.08);
-    --glow-1: rgba(15, 118, 110, 0.16);
-    --glow-2: rgba(194, 65, 12, 0.12);
+    --ink: #14201f;
+    --muted: #5b6b68;
+    --paper: #f4f6f5;
+    --paper-2: #e8eeec;
+    --brand: #0f5f5a;
+    --brand-deep: #0a4541;
+    --accent: #1a7a72;
+    --line: rgba(20, 32, 31, 0.10);
+    --panel: rgba(255, 255, 255, 0.92);
+    --panel-strong: #ffffff;
+    --shadow: 0 12px 40px rgba(20, 32, 31, 0.08);
+    --glow-1: rgba(15, 95, 90, 0.08);
+    --glow-2: rgba(15, 95, 90, 0.04);
     --danger: #b91c1c;
     --on-brand: #ffffff;
     --font-display-family: "Fraunces", Georgia, serif;
@@ -78,8 +78,7 @@
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
     background:
-      radial-gradient(circle at 10% 10%, var(--glow-1), transparent 35%),
-      radial-gradient(circle at 90% 0%, var(--glow-2), transparent 30%),
+      radial-gradient(ellipse 80% 50% at 50% -10%, var(--glow-1), transparent 55%),
       linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
     background-attachment: fixed;
   }

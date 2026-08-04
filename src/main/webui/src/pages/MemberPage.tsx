@@ -12,7 +12,7 @@ import { InfiniteSentinel } from '../components/ui/InfiniteSentinel'
 import { PageTitle } from '../components/ui/PageTitle'
 import { Avatar } from '../components/ui/Avatar'
 import { cn } from '../lib/cn'
-import { panelClass, stackClass } from '../components/ui/styles'
+import { backLinkClass, panelClass, sectionTitleClass, stackClass, tributeCardClass } from '../components/ui/styles'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 
 export default function MemberPage() {
@@ -127,23 +127,36 @@ export default function MemberPage() {
 
   return (
     <Layout>
-      <Link
-        to={`/teams/${member.teamId}`}
-        className="text-sm font-semibold text-muted hover:text-ink"
-      >
-        {t('member.back')}
+      <Link to={`/teams/${member.teamId}`} className={backLinkClass}>
+        ← {t('member.back')}
       </Link>
-      <PageTitle>{member.nickname}</PageTitle>
-      <p className="text-muted">{member.bio || t('member.noBio')}</p>
-      <Avatar name={member.nickname} src={member.avatar?.url} size="lg" className="mt-3" />
 
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <section className={stackClass}>
-          <h2 className="font-display text-xl tracking-tight">{t('member.tributes')}</h2>
+      <section className={`${panelClass} mt-4`}>
+        <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
+          <Avatar name={member.nickname} src={member.avatar?.url} size="xl" shape="rounded" />
+          <div className="min-w-0 flex-1 text-center sm:text-start">
+            <PageTitle className="!mt-0">{member.nickname}</PageTitle>
+            <p className="mt-2 max-w-xl text-muted">{member.bio || t('member.noBio')}</p>
+            {characteristics.length > 0 && (
+              <div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
+                {characteristics.map((c: { id: string; title: string; count: number }) => (
+                  <Chip key={c.id}>
+                    {c.title} × {c.count}
+                  </Chip>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-2">
+        <section className={`${panelClass} ${stackClass}`}>
+          <h2 className={sectionTitleClass}>{t('member.tributes')}</h2>
           {items.length === 0 && <p className="text-muted">{t('member.noTributes')}</p>}
           {items.map((tribute) => (
-            <article key={tribute.id} className={panelClass}>
-              <p className="whitespace-pre-wrap">{tribute.text}</p>
+            <article key={tribute.id} className={tributeCardClass}>
+              <p className="whitespace-pre-wrap text-ink">{tribute.text}</p>
               {tribute.pictures?.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {tribute.pictures.map((pic: { id: string; url: string }) => (
@@ -151,13 +164,13 @@ export default function MemberPage() {
                       <img
                         src={pic.url}
                         alt=""
-                        className="h-28 w-28 rounded-xl border border-line object-cover"
+                        className="h-28 w-28 rounded-2xl border border-line object-cover"
                       />
                     </a>
                   ))}
                 </div>
               )}
-              <div className="mt-2 flex flex-wrap gap-2 text-sm text-muted">
+              <div className="mt-3 flex flex-wrap gap-2 text-sm text-muted">
                 <span>— {tribute.writer?.nickname}</span>
                 {tribute.anonymous && <Chip>{t('member.anonymous')}</Chip>}
                 {tribute.privateTribute && <Chip>{t('member.private')}</Chip>}
@@ -208,7 +221,7 @@ export default function MemberPage() {
 
         <div className={stackClass}>
           <form className={cn(panelClass, stackClass)} onSubmit={onTribute}>
-            <h2 className="font-display text-xl tracking-tight">
+            <h2 className={sectionTitleClass}>
               {t('member.writeAbout', { name: member.nickname })}
             </h2>
             <Label>
@@ -242,7 +255,7 @@ export default function MemberPage() {
           </form>
 
           <form className={cn(panelClass, stackClass)} onSubmit={onCharacteristic}>
-            <h2 className="font-display text-xl tracking-tight">{t('member.characteristics')}</h2>
+            <h2 className={sectionTitleClass}>{t('member.characteristics')}</h2>
             {characteristics.length === 0 ? (
               <p className="text-sm text-muted">{t('member.noCharacteristics')}</p>
             ) : (
