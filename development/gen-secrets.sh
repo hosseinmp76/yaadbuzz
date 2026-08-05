@@ -60,6 +60,7 @@ if [[ "${STDOUT_ONLY}" -eq 0 && -f "${OUT}" && "${FORCE}" -eq 0 ]]; then
 fi
 
 DB_PASSWORD="$("$GEN" 32)"
+METABASE_DB_PASSWORD="$("$GEN" 32)"
 S3_SECRET="$("$GEN" 32)"
 JWT_PEPPER="$("$GEN" --url 48)"
 MAIL_PASSWORD="$("$GEN" 24)"
@@ -87,6 +88,10 @@ QUARKUS_DATASOURCE_PASSWORD=${DB_PASSWORD}
 # The compose app container overrides these with docker service names in docker-compose.yml.
 QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://localhost:5432/yaadbuzz
 QUARKUS_HIBERNATE_SEARCH_ORM_ELASTICSEARCH_HOSTS=localhost:9200
+
+# --- Metabase (dedicated Postgres role; not the app datasource user) ---
+METABASE_DB_USER=metabase
+METABASE_DB_PASSWORD=${METABASE_DB_PASSWORD}
 
 # --- MinIO / S3 ---
 MINIO_ROOT_USER=yaadbuzz
