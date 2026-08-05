@@ -331,7 +331,29 @@
     "view": "View",
     "create": "Create",
     "created": "Team created",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "encryptTeam": "Encrypt team content",
+    "encryptTeamHint": "Texts and images are encrypted in your browser. The key is never sent to the server. Share it with members privately.",
+    "encryptionKeyTitle": "Save your team encryption key",
+    "encryptionKeyBody": "This is the only copy we can show you. Store it safely and share it with teammates. Without it, encrypted content cannot be read.",
+    "continueToTeam": "I’ve saved the key — open team"
+  },
+  "encryption": {
+    "unlockTitle": "This team is encrypted",
+    "unlockBody": "Enter the shared AES key from the team admin. It stays only in this browser (IndexedDB) and is never uploaded.",
+    "yourKey": "Your team key",
+    "saveKeyHint": "Copy this key and share it privately with teammates. Yaadbuzz cannot recover it.",
+    "keyLabel": "Team encryption key",
+    "keyPlaceholder": "Paste the base64url key…",
+    "unlock": "Unlock on this device",
+    "unlocking": "Unlocking…",
+    "invalidKey": "That key is invalid",
+    "wrongKey": "That key was wrong — it was removed from this device. Ask the admin for the correct key.",
+    "copyKey": "Copy key",
+    "copied": "Copied",
+    "lockedBadge": "Encrypted",
+    "showKey": "Show saved key",
+    "removeLocalKey": "Remove key from this device"
   },
   "join": {
     "title": "Join a team",

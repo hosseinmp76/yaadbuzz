@@ -28,9 +28,20 @@ Yaadbuzz is a place for a class, club, or company to **build a yearbook together
 - Tributes (anonymous / private / reveal mode)
 - Shared memories with comments
 - Topic awards and characteristic tags
+- Optional **client-side team encryption** (AES-GCM; key never leaves the browser)
 - Elasticsearch search
 - Online yearbook view with browser print / Save as PDF
 - Swagger UI for the REST API
+
+### Optional team encryption
+
+When enabled for the deployment (`app_config.team_encryption_enabled`), a team admin can turn on encryption while creating a team. An AES-256 key is generated **in the browser**, shown once to the admin, and stored only in that browser’s IndexedDB. Teammates paste the same key on their devices. Tribute, memory, and comment text (and their photos) are encrypted before upload; the server stores ciphertext and never receives the key. Without the shared key, encrypted content cannot be read.
+
+Toggle for new teams (SQL):
+
+```sql
+UPDATE app_config SET team_encryption_enabled = true WHERE id = 1;
+```
 
 **Stack:** Quarkus, React (Quinoa), REST/OpenAPI, PostgreSQL, Elasticsearch, MinIO.
 

@@ -14,7 +14,6 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -81,17 +80,6 @@ public class ObjectStorageService {
             return new StoredObject(key, url);
         } catch (Exception e) {
             throw ApiException.badRequest("Failed to upload file: " + e.getMessage());
-        }
-    }
-
-    public byte[] download(String storageKey) {
-        try {
-            return client().getObjectAsBytes(GetObjectRequest.builder()
-                    .bucket(props.bucket())
-                    .key(storageKey)
-                    .build()).asByteArray();
-        } catch (Exception e) {
-            throw ApiException.notFound("File not found");
         }
     }
 

@@ -3,14 +3,20 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { api } from '../api/client'
+import type { Tribute } from '../api/types'
 import { useApiMutation, useApiQuery } from '../api/useApi'
 import Layout from '../components/Layout'
+import { TeamEncryptionUnlock } from '../components/TeamEncryptionUnlock'
 import { Button } from '../components/ui/Button'
 import { Chip } from '../components/ui/Chip'
 import { Input, Label, Textarea } from '../components/ui/Field'
 import { InfiniteSentinel } from '../components/ui/InfiniteSentinel'
 import { PageTitle } from '../components/ui/PageTitle'
 import { Avatar } from '../components/ui/Avatar'
+import { EncryptedImage } from '../crypto/EncryptedImage'
+import { decryptTributes, prepareTributePayload } from '../crypto/contentCrypto'
+import { useTeamCrypto } from '../crypto/useTeamCrypto'
+import { isWrongTeamKeyError } from '../crypto/verifyTeamKey'
 import { cn } from '../lib/cn'
 import { backLinkClass, panelClass, sectionTitleClass, stackClass, tributeCardClass } from '../components/ui/styles'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
@@ -19,6 +25,12 @@ export default function MemberPage() {
   const { t } = useTranslation()
   const { memberId = '' } = useParams()
   const [{ data: member }] = useApiQuery(!!memberId, () => api.teamMember(memberId), [memberId])
+  const [{ data: team }] = useApiQuery(
+    !!member?.teamId,
+    () => api.team(member!.teamId),
+    [member?.teamId],
+  )
+  const teamCrypto = useTeamCrypto(member?.teamId, team?.encryptionEnabled)
   const [{ data: me }] = useApiQuery(
     !!member?.teamId,
     () => api.myTeamMembership(member!.teamId),
@@ -50,7 +62,7 @@ export default function MemberPage() {
   const [anonymous, setAnonymous] = useState(false)
   const [privateTribute, setPrivateTribute] = useState(false)
   const [charTitle, setCharTitle] = useState('')
-  const [items, setItems] = useState<any[]>([])
+  const [items, setItems] = useState<Tribute[]>([])
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasNext, setHasNext] = useState(false)
   const cursorRef = useRef<string | null>(null)
@@ -62,23 +74,33 @@ export default function MemberPage() {
   const loadTributes = useCallback(
     async (reset = false) => {
       if (!member) return
-      const page = await api.tributes(member.teamId, {
-        recipientId: member.id,
-        first: 10,
-        after: reset ? undefined : cursorRef.current ?? undefined,
-      })
-      setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
-      setCursor(page.nextCursor ?? null)
-      setHasNext(page.hasNext)
+      try {
+        const page = await api.tributes(member.teamId, {
+          recipientId: member.id,
+          first: 10,
+          after: reset ? undefined : cursorRef.current ?? undefined,
+        })
+        const decrypted = await decryptTributes(teamCrypto.key, page.items)
+        setItems((prev) => (reset ? decrypted : [...prev, ...decrypted]))
+        setCursor(page.nextCursor ?? null)
+        setHasNext(page.hasNext)
+      } catch (err) {
+        if (isWrongTeamKeyError(err)) {
+          await teamCrypto.rejectWrongKey()
+          toast.error(t('encryption.wrongKey'))
+          return
+        }
+        throw err
+      }
     },
-    [member],
+    [member, teamCrypto.key, teamCrypto.rejectWrongKey, t],
   )
 
   useEffect(() => {
     setItems([])
     setCursor(null)
-    if (member) void loadTributes(true)
-  }, [memberId, member?.id, loadTributes, member])
+    if (member && teamCrypto.ready && !teamCrypto.missing) void loadTributes(true)
+  }, [memberId, member?.id, loadTributes, member, teamCrypto.ready, teamCrypto.missing])
 
   const sentinelRef = useInfiniteScroll(() => {
     if (hasNext) void loadTributes(false)
@@ -87,9 +109,10 @@ export default function MemberPage() {
   async function onTribute(e: FormEvent) {
     e.preventDefault()
     if (!member) return
+    const encryptedText = await prepareTributePayload(teamCrypto.key, text)
     const result = await createTribute(member.teamId, {
       recipientId: member.id,
-      text,
+      text: encryptedText,
       anonymous: isOwnProfile ? false : anonymous,
       privateTribute,
     })
@@ -131,6 +154,12 @@ export default function MemberPage() {
         ← {t('member.back')}
       </Link>
 
+      {teamCrypto.missing ? (
+        <div className="mt-4">
+          <TeamEncryptionUnlock onUnlock={teamCrypto.unlock} rejected={teamCrypto.keyRejected} />
+        </div>
+      ) : (
+      <>
       <section className={`${panelClass} mt-4`}>
         <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
           <Avatar name={member.nickname} src={member.avatar?.url} size="xl" shape="rounded" />
@@ -159,15 +188,17 @@ export default function MemberPage() {
               <p className="whitespace-pre-wrap text-ink">{tribute.text}</p>
               {tribute.pictures?.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {tribute.pictures.map((pic: { id: string; url: string }) => (
-                    <a key={pic.id} href={pic.url} target="_blank" rel="noopener noreferrer">
-                      <img
-                        src={pic.url}
+                  {tribute.pictures.map((pic) =>
+                    pic.id && pic.url ? (
+                      <EncryptedImage
+                        key={pic.id}
+                        url={pic.url}
+                        cryptoKey={teamCrypto.key}
                         alt=""
                         className="h-28 w-28 rounded-2xl border border-line object-cover"
                       />
-                    </a>
-                  ))}
+                    ) : null,
+                  )}
                 </div>
               )}
               <div className="mt-3 flex flex-wrap gap-2 text-sm text-muted">
@@ -286,6 +317,8 @@ export default function MemberPage() {
           </p>
         </div>
       </div>
+      </>
+      )}
     </Layout>
   )
 }

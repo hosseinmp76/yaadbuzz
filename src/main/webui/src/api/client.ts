@@ -54,8 +54,12 @@ export const api = {
 
   myTeams: () =>
     unwrap(openapi.GET('/api/teams', {})) as Promise<Team[]>,
-  createTeam: (name: string, brandColor: string) =>
-    unwrap(openapi.POST('/api/teams', { body: { name, brandColor } })) as Promise<Team>,
+  createTeam: (name: string, brandColor: string, encryptionEnabled = false) =>
+    apiFetch<Team>('/api/teams', {
+      method: 'POST',
+      body: JSON.stringify({ name, brandColor, encryptionEnabled }),
+    }),
+  features: () => apiFetch<{ teamEncryption: boolean }>('/api/features'),
   team: (id: string) =>
     unwrap(openapi.GET('/api/teams/{id}', { params: { path: { id } } })) as Promise<Team>,
   updateTeamSettings: (

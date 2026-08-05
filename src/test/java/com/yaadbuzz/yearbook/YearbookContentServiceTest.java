@@ -35,7 +35,7 @@ class YearbookContentServiceTest {
         AuthSupport.register(email, "password123", "YbUser");
         User user = User.findByEmail(email).orElseThrow();
 
-        var team = teamService.create(user, "Yb Team", "#B45309");
+        var team = teamService.create(user, "Yb Team", "#B45309", false);
         var memory = memoryService.create(
                 team.id, user, "Campfire", "We stayed up late.", false, List.of(), List.of());
         memoryService.addComment(memory.id, user, "Still my favorite night.", null, List.of());

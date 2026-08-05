@@ -23,6 +23,7 @@ Naming: use **Team** (not Department).
 | Search | Elasticsearch 8 via Hibernate Search |
 | Object storage | MinIO / S3-compatible |
 | Auth | Local email/password JWT + optional Google/GitHub OAuth (OIDC); keep boundaries OIDC-ready |
+| Optional encryption | Client-side AES-GCM per team; offered for new teams when `app_config.team_encryption_enabled` is true (key never leaves the browser) |
 
 Frontend UI libs in use: Tailwind CSS v4, Motion, React Hook Form, Zod, Phosphor icons, Sonner, clsx. Themes are user-selectable CSS-variable presets (`src/main/webui/src/theme/`).
 
@@ -30,7 +31,7 @@ Frontend UI libs in use: Tailwind CSS v4, Motion, React Hook Form, Zod, Phosphor
 
 Key entities under `src/main/java/com/yaadbuzz/domain/`:
 
-User, Team, Invite, TeamMember, Tribute, Memory, Comment, Topic, TopicVote, Characteristic, MediaAsset.
+User, Team, Invite, TeamMember, Tribute, Memory, Comment, Topic, TopicVote, Characteristic, MediaAsset, AppConfig.
 
 Important product rules:
 

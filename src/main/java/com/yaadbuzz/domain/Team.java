@@ -59,6 +59,10 @@ public class Team extends BaseEntity {
     @Column(name = "yearbook_show_awards", nullable = false)
     public boolean yearbookShowAwards = true;
 
+    /** When true, clients encrypt texts/media with a shared AES key that never leaves the browser. */
+    @Column(name = "encryption_enabled", nullable = false)
+    public boolean encryptionEnabled = false;
+
     public boolean tributesRevealed() {
         if (revealTributes) {
             return true;

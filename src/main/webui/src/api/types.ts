@@ -24,6 +24,7 @@ export type Team = {
   yearbookShowCharacteristics: boolean
   yearbookShowMemories: boolean
   yearbookShowAwards: boolean
+  encryptionEnabled?: boolean
 }
 export type TeamMember = Req<S['TeamMemberType'], 'id' | 'teamId' | 'nickname'>
 export type Invite = Req<S['InviteType'], 'id' | 'teamId' | 'code' | 'role' | 'useCount'>

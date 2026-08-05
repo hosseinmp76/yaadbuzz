@@ -30,14 +30,21 @@ public class TeamService {
     @Inject
     EmailService emailService;
 
+    @Inject
+    AppConfigService appConfigService;
+
     @Transactional
-    public Team create(User user, String name, String brandColor) {
+    public Team create(User user, String name, String brandColor, boolean encryptionEnabled) {
         if (name == null || name.isBlank()) {
             throw ApiException.badRequest("Team name is required");
+        }
+        if (encryptionEnabled && !appConfigService.isTeamEncryptionOffered()) {
+            throw ApiException.badRequest("Team encryption is not enabled on this server");
         }
         Team team = new Team();
         team.name = name.trim();
         team.brandColor = brandColor;
+        team.encryptionEnabled = encryptionEnabled;
         team.persist();
 
         TeamMember member = new TeamMember();

@@ -15,7 +15,19 @@
     <link rel="canonical" href="https://yaadbuzz.ir/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
-    <link rel="preload" as="image" href="/features/feature-yearbook.webp" fetchpriority="high" />
+    <script>
+      // Preload landing hero only on `/` so other routes don't get an unused-preload warning.
+      ;(function () {
+        var path = location.pathname
+        if (path !== '/' && path !== '') return
+        var link = document.createElement('link')
+        link.rel = 'preload'
+        link.as = 'image'
+        link.href = '/features/feature-yearbook.webp'
+        link.fetchPriority = 'high'
+        document.head.appendChild(link)
+      })()
+    </script>
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Yaadbuzz" />

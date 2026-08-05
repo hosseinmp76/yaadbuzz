@@ -81,7 +81,10 @@ public class TeamResource {
     @Operation(summary = "Create a team")
     public TeamType create(CreateTeamRequest request) {
         return TeamType.from(teamService.create(
-                currentUserService.requireUser(), request.name(), request.brandColor()));
+                currentUserService.requireUser(),
+                request.name(),
+                request.brandColor(),
+                Boolean.TRUE.equals(request.encryptionEnabled())));
     }
 
     @POST

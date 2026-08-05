@@ -33,7 +33,7 @@ class TributeServiceTest {
     @Transactional
     void cannotWriteAnonymousTributeToSelf() {
         User user = User.findByEmail(createUserEmail()).orElseThrow();
-        Team team = teamService.create(user, "Tribute Team", null);
+        Team team = teamService.create(user, "Tribute Team", null, false);
         TeamMember member = TeamMember.findByTeamAndUser(team.id, user.id).orElseThrow();
 
         ApiException ex = assertThrows(ApiException.class, () -> tributeService.create(

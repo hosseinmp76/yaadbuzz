@@ -1,5 +1,6 @@
 package com.yaadbuzz.config;
 
+import com.yaadbuzz.domain.AppConfig;
 import com.yaadbuzz.domain.Characteristic;
 import com.yaadbuzz.domain.Comment;
 import com.yaadbuzz.domain.Invite;
@@ -105,6 +106,11 @@ public class SeedData {
     void onStart(@Observes StartupEvent event) {
         if (!seedEnabled) {
             return;
+        }
+        // Dev seed profile: offer client-side encryption for new teams (app_config singleton).
+        AppConfig config = AppConfig.findById(AppConfig.SINGLETON_ID);
+        if (config != null) {
+            config.teamEncryptionEnabled = true;
         }
         if (User.count() > 0) {
             return;

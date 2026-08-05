@@ -16,7 +16,6 @@ import {
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { api } from '../api/client'
-import { uploadMedia } from '../api/http'
 import type { Team, TeamMember, Tribute, Memory, Topic, TopicStanding, SearchHit } from '../api/types'
 import { useApiMutation, useApiQuery } from '../api/useApi'
 import Layout from '../components/Layout'
@@ -25,6 +24,7 @@ import {
   SidebarNavButton,
   sidebarNavClass,
 } from '../components/AppSidebar'
+import { TeamEncryptionUnlock } from '../components/TeamEncryptionUnlock'
 import { Button } from '../components/ui/Button'
 import { Chip } from '../components/ui/Chip'
 import { Input, Label, Select, Textarea } from '../components/ui/Field'
@@ -33,6 +33,16 @@ import { InfiniteSentinel } from '../components/ui/InfiniteSentinel'
 import { ListItem } from '../components/ui/ListItem'
 import { PageTitle } from '../components/ui/PageTitle'
 import { Avatar } from '../components/ui/Avatar'
+import { EncryptedImage } from '../crypto/EncryptedImage'
+import {
+  decryptMemories,
+  decryptTributes,
+  prepareMemoryPayload,
+  prepareTributePayload,
+} from '../crypto/contentCrypto'
+import { uploadTeamMedia } from '../crypto/uploadEncryptedMedia'
+import { useTeamCrypto } from '../crypto/useTeamCrypto'
+import { isWrongTeamKeyError } from '../crypto/verifyTeamKey'
 import { cn } from '../lib/cn'
 import { panelClass, stackClass, backLinkClass, sectionTitleClass, tributeCardClass } from '../components/ui/styles'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
@@ -96,6 +106,8 @@ export default function TeamPage() {
     [teamId],
   )
   const isAdmin = membership?.role === 'ADMIN'
+  const teamCrypto = useTeamCrypto(teamId, team?.encryptionEnabled)
+  const cryptoKey = teamCrypto.key
 
   useEffect(() => {
     if (tab === 'adminSettings' && membership && !isAdmin) {
@@ -156,19 +168,50 @@ export default function TeamPage() {
         <div className="min-w-0 flex-1">
           <PageTitle className="!mt-0">{team?.name ?? t('team.fallbackTitle')}</PageTitle>
           <p className="mt-2 max-w-xl text-muted">{t('team.tributesPublishHint')}</p>
+          {team?.encryptionEnabled && (
+            <p className="mt-1 text-sm font-semibold text-brand">{t('encryption.lockedBadge')}</p>
+          )}
         </div>
       </section>
 
-      {tab === 'members' && <MembersTab teamId={teamId} />}
-      {tab === 'tributes' && <TributesTab teamId={teamId} />}
-      {tab === 'characteristics' && <CharacteristicsTab teamId={teamId} />}
-      {tab === 'memories' && <MemoriesTab teamId={teamId} />}
-      {tab === 'topics' && <TopicsTab teamId={teamId} />}
-      {tab === 'search' && <SearchTab teamId={teamId} />}
-      {tab === 'yearbook' && <YearbookTab teamId={teamId} team={team} reTeam={reTeam} />}
-      {tab === 'personalSettings' && <PreferencesTab teamId={teamId} />}
-      {tab === 'adminSettings' && isAdmin && (
-        <AdminSettingsTab teamId={teamId} myMemberId={membership?.id} />
+      {!teamCrypto.ready ? (
+        <p className="text-muted">{t('team.loading')}</p>
+      ) : teamCrypto.missing ? (
+        <TeamEncryptionUnlock onUnlock={teamCrypto.unlock} rejected={teamCrypto.keyRejected} />
+      ) : (
+        <>
+          {tab === 'members' && <MembersTab teamId={teamId} />}
+          {tab === 'tributes' && (
+            <TributesTab
+              teamId={teamId}
+              cryptoKey={cryptoKey}
+              onWrongKey={teamCrypto.rejectWrongKey}
+            />
+          )}
+          {tab === 'characteristics' && <CharacteristicsTab teamId={teamId} />}
+          {tab === 'memories' && (
+            <MemoriesTab
+              teamId={teamId}
+              cryptoKey={cryptoKey}
+              onWrongKey={teamCrypto.rejectWrongKey}
+            />
+          )}
+          {tab === 'topics' && <TopicsTab teamId={teamId} />}
+          {tab === 'search' && <SearchTab teamId={teamId} />}
+          {tab === 'yearbook' && (
+            <YearbookTab teamId={teamId} team={team} reTeam={reTeam} />
+          )}
+          {tab === 'personalSettings' && (
+            <PreferencesTab
+              teamId={teamId}
+              encryptionEnabled={!!team?.encryptionEnabled}
+              teamCrypto={teamCrypto}
+            />
+          )}
+          {tab === 'adminSettings' && isAdmin && (
+            <AdminSettingsTab teamId={teamId} myMemberId={membership?.id} />
+          )}
+        </>
       )}
     </Layout>
   )
@@ -275,7 +318,15 @@ function MembersTab({ teamId }: { teamId: string }) {
   )
 }
 
-function TributesTab({ teamId }: { teamId: string }) {
+function TributesTab({
+  teamId,
+  cryptoKey,
+  onWrongKey,
+}: {
+  teamId: string
+  cryptoKey: CryptoKey | null
+  onWrongKey: () => Promise<void>
+}) {
   const { t } = useTranslation()
   const [{ data: membersPage }] = useApiQuery(
     !!teamId,
@@ -323,15 +374,25 @@ function TributesTab({ teamId }: { teamId: string }) {
 
   const load = useCallback(
     async (reset = false) => {
-      const page = await api.tributes(teamId, {
-        first: 12,
-        after: reset ? undefined : cursorRef.current ?? undefined,
-      })
-      setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
-      setCursor(page.nextCursor ?? null)
-      setHasNext(page.hasNext)
+      try {
+        const page = await api.tributes(teamId, {
+          first: 12,
+          after: reset ? undefined : cursorRef.current ?? undefined,
+        })
+        const decrypted = await decryptTributes(cryptoKey, page.items)
+        setItems((prev) => (reset ? decrypted : [...prev, ...decrypted]))
+        setCursor(page.nextCursor ?? null)
+        setHasNext(page.hasNext)
+      } catch (err) {
+        if (isWrongTeamKeyError(err)) {
+          await onWrongKey()
+          toast.error(t('encryption.wrongKey'))
+          return
+        }
+        throw err
+      }
     },
-    [teamId],
+    [teamId, cryptoKey, onWrongKey, t],
   )
 
   useEffect(() => {
@@ -347,9 +408,10 @@ function TributesTab({ teamId }: { teamId: string }) {
   async function onCreate(e: FormEvent) {
     e.preventDefault()
     if (!recipientId) return
+    const encryptedText = await prepareTributePayload(cryptoKey, text)
     const result = await createTribute(teamId, {
       recipientId,
-      text,
+      text: encryptedText,
       anonymous: writingToSelf ? false : anonymous,
       privateTribute,
     })
@@ -375,15 +437,17 @@ function TributesTab({ teamId }: { teamId: string }) {
             <p className="whitespace-pre-wrap text-ink">{tribute.text}</p>
             {tribute.pictures?.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
-                {tribute.pictures.map((pic) => (
-                  <a key={pic.id} href={pic.url} target="_blank" rel="noopener noreferrer">
-                    <img
-                      src={pic.url}
+                {tribute.pictures.map((pic) =>
+                  pic.id && pic.url ? (
+                    <EncryptedImage
+                      key={pic.id}
+                      url={pic.url}
+                      cryptoKey={cryptoKey}
                       alt=""
                       className="h-28 w-28 rounded-xl border border-line object-cover"
                     />
-                  </a>
-                ))}
+                  ) : null,
+                )}
               </div>
             )}
             <div className="mt-2 flex flex-wrap gap-2 text-sm text-muted">
@@ -635,7 +699,15 @@ function CharacteristicsTab({ teamId }: { teamId: string }) {
   )
 }
 
-function MemoriesTab({ teamId }: { teamId: string }) {
+function MemoriesTab({
+  teamId,
+  cryptoKey,
+  onWrongKey,
+}: {
+  teamId: string
+  cryptoKey: CryptoKey | null
+  onWrongKey: () => Promise<void>
+}) {
   const { t } = useTranslation()
   const [, createMemory] = useApiMutation(
     (
@@ -664,15 +736,25 @@ function MemoriesTab({ teamId }: { teamId: string }) {
 
   const load = useCallback(
     async (reset = false) => {
-      const page = await api.memories(teamId, {
-        first: 10,
-        after: reset ? undefined : cursorRef.current ?? undefined,
-      })
-      setItems((prev) => (reset ? page.items : [...prev, ...page.items]))
-      setCursor(page.nextCursor ?? null)
-      setHasNext(page.hasNext)
+      try {
+        const page = await api.memories(teamId, {
+          first: 10,
+          after: reset ? undefined : cursorRef.current ?? undefined,
+        })
+        const decrypted = await decryptMemories(cryptoKey, page.items)
+        setItems((prev) => (reset ? decrypted : [...prev, ...decrypted]))
+        setCursor(page.nextCursor ?? null)
+        setHasNext(page.hasNext)
+      } catch (err) {
+        if (isWrongTeamKeyError(err)) {
+          await onWrongKey()
+          toast.error(t('encryption.wrongKey'))
+          return
+        }
+        throw err
+      }
     },
-    [teamId],
+    [teamId, cryptoKey, onWrongKey, t],
   )
 
   useEffect(() => {
@@ -689,12 +771,13 @@ function MemoriesTab({ teamId }: { teamId: string }) {
     try {
       const mediaIds: string[] = []
       for (const file of files.slice(0, 6)) {
-        const uploaded = await uploadMedia(file)
+        const uploaded = await uploadTeamMedia(file, cryptoKey)
         mediaIds.push(uploaded.id)
       }
+      const encrypted = await prepareMemoryPayload(cryptoKey, title, bodyText)
       const result = await createMemory(teamId, {
-        title,
-        bodyText,
+        title: encrypted.title,
+        bodyText: encrypted.bodyText,
         privateMemory: false,
         taggedIds: [],
         mediaIds,
@@ -723,14 +806,13 @@ function MemoriesTab({ teamId }: { teamId: string }) {
           const hero = m.pictures?.[0]
           return (
             <article key={m.id} className={cn(panelClass, '!overflow-hidden !p-0')}>
-              {hero && (
-                <a href={hero.url} target="_blank" rel="noopener noreferrer">
-                  <img
-                    src={hero.url}
-                    alt=""
-                    className="aspect-[16/9] w-full object-cover"
-                  />
-                </a>
+              {hero?.url && (
+                <EncryptedImage
+                  url={hero.url}
+                  cryptoKey={cryptoKey}
+                  alt=""
+                  className="aspect-[16/9] w-full object-cover"
+                />
               )}
               <div className="p-5 sm:p-6">
                 <h3 className="font-display text-xl tracking-tight text-brand sm:text-2xl">
@@ -739,19 +821,21 @@ function MemoriesTab({ teamId }: { teamId: string }) {
                 <p className="mt-2 whitespace-pre-wrap text-ink">{m.bodyText}</p>
                 {m.pictures && m.pictures.length > 1 && (
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {m.pictures.slice(1).map((pic) => (
-                      <a key={pic.id} href={pic.url} target="_blank" rel="noopener noreferrer">
-                        <img
-                          src={pic.url}
+                    {m.pictures.slice(1).map((pic) =>
+                      pic.url ? (
+                        <EncryptedImage
+                          key={pic.id ?? pic.url}
+                          url={pic.url}
+                          cryptoKey={cryptoKey}
                           alt=""
                           className="h-20 w-20 rounded-xl border border-line object-cover"
                         />
-                      </a>
-                    ))}
+                      ) : null,
+                    )}
                   </div>
                 )}
                 <div className="mt-3 text-sm font-semibold text-brand">— {m.writer.nickname}</div>
-                <MemoryComments memoryId={m.id} />
+                <MemoryComments memoryId={m.id} cryptoKey={cryptoKey} />
               </div>
             </article>
           )
@@ -1094,7 +1178,8 @@ function YearbookTab({
     if (!file) return
     setUploadingCover(true)
     try {
-      const uploaded = await uploadMedia(file)
+      // Cover stays plaintext so branding works without decrypting the whole yearbook chrome.
+      const uploaded = await uploadTeamMedia(file, null)
       const result = await updateSettings(teamId, { coverMediaId: uploaded.id })
       if (result.error) {
         toast.error(result.error.message)
@@ -1251,7 +1336,15 @@ function Toggle({
   )
 }
 
-function PreferencesTab({ teamId }: { teamId: string }) {
+function PreferencesTab({
+  teamId,
+  encryptionEnabled,
+  teamCrypto,
+}: {
+  teamId: string
+  encryptionEnabled: boolean
+  teamCrypto: ReturnType<typeof useTeamCrypto>
+}) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [{ data: membership, fetching, error }, reexecute] = useApiQuery(
@@ -1270,6 +1363,8 @@ function PreferencesTab({ teamId }: { teamId: string }) {
   const [bio, setBio] = useState('')
   const [saving, setSaving] = useState(false)
   const [leaving, setLeaving] = useState(false)
+  const [revealedKey, setRevealedKey] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     if (!membership) return
@@ -1300,7 +1395,7 @@ function PreferencesTab({ teamId }: { teamId: string }) {
   async function onAvatar(file: File | null) {
     if (!file) return
     try {
-      const uploaded = await uploadMedia(file)
+      const uploaded = await uploadTeamMedia(file, null)
       const result = await upsertProfile(teamId, {
         nickname: null,
         bio: null,
@@ -1315,6 +1410,25 @@ function PreferencesTab({ teamId }: { teamId: string }) {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('team.uploadFailed'))
     }
+  }
+
+  async function showSavedKey() {
+    const keyB64 = await teamCrypto.peekKey()
+    setRevealedKey(keyB64)
+  }
+
+  async function copySavedKey() {
+    const keyB64 = revealedKey ?? (await teamCrypto.peekKey())
+    if (!keyB64) return
+    await navigator.clipboard.writeText(keyB64)
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 2000)
+  }
+
+  async function removeLocalKey() {
+    if (!window.confirm(t('encryption.removeLocalKey'))) return
+    await teamCrypto.lockLocal()
+    setRevealedKey(null)
   }
 
   async function onLeave() {
@@ -1372,6 +1486,36 @@ function PreferencesTab({ teamId }: { teamId: string }) {
           {saving ? t('common.saving') : t('team.saveProfile')}
         </Button>
       </form>
+      {encryptionEnabled && (
+        <div className={cn(panelClass, stackClass)}>
+          <h2 className={sectionTitleClass}>{t('encryption.keyLabel')}</h2>
+          <p className="text-muted">{t('encryption.unlockBody')}</p>
+          {revealedKey ? (
+            <>
+              <code className="break-all rounded-xl border border-line bg-panel-strong px-3 py-2 text-sm">
+                {revealedKey}
+              </code>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="secondary" onClick={() => void copySavedKey()}>
+                  {copied ? t('encryption.copied') : t('encryption.copyKey')}
+                </Button>
+                <Button type="button" variant="secondary" onClick={() => void removeLocalKey()}>
+                  {t('encryption.removeLocalKey')}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="secondary" onClick={() => void showSavedKey()}>
+                {t('encryption.showKey')}
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => void removeLocalKey()}>
+                {t('encryption.removeLocalKey')}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
       <div className={cn(panelClass, stackClass)}>
         <h2 className={sectionTitleClass}>{t('team.leaveTitle')}</h2>
         <p className="text-muted">{t('team.leaveHint')}</p>

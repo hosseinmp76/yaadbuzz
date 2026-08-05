@@ -1,12 +1,17 @@
 import { Printer, ArrowLeft } from '@phosphor-icons/react'
 import clsx from 'clsx'
 import type { CSSProperties, ReactNode } from 'react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { useApiQuery } from '../api/useApi'
+import { TeamEncryptionUnlock } from '../components/TeamEncryptionUnlock'
 import { Button } from '../components/ui/Button'
 import { Avatar } from '../components/ui/Avatar'
+import { EncryptedImage } from '../crypto/EncryptedImage'
+import { decryptYearbookContent } from '../crypto/contentCrypto'
+import { useTeamCrypto } from '../crypto/useTeamCrypto'
+import { isWrongTeamKeyError } from '../crypto/verifyTeamKey'
 
 type YearbookData = {
   teamId: string
@@ -67,17 +72,53 @@ function darken(hex: string, amount = 0.35): string {
 
 export default function YearbookPage() {
   const { teamId = '' } = useParams()
+  const [{ data: team }] = useApiQuery(!!teamId, () => api.team(teamId), [teamId])
+  const teamCrypto = useTeamCrypto(teamId, team?.encryptionEnabled)
   const [{ data, fetching, error }, reexecute] = useApiQuery(
     !!teamId,
     () => api.yearbook(teamId),
     [teamId],
   )
-  const yearbook = data as YearbookData | undefined
+  const [yearbook, setYearbook] = useState<YearbookData | undefined>()
 
   useEffect(() => {
     if (!teamId) return
     reexecute()
   }, [teamId, reexecute])
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      if (!data || !teamCrypto.ready) {
+        if (!data) setYearbook(undefined)
+        return
+      }
+      if (teamCrypto.missing) {
+        setYearbook(undefined)
+        return
+      }
+      try {
+        const decrypted = await decryptYearbookContent(teamCrypto.key, data as YearbookData)
+        if (!cancelled) setYearbook(decrypted)
+      } catch (err) {
+        if (isWrongTeamKeyError(err)) {
+          await teamCrypto.rejectWrongKey()
+          if (!cancelled) setYearbook(undefined)
+          return
+        }
+        throw err
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [
+    data,
+    teamCrypto.ready,
+    teamCrypto.missing,
+    teamCrypto.key,
+    teamCrypto.rejectWrongKey,
+  ])
 
   return (
     <div className="yearbook-print-root min-h-screen bg-[#faf7f2] text-[#1c1917]">
@@ -95,7 +136,7 @@ export default function YearbookPage() {
               Customize
             </Button>
           </Link>
-          <Button className="w-full sm:w-auto" onClick={() => window.print()}>
+          <Button className="w-full sm:w-auto" onClick={() => window.print()} disabled={!yearbook}>
             <Printer size={18} />
             Print / Save as PDF
           </Button>
@@ -108,12 +149,23 @@ export default function YearbookPage() {
       {error && (
         <p className="mx-auto w-[min(800px,calc(100%-2rem))] text-[#b91c1c]">{error.message}</p>
       )}
-      {yearbook && <YearbookDocument yearbook={yearbook} />}
+      {teamCrypto.missing && (
+        <div className="mx-auto w-[min(640px,calc(100%-2rem))]">
+          <TeamEncryptionUnlock onUnlock={teamCrypto.unlock} rejected={teamCrypto.keyRejected} />
+        </div>
+      )}
+      {yearbook && <YearbookDocument yearbook={yearbook} cryptoKey={teamCrypto.key} />}
     </div>
   )
 }
 
-function YearbookDocument({ yearbook }: { yearbook: YearbookData }) {
+function YearbookDocument({
+  yearbook,
+  cryptoKey,
+}: {
+  yearbook: YearbookData
+  cryptoKey: CryptoKey | null
+}) {
   const theme = yearbook.theme || 'CLASSIC'
   const brand = yearbook.brandColor || '#0F766E'
   const brandDeep = darken(brand)
@@ -264,9 +316,10 @@ function YearbookDocument({ yearbook }: { yearbook: YearbookData }) {
                   {memory.imageUrls && memory.imageUrls.length > 0 && (
                     <div className="space-y-3">
                       {memory.imageUrls.map((url) => (
-                        <img
+                        <EncryptedImage
                           key={url}
-                          src={url}
+                          url={url}
+                          cryptoKey={cryptoKey}
                           alt=""
                           className="mx-auto h-auto max-h-[32rem] w-auto max-w-2xl object-contain shadow-md"
                         />
@@ -287,9 +340,10 @@ function YearbookDocument({ yearbook }: { yearbook: YearbookData }) {
                           {comment.imageUrls && comment.imageUrls.length > 0 && (
                             <div className="mb-2 space-y-2">
                               {comment.imageUrls.map((url) => (
-                                <img
+                                <EncryptedImage
                                   key={url}
-                                  src={url}
+                                  url={url}
+                                  cryptoKey={cryptoKey}
                                   alt=""
                                   className="mx-auto h-auto max-h-64 w-auto max-w-[85%] object-contain shadow-sm"
                                 />

@@ -55,7 +55,8 @@ public final class ApiDtos {
             boolean yearbookShowTributes,
             boolean yearbookShowCharacteristics,
             boolean yearbookShowMemories,
-            boolean yearbookShowAwards
+            boolean yearbookShowAwards,
+            boolean encryptionEnabled
     ) {
         public static TeamType from(Team team) {
             return new TeamType(
@@ -74,7 +75,8 @@ public final class ApiDtos {
                     team.yearbookShowTributes,
                     team.yearbookShowCharacteristics,
                     team.yearbookShowMemories,
-                    team.yearbookShowAwards
+                    team.yearbookShowAwards,
+                    team.encryptionEnabled
             );
         }
     }

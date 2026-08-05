@@ -41,6 +41,8 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-yaadbuzz}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-yaadbuzzsecret}
+      # Browser fetch() of media (client-side decrypt) needs CORS; community MinIO uses this global setting.
+      MINIO_API_CORS_ALLOW_ORIGIN: ${MINIO_API_CORS_ALLOW_ORIGIN:-*}
     ports:
       - "127.0.0.1:9000:9000"
       - "127.0.0.1:9001:9001"
@@ -77,13 +79,13 @@ services:
     # Build locally:
     #   APP_PULL_POLICY=build docker compose up -d --build
     #   # or simply: docker compose up -d --build
-    image: ${APP_IMAGE:-hosseinmp762/yaadbuzz}:${IMAGE_TAG:-2026.07.30.5}
+    image: ${APP_IMAGE:-hosseinmp762/yaadbuzz}:${IMAGE_TAG}
     pull_policy: ${APP_PULL_POLICY:-missing}
-    build:
-      context: .
-      dockerfile: src/main/docker/Dockerfile.compose
-      tags:
-        - ${APP_IMAGE:-yaadbuzz/yaadbuzz}:${IMAGE_TAG:-local}
+#    build:
+#      context: .
+#      dockerfile: src/main/docker/Dockerfile.compose
+#      tags:
+#        - ${APP_IMAGE:-yaadbuzz/yaadbuzz}:${IMAGE_TAG:-local}
     depends_on:
       postgres:
         condition: service_healthy
@@ -104,6 +106,7 @@ services:
       YAADBUZZ_S3_BUCKET: yaadbuzz
       YAADBUZZ_PUBLIC_URL: ${YAADBUZZ_PUBLIC_URL:-https://yaadbuzz.ir}
       YAADBUZZ_SOURCE_URL: ${YAADBUZZ_SOURCE_URL:-https://github.com/hosseinmp76/yaadbuzz}
+      YAADBUZZ_TEAM_ENCRYPTION_ENABLED: ${YAADBUZZ_TEAM_ENCRYPTION_ENABLED:-false}
       YAADBUZZ_JWT_REFRESH_PEPPER: ${YAADBUZZ_JWT_REFRESH_PEPPER:-}
       # Mock mail until real SMTP is configured (empty host previously broke startup)
       YAADBUZZ_MAIL_MOCK: ${YAADBUZZ_MAIL_MOCK:-true}

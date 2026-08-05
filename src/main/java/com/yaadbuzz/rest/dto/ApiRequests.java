@@ -14,7 +14,7 @@ public final class ApiRequests {
     public record UpdateProfileRequest(String displayName) {
     }
 
-    public record CreateTeamRequest(String name, String brandColor) {
+    public record CreateTeamRequest(String name, String brandColor, Boolean encryptionEnabled) {
     }
 
     public record UpdateTeamSettingsRequest(

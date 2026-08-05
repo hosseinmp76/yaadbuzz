@@ -25,7 +25,14 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 @RolesAllowed("user")
 public class MediaResource {
 
-    private static final Set<String> ALLOWED = Set.of("image/jpeg", "image/png", "image/webp", "image/gif");
+    private static final Set<String> ALLOWED = Set.of(
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "image/gif",
+            // Client-side encrypted payloads (AES-GCM envelope).
+            "application/octet-stream"
+    );
 
     @Inject
     CurrentUserService currentUserService;
@@ -45,7 +52,7 @@ public class MediaResource {
         }
         String contentType = file.contentType() == null ? "application/octet-stream" : file.contentType();
         if (!ALLOWED.contains(contentType)) {
-            throw ApiException.badRequest("Only image uploads are allowed");
+            throw ApiException.badRequest("Only image or encrypted binary uploads are allowed");
         }
         byte[] bytes = java.nio.file.Files.readAllBytes(file.uploadedFile());
         if (bytes.length > 5 * 1024 * 1024) {

@@ -1,9 +1,12 @@
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { api } from '../api/client'
-import { uploadMedia } from '../api/http'
+import type { Comment } from '../api/types'
 import { useApiMutation, useApiQuery } from '../api/useApi'
+import { EncryptedImage } from '../crypto/EncryptedImage'
+import { decryptComments, prepareCommentPayload } from '../crypto/contentCrypto'
+import { uploadTeamMedia } from '../crypto/uploadEncryptedMedia'
 import { Button } from './ui/Button'
 import { Input, Label, Textarea } from './ui/Field'
 import { cn } from '../lib/cn'
@@ -11,7 +14,13 @@ import { stackClass } from './ui/styles'
 
 const MAX_COMMENT_IMAGES = 6
 
-export function MemoryComments({ memoryId }: { memoryId: string }) {
+export function MemoryComments({
+  memoryId,
+  cryptoKey,
+}: {
+  memoryId: string
+  cryptoKey: CryptoKey | null
+}) {
   const { t } = useTranslation()
   const [{ data }, reexecute] = useApiQuery(!!memoryId, () => api.comments(memoryId), [memoryId])
   const [, addComment] = useApiMutation(
@@ -21,8 +30,19 @@ export function MemoryComments({ memoryId }: { memoryId: string }) {
   const [text, setText] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [posting, setPosting] = useState(false)
-  const comments = data ?? []
+  const [comments, setComments] = useState<Comment[]>([])
   const canPost = !!text.trim() || files.length > 0
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      const decrypted = await decryptComments(cryptoKey, data ?? [])
+      if (!cancelled) setComments(decrypted)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [data, cryptoKey])
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -31,10 +51,11 @@ export function MemoryComments({ memoryId }: { memoryId: string }) {
     try {
       const mediaIds: string[] = []
       for (const file of files.slice(0, MAX_COMMENT_IMAGES)) {
-        const uploaded = await uploadMedia(file)
+        const uploaded = await uploadTeamMedia(file, cryptoKey)
         mediaIds.push(uploaded.id)
       }
-      const result = await addComment(memoryId, { text: text.trim(), mediaIds })
+      const encryptedText = await prepareCommentPayload(cryptoKey, text.trim())
+      const result = await addComment(memoryId, { text: encryptedText, mediaIds })
       if (result.error) {
         toast.error(result.error.message)
         return
@@ -62,15 +83,17 @@ export function MemoryComments({ memoryId }: { memoryId: string }) {
               {c.text ? <p className="whitespace-pre-wrap">{c.text}</p> : null}
               {c.pictures && c.pictures.length > 0 && (
                 <div className={cn('flex flex-wrap gap-2', c.text ? 'mt-2' : '')}>
-                  {c.pictures.map((pic) => (
-                    <a key={pic.id} href={pic.url} target="_blank" rel="noopener noreferrer">
-                      <img
-                        src={pic.url}
+                  {c.pictures.map((pic) =>
+                    pic.id && pic.url ? (
+                      <EncryptedImage
+                        key={pic.id}
+                        url={pic.url}
+                        cryptoKey={cryptoKey}
                         alt=""
                         className="h-20 w-20 rounded-lg border border-line object-cover"
                       />
-                    </a>
-                  ))}
+                    ) : null,
+                  )}
                 </div>
               )}
               <div className="mt-1 text-xs text-muted">— {c.writer?.nickname}</div>

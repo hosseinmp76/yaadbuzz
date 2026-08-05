@@ -1,5 +1,6 @@
 import { EnvelopeSimple, Plus, SignIn, UsersThree } from '@phosphor-icons/react'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
@@ -19,39 +20,50 @@ import { PageTitle } from '../components/ui/PageTitle'
 import { Panel } from '../components/ui/Panel'
 import { Stack } from '../components/ui/Stack'
 import { sectionTitleClass, stackClass } from '../components/ui/styles'
+import { generateTeamAesKey } from '../crypto/teamAes'
+import { saveTeamKey } from '../crypto/teamKeyStore'
 import { FirstVisitPrompt } from '../onboarding/FirstVisitPrompt'
 
-type FormValues = { name: string }
+type FormValues = { name: string; encryptTeam: boolean }
 
 export default function DashboardPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const schema = z.object({
     name: z.string().min(2, t('dashboard.teamNameRequired')),
+    encryptTeam: z.boolean(),
   })
   const [{ data, fetching, error }, reexecute] = useApiQuery(true, () => api.myTeams(), [])
+  const [{ data: features }] = useApiQuery(true, () => api.features(), [])
   const [{ data: invites, fetching: invitesLoading }, reexecuteInvites] = useApiQuery(
     true,
     () => api.pendingInvites(),
     [],
   )
-  const [, createTeam] = useApiMutation((name: string, brandColor: string) =>
-    api.createTeam(name, brandColor),
+  const [, createTeam] = useApiMutation(
+    (name: string, brandColor: string, encryptionEnabled: boolean) =>
+      api.createTeam(name, brandColor, encryptionEnabled),
   )
   const [, acceptInvite] = useApiMutation((id: string) => api.acceptInvite(id))
   const [, rejectInvite] = useApiMutation((id: string) => api.rejectInvite(id))
+  const [pendingKey, setPendingKey] = useState<{ teamId: string; keyB64: string } | null>(null)
+  const [copied, setCopied] = useState(false)
+  const encryptionOffered = !!features?.teamEncryption
   const {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '' },
+    defaultValues: { name: '', encryptTeam: false },
   })
+  const encryptChecked = watch('encryptTeam')
 
   const onCreate = handleSubmit(async (values) => {
-    const result = await createTeam(values.name, '#0f5f5a')
+    const useEncryption = encryptionOffered && values.encryptTeam
+    const result = await createTeam(values.name, '#0f5f5a', useEncryption)
     if (result.error) {
       toast.error(result.error.message)
       return
@@ -59,7 +71,15 @@ export default function DashboardPage() {
     toast.success(t('dashboard.created'))
     reset()
     reexecute()
-    if (result.data?.id) void navigate(`/teams/${result.data.id}`)
+    const teamId = result.data?.id
+    if (!teamId) return
+    if (useEncryption) {
+      const key = await generateTeamAesKey()
+      const keyB64 = await saveTeamKey(teamId, key)
+      setPendingKey({ teamId, keyB64 })
+      return
+    }
+    void navigate(`/teams/${teamId}`)
   })
 
   const onAccept = async (id: string) => {
@@ -95,6 +115,7 @@ export default function DashboardPage() {
       {teams.map((team) => (
         <SidebarNavLink key={team.id} to={`/teams/${team.id}`} icon={UsersThree} stacked={stacked}>
           {team.name}
+          {team.encryptionEnabled ? ` · 🔒` : ''}
         </SidebarNavLink>
       ))}
       <SidebarNavLink to="/join" icon={SignIn} stacked={stacked} data-tour="join-team">
@@ -102,6 +123,44 @@ export default function DashboardPage() {
       </SidebarNavLink>
     </nav>
   )
+
+  if (pendingKey) {
+    return (
+      <AppSidebarLayout subtitle={t('dashboard.teams')} nav={nav(true)} mobileNav={nav(false)}>
+        <Panel className={`${stackClass} mt-6 max-w-xl`}>
+          <h2 className={sectionTitleClass}>{t('dashboard.encryptionKeyTitle')}</h2>
+          <p className="text-muted">{t('dashboard.encryptionKeyBody')}</p>
+          <code className="break-all rounded-xl border border-line bg-panel px-3 py-3 text-xs">
+            {pendingKey.keyB64}
+          </code>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                void navigator.clipboard.writeText(pendingKey.keyB64).then(() => {
+                  setCopied(true)
+                  window.setTimeout(() => setCopied(false), 2000)
+                })
+              }}
+            >
+              {copied ? t('encryption.copied') : t('encryption.copyKey')}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                const id = pendingKey.teamId
+                setPendingKey(null)
+                void navigate(`/teams/${id}`)
+              }}
+            >
+              {t('dashboard.continueToTeam')}
+            </Button>
+          </div>
+        </Panel>
+      </AppSidebarLayout>
+    )
+  }
 
   return (
     <AppSidebarLayout
@@ -186,6 +245,11 @@ export default function DashboardPage() {
                 )}
                 <div className="p-4">
                   <strong className="font-display text-xl tracking-tight text-brand">{team.name}</strong>
+                  {team.encryptionEnabled && (
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-muted">
+                      {t('encryption.lockedBadge')}
+                    </p>
+                  )}
                   <p className="mt-1 text-sm text-muted">{t('dashboard.openTeam')}</p>
                   <span className="mt-3 inline-block text-sm font-semibold text-brand group-hover:underline">
                     {t('dashboard.view')} →
@@ -206,6 +270,20 @@ export default function DashboardPage() {
               <Input {...register('name')} />
               <FieldError message={errors.name?.message} />
             </Label>
+            {encryptionOffered && (
+              <label className="flex items-start gap-2 text-sm font-semibold text-ink">
+                <input type="checkbox" className="mt-1" {...register('encryptTeam')} />
+                <span>
+                  {t('dashboard.encryptTeam')}
+                  <span className="mt-1 block font-normal text-muted">{t('dashboard.encryptTeamHint')}</span>
+                  {encryptChecked && (
+                    <span className="mt-1 block font-normal text-brand">
+                      {t('dashboard.encryptionKeyBody')}
+                    </span>
+                  )}
+                </span>
+              </label>
+            )}
             <Button type="submit" disabled={isSubmitting}>
               {t('dashboard.create')}
             </Button>

@@ -363,10 +363,12 @@ docker pull "${DOCKERHUB_USER}/yaadbuzz:${IMAGE_TAG}"
 | `YAADBUZZ_S3_ENDPOINT` | Internal S3/MinIO endpoint |
 | `YAADBUZZ_S3_PUBLIC_ENDPOINT` | Browser-reachable media URL base |
 | `YAADBUZZ_S3_ACCESS_KEY` / `SECRET_KEY` / `BUCKET` | Object storage |
+| `MINIO_API_CORS_ALLOW_ORIGIN` | MinIO CORS origins for browser `fetch` of media (client-side decrypt). Compose default `*`. Restrict in production if media is cross-origin. |
 
 Notes:
 
 - Seed data is **off** in `%prod` (`yaadbuzz.seed.enabled=false`).
+- New-team encryption opt-in is controlled by the singleton `app_config.team_encryption_enabled` row (not an env var). `%dev` seed sets it to `true`. Toggle with SQL, e.g. `UPDATE app_config SET team_encryption_enabled = true WHERE id = 1;`.
 - Flyway runs on startup (`migrate-at-start=true`).
 - Replace JWT keys under `src/main/resources/jwt/` for real deployments; do not ship the repo’s demo keys to production.
 
@@ -468,5 +470,6 @@ Verify: `dig +short HTTPS _index._agents.yaadbuzz.ir` and that `checks.discovera
 | `WebSocket is closed` / Quinoa HMR proxy errors | Expected race if Quinoa proxied HMR; app uses `%dev.quarkus.quinoa.dev-server.websocket=false` and Vite HMR on `127.0.0.1:3000` directly |
 | ES / Hibernate Search version errors in tests | Keep Dev Services image at `8.15.5` |
 | Compose app can’t reach MinIO from browser | Set `YAADBUZZ_S3_PUBLIC_ENDPOINT` to a host-reachable URL (`http://localhost:9000` in compose) |
+| Encrypted images fail to decrypt (`fetch` CORS) | Ensure MinIO has `MINIO_API_CORS_ALLOW_ORIGIN` (compose default `*`); restart the `minio` service after changing it |
 | Native build / AWS Netty issues | Prefer URL-connection S3 client; see native-image args in `application.properties` |
 | Frontend can’t call API | Use **http://localhost:8080** with Quinoa; do not enable Vite→Quarkus proxy while Quinoa is managing Vite |
