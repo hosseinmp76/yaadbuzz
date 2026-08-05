@@ -29,15 +29,11 @@ class TributeServiceTest {
     @Inject
     TeamService teamService;
 
-    @Inject
-    OrganizationService organizationService;
-
     @Test
     @Transactional
     void cannotWriteAnonymousTributeToSelf() {
         User user = User.findByEmail(createUserEmail()).orElseThrow();
-        var org = organizationService.create(user, "Tribute Org", "#123456");
-        Team team = teamService.create(user, org.id, "Tribute Team", null);
+        Team team = teamService.create(user, "Tribute Team", null);
         TeamMember member = TeamMember.findByTeamAndUser(team.id, user.id).orElseThrow();
 
         ApiException ex = assertThrows(ApiException.class, () -> tributeService.create(
@@ -59,19 +55,10 @@ class TributeServiceTest {
         AuthSupport.AuthSession other = AuthSupport.register(
                 "other-" + UUID.randomUUID() + "@example.com", "password123", "Other");
 
-        String orgId = ApiClient.json(
-                        ApiClient.post(
-                                writer.accessToken(),
-                                "/api/organizations",
-                                Map.of("name", "Publish Org", "brandColor", "#123456")),
-                        200)
-                .get("id")
-                .toString();
-
         String teamId = ApiClient.json(
                         ApiClient.post(
                                 writer.accessToken(),
-                                "/api/organizations/" + orgId + "/teams",
+                                "/api/teams",
                                 Map.of("name", "Publish Team", "brandColor", "#123456")),
                         200)
                 .get("id")

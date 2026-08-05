@@ -1,127 +1,96 @@
 # Yaadbuzz
 
-Online yearbook generator built with **Quarkus**, **React (Quinoa)**, **REST/OpenAPI**, **PostgreSQL**, **Elasticsearch**, and **MinIO**.
+**Site:** [https://yaadbuzz.ir](https://yaadbuzz.ir)
 
-**License:** [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0)
+Collaborative online yearbooks for teams — free and open source (AGPL-3.0).
+
+## What it is
+
+Yaadbuzz is a place for a class, club, or company to **build a yearbook together**: invite teammates, write tributes, share memories with photos, vote on awards, then open a polished yearbook online and print it from the browser.
+
+### The name
+
+- **Yaad** (یاد) means *memory*.
+- **Buzz** means someone who has a lot of something.
+- Together: **someone rich in memories** — and a buzzing collaborative yearbook.
+
+### Goals
+
+- Keep shared memories in one collaborative workspace owned by the team
+- Stay FOSS so schools and communities can self-host and inspect the code
+- Prefer collaboration over single-author scrapbooks: every member contributes
+- Ship an online yearbook first, with print via the browser when you are ready
 
 ## Features
 
-- Email/password JWT auth, plus optional Google / GitHub OAuth and Telegram Login Widget
-- Organizations → Teams → members via invite codes
-- Tributes about teammates (anonymous / private / reveal mode)
+- Email/password JWT auth, plus optional Google / GitHub OAuth and Telegram Login
+- Teams and members via invite codes or email invites
+- Tributes (anonymous / private / reveal mode)
 - Shared memories with comments
-- Topic awards and characteristics tags
+- Topic awards and characteristic tags
 - Elasticsearch search
-- Cursor-based infinite scroll
 - Online yearbook view with browser print / Save as PDF
-- Swagger UI for the full REST API
+- Swagger UI for the REST API
+
+**Stack:** Quarkus, React (Quinoa), REST/OpenAPI, PostgreSQL, Elasticsearch, MinIO.
+
+**License:** [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0)
 
 ## Quick start (dev)
 
-Full local runbook (together vs separate frontend/backend, build, deploy, tree): [`development/development.md`](development/development.md).  
+Full local runbook: [`development/development.md`](development/development.md).  
 Agent context: [`AGENTS.md`](AGENTS.md).
 
 ```bash
-# Java via sdkman
 source "$HOME/.sdkman/bin/sdkman-init.sh"
-
-# Node via nvm
 nvm use --lts
-
-# Infrastructure
 docker compose up -d postgres elasticsearch minio minio-init
-
-# App (Quarkus + Quinoa Vite HMR)
 ./mvnw quarkus:dev
 ```
 
-Open:
-
 - App: http://localhost:8080
-- Swagger: http://localhost:8080/q/swagger-ui — authorize with Bearer JWT after login
-- Regenerate typed OpenAPI client (Quarkus must be running): `./mvnw -Popenapi-codegen generate-sources`
+- Production site: https://yaadbuzz.ir
+- Swagger: http://localhost:8080/q/swagger-ui
+- OpenAPI TS client: `./mvnw -Popenapi-codegen generate-sources` (Quarkus running)
 
-Seed users (password `password123`):
+Seed users (password `password123`): `alice@yaadbuzz.local` (team admin), `bob@yaadbuzz.local`, `cara@yaadbuzz.local`, `dana@yaadbuzz.local`, `eve@yaadbuzz.local`.  
+Invite code: `welcome2026`
 
-- `alice@yaadbuzz.local` (org owner / team admin)
-- `bob@yaadbuzz.local` (org admin)
-- `cara@yaadbuzz.local`
-- `dana@yaadbuzz.local`
-- `eve@yaadbuzz.local`
-
-Seed invite code for Class of 2026: `welcome2026`
-
-## Full stack with Docker Compose
+## Docker Compose
 
 ```bash
-# Build app image locally
 docker compose up -d --build
-
-# Or use a Docker Hub image (no local build)
-APP_IMAGE=youruser/yaadbuzz:latest APP_PULL_POLICY=always docker compose up -d
+# or: APP_IMAGE=youruser/yaadbuzz:latest APP_PULL_POLICY=always docker compose up -d
 ```
 
-## Native image + Docker
-
-Requires the `native` Maven profile (activated by `-Dnative`). Container native builds use Mandrel via Docker.
+## Native image
 
 ```bash
-source "$HOME/.sdkman/bin/sdkman-init.sh"
-nvm use --lts
-
-# 1) Build native binary (in a Mandrel container)
 ./mvnw -DskipTests package -Dnative
-
-# 2) Package it as a Docker image (uses src/main/docker/Dockerfile.native)
 ./mvnw quarkus:image-build -Dnative
 ```
 
-One-shot:
+## Tests & lint
 
 ```bash
-./mvnw -DskipTests package quarkus:image-build -Dnative
-```
-
-Image: `yaadbuzz/yaadbuzz:1.0.0-SNAPSHOT`  
-Binary: `target/yaadbuzz-1.0.0-SNAPSHOT-runner`
-
-## Tests
-
-```bash
-source "$HOME/.sdkman/bin/sdkman-init.sh"
 ./mvnw test
+cd src/main/webui && npm run lint
 ```
 
-Uses Quarkus Dev Services (Postgres + Elasticsearch 8). Quinoa and seed data are disabled in the `%test` profile.
-
-## Frontend lint
-
-```bash
-cd src/main/webui
-nvm use --lts
-npm run lint
-npm run lint:fix   # auto-fix where possible
-```
-
-## API split
+## API surface
 
 | Surface | Purpose |
 |---|---|
 | `POST /api/auth/*` | Register, login, refresh, password reset |
-| `GET /api/auth/oauth/{google\|github}` | Social login (OIDC redirect) |
-| `POST /api/auth/oauth/exchange` | Exchange one-time OAuth code for JWTs |
+| `GET /api/auth/oauth/{google\|github}` | Social login |
 | `POST /api/media` | Image upload |
-| `/api/organizations`, `/api/teams`, … | Yearbook domain operations |
+| `GET/POST /api/teams`, … | Team yearbook domain |
 
-## Project layout
-
-See the full tree in [`development/development.md`](development/development.md#project-file-structure).
+## Layout
 
 ```
 src/main/java/com/yaadbuzz/   # backend
 src/main/webui/               # React + Vite (Quinoa)
 src/main/resources/db/migration
 docker-compose.yml
-development/development.md
-AGENTS.md
 ```

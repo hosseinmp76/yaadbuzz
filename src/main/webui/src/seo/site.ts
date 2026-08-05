@@ -5,7 +5,7 @@ export const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined)?.r
 export const SITE_NAME = 'Yaadbuzz'
 
 export const DEFAULT_DESCRIPTION =
-  'Yaadbuzz is an online yearbook for teams and organizations — collect tributes, memories, and awards, then print a keepsake PDF.'
+  'Build a yearbook together with your team. Yaad means memory; buzz means someone with a lot of something — someone rich in memories. Free open source software.'
 
 export function absoluteUrl(path = '/'): string {
   const normalized = path.startsWith('/') ? path : `/${path}`

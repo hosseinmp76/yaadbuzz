@@ -103,7 +103,7 @@ public class AgentHttpSupport {
         return """
                 # Yaadbuzz
 
-                Online yearbooks for teams and organizations — tributes, memories, awards, and printable PDFs.
+                Online yearbooks for teams — tributes, memories, awards, and printable PDFs.
 
                 - Website: %s/
                 - About: %s/about

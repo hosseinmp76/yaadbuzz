@@ -116,10 +116,8 @@ public class YearbookContentService {
                 })
                 .toList();
 
-        String brand = team.brandColor == null
-                ? (team.organization.brandColor == null ? "#0F766E" : team.organization.brandColor)
-                : team.brandColor;
-        String logoUrl = team.organization.logo == null ? "" : team.organization.logo.url;
+        String brand = team.brandColor == null ? "#0F766E" : team.brandColor;
+        String logoUrl = "";
         String coverUrl = team.coverMedia == null ? "" : team.coverMedia.url;
         YearbookTheme theme = team.yearbookTheme == null ? YearbookTheme.CLASSIC : team.yearbookTheme;
 
@@ -128,11 +126,11 @@ public class YearbookContentService {
                 : team.name + " Yearbook";
         String subtitle = blankToNull(team.yearbookSubtitle) != null
                 ? team.yearbookSubtitle.trim()
-                : team.organization.name;
+                : team.name;
 
         return new YearbookContent(
                 team.id,
-                team.organization.name,
+                team.name,
                 team.name,
                 title,
                 subtitle,

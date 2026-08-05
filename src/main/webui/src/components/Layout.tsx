@@ -153,9 +153,7 @@ export function AccountMenu({
         type="button"
         className={cn(
           'inline-flex min-h-11 touch-manipulation items-center gap-1.5 rounded-2xl border border-line bg-panel-strong px-3 py-2 text-sm font-semibold text-ink shadow-sm transition hover:border-brand/30',
-          menuPlacement === 'top'
-            ? 'w-full max-w-full'
-            : 'max-w-[11rem] sm:max-w-[16rem]',
+          menuPlacement === 'top' && 'w-full',
         )}
         aria-expanded={open}
         aria-haspopup="menu"
@@ -163,7 +161,7 @@ export function AccountMenu({
         onClick={() => setOpen((value) => !value)}
       >
         <UserCircle size={20} weight="duotone" className="shrink-0 text-brand" />
-        <span className={cn('truncate', menuPlacement === 'top' && 'min-w-0 flex-1 text-start')}>
+        <span className={cn(menuPlacement === 'top' && 'min-w-0 flex-1 truncate text-start')}>
           {displayName}
         </span>
         <CaretDown size={14} weight="bold" className={cn('shrink-0 text-muted transition', open && 'rotate-180')} />
@@ -173,12 +171,12 @@ export function AccountMenu({
           id={menuId}
           role="menu"
           className={cn(
-            'absolute z-40 w-full overflow-hidden rounded-panel border border-line bg-panel-strong py-1.5 shadow-panel',
-            menuPlacement === 'top' ? 'bottom-full mb-2 start-0' : 'end-0 top-full mt-2',
+            'absolute z-40 min-w-full overflow-hidden rounded-panel border border-line bg-panel-strong py-1.5 shadow-panel',
+            menuPlacement === 'top' ? 'bottom-full mb-2 start-0 w-full' : 'end-0 top-full mt-2 w-max min-w-[12rem]',
           )}
         >
           <MenuLink to="/app" onSelect={close}>
-            {t('nav.organizations')}
+            {t('nav.teams')}
           </MenuLink>
           {tour && (
             <button

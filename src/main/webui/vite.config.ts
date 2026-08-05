@@ -33,5 +33,18 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/motion')) return 'motion'
+          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) {
+            return 'react'
+          }
+          if (id.includes('node_modules/i18next') || id.includes('node_modules/react-i18next')) {
+            return 'i18n'
+          }
+        },
+      },
+    },
   },
 })

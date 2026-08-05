@@ -22,19 +22,10 @@ class YearbookFlowTest {
         AuthSupport.AuthSession bob = AuthSupport.register(
                 "bob-" + UUID.randomUUID() + "@example.com", "password123", "Bob");
 
-        String orgId = ApiClient.json(
-                        ApiClient.post(
-                                alice.accessToken(),
-                                "/api/organizations",
-                                Map.of("name", "Test Academy " + UUID.randomUUID(), "brandColor", "#0F766E")),
-                        200)
-                .get("id")
-                .toString();
-
         String teamId = ApiClient.json(
                         ApiClient.post(
                                 alice.accessToken(),
-                                "/api/organizations/" + orgId + "/teams",
+                                "/api/teams",
                                 Map.of("name", "Class of 2026", "brandColor", "#0F766E")),
                         200)
                 .get("id")
@@ -160,19 +151,10 @@ class YearbookFlowTest {
         AuthSupport.AuthSession second = AuthSupport.register(
                 "second-" + UUID.randomUUID() + "@example.com", "password123", "Second");
 
-        String orgId = ApiClient.json(
-                        ApiClient.post(
-                                owner.accessToken(),
-                                "/api/organizations",
-                                Map.of("name", "Org", "brandColor", "#111111")),
-                        200)
-                .get("id")
-                .toString();
-
         String teamId = ApiClient.json(
                         ApiClient.post(
                                 owner.accessToken(),
-                                "/api/organizations/" + orgId + "/teams",
+                                "/api/teams",
                                 Map.of("name", "Team", "brandColor", "#111111")),
                         200)
                 .get("id")

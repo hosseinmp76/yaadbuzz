@@ -12,15 +12,11 @@ import { TourOverlay } from './TourOverlay'
 import { waitForTarget } from './waitForTarget'
 
 async function resolveIds(): Promise<{
-  orgId?: string
   teamId?: string
 }> {
-  const orgs = await api.myOrganizations()
-  const orgId = orgs[0]?.id
-  if (!orgId) return {}
-  const teams = await api.teams(orgId)
+  const teams = await api.myTeams()
   const teamId = teams[0]?.id
-  return { orgId, teamId }
+  return teamId ? { teamId } : {}
 }
 
 export function TourProvider({ children }: { children: ReactNode }) {

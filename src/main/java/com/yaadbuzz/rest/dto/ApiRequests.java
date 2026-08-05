@@ -14,12 +14,6 @@ public final class ApiRequests {
     public record UpdateProfileRequest(String displayName) {
     }
 
-    public record CreateOrganizationRequest(String name, String brandColor) {
-    }
-
-    public record UpdateOrganizationBrandingRequest(String brandColor, UUID logoId) {
-    }
-
     public record CreateTeamRequest(String name, String brandColor) {
     }
 

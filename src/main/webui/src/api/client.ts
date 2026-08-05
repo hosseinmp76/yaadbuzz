@@ -1,5 +1,6 @@
 import { openapi, unwrap, isMembershipForbidden, redirectToAppIfNeeded, isStaleAuthError, clearStoredAuthAndReload } from './openapiClient'
 import { ApiError, authHeaders } from './authHeaders'
+import { refreshSession } from '../sessionRefresh'
 import type {
   Characteristic,
   Comment,
@@ -7,7 +8,6 @@ import type {
   Invite,
   Media,
   Memory,
-  Organization,
   PendingInvite,
   SearchHit,
   Team,
@@ -19,7 +19,7 @@ import type {
   Yearbook,
 } from './types'
 
-async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+async function apiFetch<T>(path: string, init?: RequestInit, retried = false): Promise<T> {
   const res = await fetch(path, {
     ...init,
     headers: {
@@ -29,6 +29,12 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
+    if (res.status === 401 && !retried) {
+      const refreshed = await refreshSession()
+      if (refreshed) {
+        return apiFetch(path, init, true)
+      }
+    }
     const message = (data as { message?: string }).message || res.statusText || 'Request failed'
     if (isStaleAuthError(message, res.status)) {
       clearStoredAuthAndReload()
@@ -46,33 +52,10 @@ export const api = {
   updateMyProfile: (displayName: string) =>
     unwrap(openapi.PATCH('/api/me', { body: { displayName } })) as Promise<User>,
 
-  myOrganizations: () =>
-    unwrap(openapi.GET('/api/organizations')) as Promise<Organization[]>,
-  createOrganization: (name: string, brandColor: string) =>
-    unwrap(openapi.POST('/api/organizations', { body: { name, brandColor } })) as Promise<Organization>,
-  organization: (id: string) =>
-    unwrap(openapi.GET('/api/organizations/{id}', { params: { path: { id } } })) as Promise<Organization>,
-  updateOrganizationBranding: (id: string, brandColor: string, logoId?: string | null) =>
-    unwrap(
-      openapi.PATCH('/api/organizations/{id}/branding', {
-        params: { path: { id } },
-        body: { brandColor, logoId: logoId ?? undefined },
-      }),
-    ) as Promise<Organization>,
-
-  teams: (organizationId: string) =>
-    unwrap(
-      openapi.GET('/api/organizations/{orgId}/teams', {
-        params: { path: { orgId: organizationId } },
-      }),
-    ) as Promise<Team[]>,
-  createTeam: (organizationId: string, name: string, brandColor: string) =>
-    unwrap(
-      openapi.POST('/api/organizations/{orgId}/teams', {
-        params: { path: { orgId: organizationId } },
-        body: { name, brandColor },
-      }),
-    ) as Promise<Team>,
+  myTeams: () =>
+    unwrap(openapi.GET('/api/teams', {})) as Promise<Team[]>,
+  createTeam: (name: string, brandColor: string) =>
+    unwrap(openapi.POST('/api/teams', { body: { name, brandColor } })) as Promise<Team>,
   team: (id: string) =>
     unwrap(openapi.GET('/api/teams/{id}', { params: { path: { id } } })) as Promise<Team>,
   updateTeamSettings: (
@@ -145,6 +128,8 @@ export const api = {
     ) as Promise<TeamMember>,
   leaveTeam: (teamId: string) =>
     apiFetch<{ message: string }>(`/api/teams/${teamId}/members/me`, { method: 'DELETE' }),
+  removeTeamMember: (teamId: string, memberId: string) =>
+    apiFetch<{ message: string }>(`/api/teams/${teamId}/members/${memberId}`, { method: 'DELETE' }),
   teamMember: (id: string) =>
     unwrap(openapi.GET('/api/members/{id}', { params: { path: { id } } })) as Promise<TeamMember>,
   upsertTeamMemberProfile: (

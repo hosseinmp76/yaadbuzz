@@ -7,29 +7,30 @@ type Req<T, K extends keyof T> = T & Required<Pick<T, K>>
 
 export type Media = Req<S['MediaType'], 'id' | 'url' | 'mimeType'>
 export type User = Req<S['UserType'], 'id' | 'email' | 'displayName'>
-export type Organization = Req<S['OrganizationType'], 'id' | 'name' | 'brandColor'>
-export type Team = Req<
-  S['TeamType'],
-  | 'id'
-  | 'organizationId'
-  | 'name'
-  | 'brandColor'
-  | 'revealTributes'
-  | 'tributesRevealed'
-  | 'yearbookShowMembers'
-  | 'yearbookShowTributes'
-  | 'yearbookShowCharacteristics'
-  | 'yearbookShowMemories'
-  | 'yearbookShowAwards'
->
+export type Team = {
+  id: string
+  name: string
+  brandColor?: string
+  coverMedia?: Media | null
+  revealTributes: boolean
+  revealAt?: string | null
+  tributesRevealed: boolean
+  yearbookTitle?: string | null
+  yearbookSubtitle?: string | null
+  yearbookDedication?: string | null
+  yearbookTheme?: string | null
+  yearbookShowMembers: boolean
+  yearbookShowTributes: boolean
+  yearbookShowCharacteristics: boolean
+  yearbookShowMemories: boolean
+  yearbookShowAwards: boolean
+}
 export type TeamMember = Req<S['TeamMemberType'], 'id' | 'teamId' | 'nickname'>
 export type Invite = Req<S['InviteType'], 'id' | 'teamId' | 'code' | 'role' | 'useCount'>
 export type PendingInvite = {
   id: string
   teamId: string
   teamName: string
-  organizationId: string
-  organizationName: string
   role?: string
   createdAt?: string
 }

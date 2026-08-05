@@ -5,7 +5,6 @@ import com.yaadbuzz.domain.Comment;
 import com.yaadbuzz.domain.Invite;
 import com.yaadbuzz.domain.MediaAsset;
 import com.yaadbuzz.domain.Memory;
-import com.yaadbuzz.domain.Organization;
 import com.yaadbuzz.domain.Team;
 import com.yaadbuzz.domain.TeamMember;
 import com.yaadbuzz.domain.Topic;
@@ -40,15 +39,8 @@ public final class ApiDtos {
         }
     }
 
-    public record OrganizationType(UUID id, String name, String brandColor, MediaType logo) {
-        public static OrganizationType from(Organization org) {
-            return new OrganizationType(org.id, org.name, org.brandColor, MediaType.from(org.logo));
-        }
-    }
-
     public record TeamType(
             UUID id,
-            UUID organizationId,
             String name,
             String brandColor,
             MediaType coverMedia,
@@ -68,7 +60,6 @@ public final class ApiDtos {
         public static TeamType from(Team team) {
             return new TeamType(
                     team.id,
-                    team.organization.id,
                     team.name,
                     team.brandColor,
                     MediaType.from(team.coverMedia),
@@ -138,8 +129,6 @@ public final class ApiDtos {
             UUID id,
             UUID teamId,
             String teamName,
-            UUID organizationId,
-            String organizationName,
             TeamRole role,
             Instant createdAt
     ) {
@@ -148,8 +137,6 @@ public final class ApiDtos {
                     invite.id,
                     invite.team.id,
                     invite.team.name,
-                    invite.team.organization.id,
-                    invite.team.organization.name,
                     invite.role,
                     invite.createdAt
             );

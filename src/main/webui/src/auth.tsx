@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { AUTH_STORAGE_KEY, type AuthUser, type StoredAuth } from './authStorage'
+import { AUTH_STORAGE_KEY, AUTH_UPDATED_EVENT, writeStoredAuth, type AuthUser, type StoredAuth } from './authStorage'
 import { clearClientSession } from './clearClientSession'
+import { ensureFreshSession } from './sessionRefresh'
 
 type AuthState = {
   accessToken: string | null
@@ -15,11 +16,13 @@ type AuthState = {
 
 const AuthContext = createContext<AuthState | null>(null)
 
-function persistAuth(next: StoredAuth | null) {
-  if (next) {
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(next))
-  } else {
-    localStorage.removeItem(AUTH_STORAGE_KEY)
+function readStoredAuth(): StoredAuth | null {
+  const raw = localStorage.getItem(AUTH_STORAGE_KEY)
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as StoredAuth
+  } catch {
+    return null
   }
 }
 
@@ -46,14 +49,22 @@ async function authRequest(path: string, body: unknown): Promise<StoredAuth> {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [stored, setStored] = useState<StoredAuth | null>(() => {
-    const raw = localStorage.getItem(AUTH_STORAGE_KEY)
-    return raw ? JSON.parse(raw) : null
-  })
+  const [stored, setStored] = useState<StoredAuth | null>(() => readStoredAuth())
 
   useEffect(() => {
-    persistAuth(stored)
-  }, [stored])
+    const sync = () => setStored(readStoredAuth())
+    window.addEventListener(AUTH_UPDATED_EVENT, sync)
+    window.addEventListener('storage', sync)
+    return () => {
+      window.removeEventListener(AUTH_UPDATED_EVENT, sync)
+      window.removeEventListener('storage', sync)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!stored?.refreshToken) return
+    void ensureFreshSession()
+  }, [stored?.refreshToken])
 
   const value = useMemo<AuthState>(() => ({
     accessToken: stored?.accessToken ?? null,
@@ -61,8 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user: stored?.user ?? null,
     async login(email, password) {
       const next = await authRequest('/api/auth/login', { email, password })
-      // Sync to localStorage before React re-renders so API middleware sees the token.
-      persistAuth(next)
+      writeStoredAuth(next)
       setStored(next)
     },
     async register(email) {
@@ -79,14 +89,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     async completeOAuth(code) {
       const next = await authRequest('/api/auth/oauth/exchange', { code })
-      persistAuth(next)
+      writeStoredAuth(next)
       setStored(next)
     },
     updateUser(nextUser) {
       setStored((prev) => {
         if (!prev) return prev
         const next = { ...prev, user: nextUser }
-        persistAuth(next)
+        writeStoredAuth(next)
         return next
       })
     },

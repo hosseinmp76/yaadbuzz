@@ -15,6 +15,7 @@ import com.yaadbuzz.rest.dto.ApiDtos.TributeType;
 import com.yaadbuzz.rest.dto.ApiDtos.YearbookType;
 import com.yaadbuzz.rest.dto.ApiRequests.CreateInviteRequest;
 import com.yaadbuzz.rest.dto.ApiRequests.CreateMemoryRequest;
+import com.yaadbuzz.rest.dto.ApiRequests.CreateTeamRequest;
 import com.yaadbuzz.rest.dto.ApiRequests.CreateTopicRequest;
 import com.yaadbuzz.rest.dto.ApiRequests.CreateTributeRequest;
 import com.yaadbuzz.rest.dto.ApiRequests.InviteByEmailRequest;
@@ -67,6 +68,21 @@ public class TeamResource {
     SearchService searchService;
     @Inject
     YearbookContentService yearbookContentService;
+
+    @GET
+    @Operation(summary = "List teams for the current user")
+    public List<TeamType> listMine() {
+        return teamService.listMine(currentUserService.requireUser()).stream()
+                .map(TeamType::from)
+                .toList();
+    }
+
+    @POST
+    @Operation(summary = "Create a team")
+    public TeamType create(CreateTeamRequest request) {
+        return TeamType.from(teamService.create(
+                currentUserService.requireUser(), request.name(), request.brandColor()));
+    }
 
     @POST
     @Path("/join")
@@ -139,10 +155,18 @@ public class TeamResource {
 
     @DELETE
     @Path("/{id}/members/me")
-    @Operation(summary = "Leave a team; also leave the organization if no other teams remain")
+    @Operation(summary = "Leave a team")
     public MessageResponse leave(@PathParam("id") UUID id) {
         teamService.leaveTeam(id, currentUserService.requireUser());
         return new MessageResponse("Left the team.");
+    }
+
+    @DELETE
+    @Path("/{id}/members/{memberId}")
+    @Operation(summary = "Remove a member from the team (admin only)")
+    public MessageResponse removeMember(@PathParam("id") UUID id, @PathParam("memberId") UUID memberId) {
+        teamService.removeMember(id, currentUserService.requireUser(), memberId);
+        return new MessageResponse("Member removed from the team.");
     }
 
     @PATCH

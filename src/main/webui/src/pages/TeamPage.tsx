@@ -7,6 +7,7 @@ import {
   GearSix,
   MagnifyingGlass,
   Printer,
+  ShieldCheck,
   Tag,
   Trophy,
   UsersThree,
@@ -48,9 +49,10 @@ type Tab =
   | 'topics'
   | 'search'
   | 'yearbook'
-  | 'settings'
+  | 'personalSettings'
+  | 'adminSettings'
 
-const TEAM_TABS: { id: Tab; icon: Icon }[] = [
+const TEAM_TABS: { id: Tab; icon: Icon; adminOnly?: boolean }[] = [
   { id: 'members', icon: UsersThree },
   { id: 'tributes', icon: ChatCircleText },
   { id: 'characteristics', icon: Tag },
@@ -58,26 +60,57 @@ const TEAM_TABS: { id: Tab; icon: Icon }[] = [
   { id: 'topics', icon: Trophy },
   { id: 'search', icon: MagnifyingGlass },
   { id: 'yearbook', icon: BookOpenText },
-  { id: 'settings', icon: GearSix },
+  { id: 'personalSettings', icon: GearSix },
+  { id: 'adminSettings', icon: ShieldCheck, adminOnly: true },
 ]
+
+function normalizeTab(raw: string | null): Tab {
+  if (raw === 'preferences' || raw === 'settings') return 'personalSettings'
+  if (
+    raw === 'members' ||
+    raw === 'tributes' ||
+    raw === 'characteristics' ||
+    raw === 'memories' ||
+    raw === 'topics' ||
+    raw === 'search' ||
+    raw === 'yearbook' ||
+    raw === 'personalSettings' ||
+    raw === 'adminSettings'
+  ) {
+    return raw
+  }
+  return 'members'
+}
 
 export default function TeamPage() {
   const { t } = useTranslation()
   const { teamId = '' } = useParams()
   const [params, setParams] = useSearchParams()
-  const rawTab = params.get('tab') || 'members'
-  // Legacy ?tab=preferences redirects into the merged settings tab.
-  const tab = (rawTab === 'preferences' ? 'settings' : rawTab) as Tab
+  const tab = normalizeTab(params.get('tab'))
   const setTab = (next: Tab) => setParams({ tab: next })
 
   const [{ data: team }, reTeam] = useApiQuery(!!teamId, () => api.team(teamId), [teamId])
+  const [{ data: membership }] = useApiQuery(
+    !!teamId,
+    () => api.myTeamMembership(teamId),
+    [teamId],
+  )
+  const isAdmin = membership?.role === 'ADMIN'
+
+  useEffect(() => {
+    if (tab === 'adminSettings' && membership && !isAdmin) {
+      setParams({ tab: 'personalSettings' })
+    }
+  }, [tab, membership, isAdmin, setParams])
+
+  const visibleTabs = TEAM_TABS.filter((item) => !item.adminOnly || isAdmin)
 
   const tabButtons = (stacked: boolean) => (
     <nav
       aria-label={team?.name ?? t('team.fallbackTitle')}
       className={sidebarNavClass(stacked)}
     >
-      {TEAM_TABS.map(({ id, icon }) => (
+      {visibleTabs.map(({ id, icon }) => (
         <SidebarNavButton
           key={id}
           active={tab === id}
@@ -101,10 +134,7 @@ export default function TeamPage() {
       }
       mobileNav={tabButtons(false)}
     >
-      <Link
-        to={team ? `/orgs/${team.organizationId}` : '/app'}
-        className={backLinkClass}
-      >
+      <Link to="/app" className={backLinkClass}>
         ← {t('team.back')}
       </Link>
 
@@ -136,11 +166,9 @@ export default function TeamPage() {
       {tab === 'topics' && <TopicsTab teamId={teamId} />}
       {tab === 'search' && <SearchTab teamId={teamId} />}
       {tab === 'yearbook' && <YearbookTab teamId={teamId} team={team} reTeam={reTeam} />}
-      {tab === 'settings' && (
-        <div className={stackClass}>
-          <PreferencesTab teamId={teamId} />
-          <SettingsTab teamId={teamId} />
-        </div>
+      {tab === 'personalSettings' && <PreferencesTab teamId={teamId} />}
+      {tab === 'adminSettings' && isAdmin && (
+        <AdminSettingsTab teamId={teamId} myMemberId={membership?.id} />
       )}
     </Layout>
   )
@@ -969,7 +997,10 @@ function YearbookTab({
     ) => api.updateYearbookSettings(id, body),
   )
   const [, updateSettings] = useApiMutation(
-    (id: string, body: { brandColor?: string | null }) => api.updateTeamSettings(id, body),
+    (
+      id: string,
+      body: { brandColor?: string | null; coverMediaId?: string | null },
+    ) => api.updateTeamSettings(id, body),
   )
 
   const [title, setTitle] = useState(team?.yearbookTitle ?? '')
@@ -987,6 +1018,7 @@ function YearbookTab({
   const [showMemories, setShowMemories] = useState(team?.yearbookShowMemories ?? true)
   const [showAwards, setShowAwards] = useState(team?.yearbookShowAwards ?? true)
   const [saving, setSaving] = useState(false)
+  const [uploadingCover, setUploadingCover] = useState(false)
 
   useEffect(() => {
     setTitle(team?.yearbookTitle ?? '')
@@ -1058,6 +1090,25 @@ function YearbookTab({
     }
   }
 
+  async function onCoverImage(file: File | null) {
+    if (!file) return
+    setUploadingCover(true)
+    try {
+      const uploaded = await uploadMedia(file)
+      const result = await updateSettings(teamId, { coverMediaId: uploaded.id })
+      if (result.error) {
+        toast.error(result.error.message)
+        return
+      }
+      toast.success(t('team.coverUpdated'))
+      reTeam()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('team.uploadFailed'))
+    } finally {
+      setUploadingCover(false)
+    }
+  }
+
   return (
     <div className="grid gap-4">
       <section className={cn(panelClass, stackClass)}>
@@ -1081,6 +1132,41 @@ function YearbookTab({
       <form className={cn(panelClass, stackClass)} onSubmit={onSaveCustomization}>
         <h2 className={sectionTitleClass}>{t('team.customize')}</h2>
         <p className="text-muted">{t('team.customizeHint')}</p>
+
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          {team?.coverMedia?.url ? (
+            <img
+              src={team.coverMedia.url}
+              alt=""
+              className="aspect-square w-full max-w-[10rem] shrink-0 rounded-3xl object-cover shadow-sm"
+            />
+          ) : (
+            <div
+              className="aspect-square w-full max-w-[10rem] shrink-0 rounded-3xl shadow-sm"
+              style={{
+                background: `linear-gradient(145deg, ${brandColor || 'var(--brand)'} 0%, color-mix(in oklab, ${brandColor || 'var(--brand)'} 45%, #0a4541) 100%)`,
+              }}
+            />
+          )}
+          <div className="min-w-0 flex-1 space-y-2">
+            <p className="font-semibold text-ink">{t('team.coverImage')}</p>
+            <p className="text-sm text-muted">{t('team.coverImageHint')}</p>
+            <Label className="mb-0">
+              <span className="sr-only">{t('team.coverImage')}</span>
+              <Input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                disabled={uploadingCover || saving}
+                onChange={(e) => {
+                  void onCoverImage(e.target.files?.[0] ?? null)
+                  e.target.value = ''
+                }}
+              />
+            </Label>
+            {uploadingCover && <p className="text-sm text-muted">{t('team.uploadingCover')}</p>}
+          </div>
+        </div>
+
         <div className="grid gap-4 md:grid-cols-2">
           <Label>
             {t('team.coverTitle')}
@@ -1379,5 +1465,97 @@ function SettingsTab({ teamId }: { teamId: string }) {
         </Button>
       </form>
     </section>
+  )
+}
+
+function AdminSettingsTab({
+  teamId,
+  myMemberId,
+}: {
+  teamId: string
+  myMemberId?: string
+}) {
+  const { t } = useTranslation()
+  const [items, setItems] = useState<TeamMember[]>([])
+  const [loading, setLoading] = useState(false)
+  const [removingId, setRemovingId] = useState<string | null>(null)
+  const [, removeMember] = useApiMutation((tid: string, memberId: string) =>
+    api.removeTeamMember(tid, memberId),
+  )
+
+  const loadMembers = useCallback(async () => {
+    setLoading(true)
+    try {
+      const page = await api.teamMembers(teamId, { first: 50 })
+      setItems(page.items)
+    } finally {
+      setLoading(false)
+    }
+  }, [teamId])
+
+  useEffect(() => {
+    void loadMembers()
+  }, [loadMembers])
+
+  async function onRemove(member: TeamMember) {
+    if (!window.confirm(t('team.removeMemberConfirm', { name: member.nickname }))) return
+    setRemovingId(member.id)
+    try {
+      const result = await removeMember(teamId, member.id)
+      if (result.error) {
+        toast.error(result.error.message)
+        return
+      }
+      toast.success(t('team.memberRemoved', { name: member.nickname }))
+      await loadMembers()
+    } finally {
+      setRemovingId(null)
+    }
+  }
+
+  return (
+    <div className={stackClass}>
+      <SettingsTab teamId={teamId} />
+      <section className={cn(panelClass, stackClass, 'max-w-xl')}>
+        <h2 className={sectionTitleClass}>{t('team.manageMembers')}</h2>
+        <p className="text-sm text-muted">{t('team.manageMembersHint')}</p>
+        {loading && items.length === 0 ? (
+          <p className="text-muted">{t('team.loading')}</p>
+        ) : (
+          <ul className={stackClass}>
+            {items.map((member) => {
+              const isSelf = member.id === myMemberId
+              return (
+                <li
+                  key={member.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line px-3 py-2.5"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-ink">{member.nickname}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                      {(member.role ?? 'member').toLowerCase()}
+                      {isSelf ? ` · ${t('team.you')}` : ''}
+                    </p>
+                  </div>
+                  {!isSelf && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="border-danger text-danger hover:bg-danger/10"
+                      disabled={removingId === member.id}
+                      onClick={() => {
+                        void onRemove(member)
+                      }}
+                    >
+                      {removingId === member.id ? t('team.removing') : t('team.removeMember')}
+                    </Button>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </section>
+    </div>
   )
 }

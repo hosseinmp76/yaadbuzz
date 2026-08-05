@@ -148,13 +148,6 @@ components:
             type: string
             format: uuid
             pattern: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
-    CreateOrganizationRequest:
-      type: object
-      properties:
-        name:
-          type: string
-        brandColor:
-          type: string
     CreateTeamRequest:
       type: object
       properties:
@@ -296,17 +289,6 @@ components:
           type: boolean
         telegram:
           type: boolean
-    OrganizationType:
-      type: object
-      properties:
-        id:
-          $ref: "#/components/schemas/UUID"
-        name:
-          type: string
-        brandColor:
-          type: string
-        logo:
-          $ref: "#/components/schemas/MediaType"
     RefreshRequest:
       type: object
       required:
@@ -322,7 +304,6 @@ components:
       properties:
         email:
           type: string
-          pattern: \S
           pattern: \S
     ResetPasswordRequest:
       type: object
@@ -374,8 +355,6 @@ components:
       type: object
       properties:
         id:
-          $ref: "#/components/schemas/UUID"
-        organizationId:
           $ref: "#/components/schemas/UUID"
         name:
           type: string
@@ -453,13 +432,6 @@ components:
       type: string
       format: uuid
       pattern: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
-    UpdateOrganizationBrandingRequest:
-      type: object
-      properties:
-        brandColor:
-          type: string
-        logoId:
-          $ref: "#/components/schemas/UUID"
     UpdateProfileRequest:
       type: object
       properties:
@@ -664,7 +636,6 @@ tags:
 - name: Media
 - name: Members
 - name: Memories
-- name: Organizations
 - name: SEO
 - name: Teams
 - name: Topics
@@ -1146,168 +1117,6 @@ paths:
       security:
       - SecurityScheme:
         - user
-  /api/organizations:
-    get:
-      summary: List organizations for the current user
-      tags:
-      - Organizations
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/OrganizationType"
-        "401":
-          description: Not Authorized
-        "403":
-          description: Not Allowed
-      security:
-      - SecurityScheme:
-        - user
-    post:
-      summary: Create an organization
-      tags:
-      - Organizations
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateOrganizationRequest"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OrganizationType"
-        "401":
-          description: Not Authorized
-        "403":
-          description: Not Allowed
-        "400":
-          description: Bad Request
-      security:
-      - SecurityScheme:
-        - user
-  /api/organizations/{id}:
-    get:
-      summary: Get an organization
-      tags:
-      - Organizations
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          $ref: "#/components/schemas/UUID"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OrganizationType"
-        "401":
-          description: Not Authorized
-        "403":
-          description: Not Allowed
-      security:
-      - SecurityScheme:
-        - user
-  /api/organizations/{id}/branding:
-    patch:
-      summary: Update organization branding
-      tags:
-      - Organizations
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          $ref: "#/components/schemas/UUID"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateOrganizationBrandingRequest"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OrganizationType"
-        "401":
-          description: Not Authorized
-        "403":
-          description: Not Allowed
-      security:
-      - SecurityScheme:
-        - user
-  /api/organizations/{orgId}/teams:
-    get:
-      summary: List teams in an organization
-      tags:
-      - Organizations
-      parameters:
-      - name: orgId
-        in: path
-        required: true
-        schema:
-          $ref: "#/components/schemas/UUID"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/TeamType"
-        "401":
-          description: Not Authorized
-        "403":
-          description: Not Allowed
-      security:
-      - SecurityScheme:
-        - user
-    post:
-      summary: Create a team in an organization
-      tags:
-      - Organizations
-      parameters:
-      - name: orgId
-        in: path
-        required: true
-        schema:
-          $ref: "#/components/schemas/UUID"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateTeamRequest"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TeamType"
-        "401":
-          description: Not Authorized
-        "403":
-          description: Not Allowed
-        "400":
-          description: Bad Request
-      security:
-      - SecurityScheme:
-        - user
   /api/source:
     get:
       summary: AGPL corresponding source offer
@@ -1333,6 +1142,53 @@ paths:
           content:
             application/json:
               schema: {}
+  /api/teams:
+    get:
+      summary: List teams for the current user
+      tags:
+      - Teams
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeamType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+    post:
+      summary: Create a team
+      tags:
+      - Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTeamRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - SecurityScheme:
+        - user
   /api/teams/join:
     post:
       summary: Join a team with an invite code

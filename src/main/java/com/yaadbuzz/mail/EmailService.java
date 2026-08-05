@@ -62,14 +62,12 @@ public class EmailService {
             String toEmail,
             String inviterName,
             String teamName,
-            String orgName,
             String inviteCode
     ) {
         String joinUrl = publicUrl.replaceAll("/$", "") + "/join?code=" + inviteCode;
         String html = teamInviteTemplate
                 .data("inviterName", inviterName)
                 .data("teamName", teamName)
-                .data("orgName", orgName)
                 .data("inviteCode", inviteCode)
                 .data("joinUrl", joinUrl)
                 .data("publicUrl", publicUrl)

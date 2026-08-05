@@ -5,15 +5,12 @@ import com.yaadbuzz.domain.Comment;
 import com.yaadbuzz.domain.Invite;
 import com.yaadbuzz.domain.MediaAsset;
 import com.yaadbuzz.domain.Memory;
-import com.yaadbuzz.domain.Organization;
-import com.yaadbuzz.domain.OrganizationMembership;
 import com.yaadbuzz.domain.Team;
 import com.yaadbuzz.domain.TeamMember;
 import com.yaadbuzz.domain.Topic;
 import com.yaadbuzz.domain.TopicVote;
 import com.yaadbuzz.domain.Tribute;
 import com.yaadbuzz.domain.User;
-import com.yaadbuzz.enums.OrgRole;
 import com.yaadbuzz.enums.TeamRole;
 import com.yaadbuzz.enums.YearbookTheme;
 import io.quarkus.elytron.security.common.BcryptUtil;
@@ -129,24 +126,9 @@ public class SeedData {
         User eve = user("eve@yaadbuzz.local", "Eve", SEED_PASSWORD);
         List<User> users = List.of(alice, bob, cara, dana, eve);
 
-        MediaAsset orgLogo = picsum(alice, "org-logo", 400, 400);
         MediaAsset teamCover = picsum(alice, "team-cover", 1600, 900);
 
-        Organization org = new Organization();
-        org.name = "Northwind Academy";
-        org.brandColor = "#0F766E";
-        org.logo = orgLogo;
-        org.owner = alice;
-        org.persist();
-
-        membership(org, alice, OrgRole.OWNER);
-        membership(org, bob, OrgRole.ADMIN);
-        membership(org, cara, OrgRole.MEMBER);
-        membership(org, dana, OrgRole.MEMBER);
-        membership(org, eve, OrgRole.MEMBER);
-
         Team team = new Team();
-        team.organization = org;
         team.name = "Class of 2026";
         team.brandColor = "#0F766E";
         team.coverMedia = teamCover;
@@ -164,7 +146,6 @@ public class SeedData {
         team.persist();
 
         Team alumni = new Team();
-        alumni.organization = org;
         alumni.name = "Alumni Circle";
         alumni.brandColor = "#B45309";
         alumni.revealTributes = false;
@@ -393,14 +374,6 @@ public class SeedData {
                 ? publicEndpoint.substring(0, publicEndpoint.length() - 1)
                 : publicEndpoint;
         return base + "/" + bucket + "/" + key;
-    }
-
-    private void membership(Organization org, User user, OrgRole role) {
-        OrganizationMembership membership = new OrganizationMembership();
-        membership.organization = org;
-        membership.user = user;
-        membership.role = role;
-        membership.persist();
     }
 
     private TeamMember member(Team team, User user, String nickname, TeamRole role, String bio, MediaAsset avatar) {

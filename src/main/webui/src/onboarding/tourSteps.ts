@@ -4,7 +4,7 @@ export type TourStep = {
   target: string
   titleKey: string
   bodyKey: string
-  /** Navigate here before highlighting (supports `:orgId` / `:teamId`) */
+  /** Navigate here before highlighting (supports `:teamId`) */
   path?: string
   /** Team tab query param when on a team page */
   tab?: string
@@ -18,34 +18,32 @@ const TEAM_TABS = [
   'topics',
   'search',
   'yearbook',
-  'settings',
+  'personalSettings',
+  'adminSettings',
 ] as const
 
 export type TourContextIds = {
-  orgId?: string
   teamId?: string
 }
 
 function resolvePath(path: string, ids: TourContextIds): string {
-  return path
-    .replace(':orgId', ids.orgId ?? '')
-    .replace(':teamId', ids.teamId ?? '')
+  return path.replace(':teamId', ids.teamId ?? '')
 }
 
 export function buildTourSteps(ids: TourContextIds): TourStep[] {
   const steps: TourStep[] = [
     {
-      id: 'orgs-list',
-      target: 'orgs-list',
-      titleKey: 'onboarding.steps.orgsList.title',
-      bodyKey: 'onboarding.steps.orgsList.body',
+      id: 'teams-list',
+      target: 'teams-list',
+      titleKey: 'onboarding.steps.teamsList.title',
+      bodyKey: 'onboarding.steps.teamsList.body',
       path: '/app',
     },
     {
-      id: 'create-org',
-      target: 'create-org',
-      titleKey: 'onboarding.steps.createOrg.title',
-      bodyKey: 'onboarding.steps.createOrg.body',
+      id: 'create-team',
+      target: 'create-team',
+      titleKey: 'onboarding.steps.createTeam.title',
+      bodyKey: 'onboarding.steps.createTeam.body',
       path: '/app',
     },
     {
@@ -56,25 +54,6 @@ export function buildTourSteps(ids: TourContextIds): TourStep[] {
       path: '/app',
     },
   ]
-
-  if (ids.orgId) {
-    steps.push(
-      {
-        id: 'teams-list',
-        target: 'teams-list',
-        titleKey: 'onboarding.steps.teamsList.title',
-        bodyKey: 'onboarding.steps.teamsList.body',
-        path: '/orgs/:orgId',
-      },
-      {
-        id: 'create-team',
-        target: 'create-team',
-        titleKey: 'onboarding.steps.createTeam.title',
-        bodyKey: 'onboarding.steps.createTeam.body',
-        path: '/orgs/:orgId',
-      },
-    )
-  }
 
   if (ids.teamId) {
     for (const tab of TEAM_TABS) {
@@ -87,18 +66,10 @@ export function buildTourSteps(ids: TourContextIds): TourStep[] {
         tab,
       })
     }
-  } else if (ids.orgId) {
-    steps.push({
-      id: 'empty-continue',
-      target: 'create-team',
-      titleKey: 'onboarding.steps.emptyContinue.title',
-      bodyKey: 'onboarding.steps.emptyContinue.body',
-      path: '/orgs/:orgId',
-    })
   } else {
     steps.push({
       id: 'empty-continue',
-      target: 'create-org',
+      target: 'create-team',
       titleKey: 'onboarding.steps.emptyContinue.title',
       bodyKey: 'onboarding.steps.emptyContinue.body',
       path: '/app',

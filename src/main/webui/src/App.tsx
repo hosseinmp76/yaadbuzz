@@ -1,24 +1,25 @@
-import type { ReactNode } from 'react'
+import { lazy, Suspense, type ReactNode } from 'react'
 import { useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './auth'
 import LandingPage from './pages/LandingPage'
-import LoginPage from './pages/LoginPage'
-import RegisterPage from './pages/RegisterPage'
-import ForgotPasswordPage from './pages/ForgotPasswordPage'
-import ResetPasswordPage from './pages/ResetPasswordPage'
-import DashboardPage from './pages/DashboardPage'
-import OrgPage from './pages/OrgPage'
-import TeamPage from './pages/TeamPage'
-import MemberPage from './pages/MemberPage'
-import JoinPage from './pages/JoinPage'
-import YearbookPage from './pages/YearbookPage'
-import AboutPage from './pages/AboutPage'
-import FeaturesPage from './pages/FeaturesPage'
-import OAuthCallbackPage from './pages/OAuthCallbackPage'
-import PreferencesPage from './pages/PreferencesPage'
-import SourcePage from './pages/SourcePage'
 import { Seo } from './seo/Seo'
+
+const LoginPage = lazy(() => import('./pages/LoginPage'))
+const RegisterPage = lazy(() => import('./pages/RegisterPage'))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
+const DashboardPage = lazy(() => import('./pages/DashboardPage'))
+const TeamPage = lazy(() => import('./pages/TeamPage'))
+const MemberPage = lazy(() => import('./pages/MemberPage'))
+const JoinPage = lazy(() => import('./pages/JoinPage'))
+const YearbookPage = lazy(() => import('./pages/YearbookPage'))
+const AboutPage = lazy(() => import('./pages/AboutPage'))
+const FeaturesPage = lazy(() => import('./pages/FeaturesPage'))
+const AlternativesPage = lazy(() => import('./pages/AlternativesPage'))
+const OAuthCallbackPage = lazy(() => import('./pages/OAuthCallbackPage'))
+const PreferencesPage = lazy(() => import('./pages/PreferencesPage'))
+const SourcePage = lazy(() => import('./pages/SourcePage'))
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -31,8 +32,6 @@ function ScrollToTop() {
 function Protected({ children }: { children: ReactNode }) {
   const { accessToken } = useAuth()
   if (!accessToken) {
-    // Do not preserve deep links (e.g. another user's team) across logout/login.
-    // Invite flows carry `next` explicitly via /join → login links.
     return <Navigate to="/login" replace />
   }
   return (
@@ -43,30 +42,37 @@ function Protected({ children }: { children: ReactNode }) {
   )
 }
 
+function LazyFallback() {
+  return <p className="p-6 text-muted">…</p>
+}
+
 export default function App() {
   return (
     <>
       <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/features" element={<FeaturesPage />} />
-        <Route path="/source" element={<SourcePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/set-password" element={<ResetPasswordPage />} />
-        <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
-        <Route path="/join" element={<JoinPage />} />
-        <Route path="/app" element={<Protected><DashboardPage /></Protected>} />
-        <Route path="/preferences" element={<Protected><PreferencesPage /></Protected>} />
-        <Route path="/orgs/:orgId" element={<Protected><OrgPage /></Protected>} />
-        <Route path="/teams/:teamId" element={<Protected><TeamPage /></Protected>} />
-        <Route path="/teams/:teamId/yearbook" element={<Protected><YearbookPage /></Protected>} />
-        <Route path="/members/:memberId" element={<Protected><MemberPage /></Protected>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense fallback={<LazyFallback />}>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/features" element={<FeaturesPage />} />
+          <Route path="/alternatives" element={<AlternativesPage />} />
+          <Route path="/source" element={<SourcePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/set-password" element={<ResetPasswordPage />} />
+          <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+          <Route path="/join" element={<JoinPage />} />
+          <Route path="/app" element={<Protected><DashboardPage /></Protected>} />
+          <Route path="/preferences" element={<Protected><PreferencesPage /></Protected>} />
+          <Route path="/orgs/*" element={<Navigate to="/app" replace />} />
+          <Route path="/teams/:teamId" element={<Protected><TeamPage /></Protected>} />
+          <Route path="/teams/:teamId/yearbook" element={<Protected><YearbookPage /></Protected>} />
+          <Route path="/members/:memberId" element={<Protected><MemberPage /></Protected>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </>
   )
 }

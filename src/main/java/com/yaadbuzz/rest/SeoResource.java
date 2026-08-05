@@ -47,6 +47,11 @@ public class SeoResource {
                     <priority>0.8</priority>
                   </url>
                   <url>
+                    <loc>%s/alternatives</loc>
+                    <changefreq>monthly</changefreq>
+                    <priority>0.7</priority>
+                  </url>
+                  <url>
                     <loc>%s/source</loc>
                     <changefreq>monthly</changefreq>
                     <priority>0.6</priority>
@@ -62,7 +67,7 @@ public class SeoResource {
                     <priority>0.5</priority>
                   </url>
                 </urlset>
-                """.formatted(base, base, base, base, base, base);
+                """.formatted(base, base, base, base, base, base, base);
         return Response.ok(xml)
                 .type("application/xml; charset=UTF-8")
                 .header("Cache-Control", "public, max-age=3600")
@@ -80,6 +85,7 @@ public class SeoResource {
                 Allow: /
                 Allow: /about
                 Allow: /features
+                Allow: /alternatives
                 Allow: /source
                 Allow: /login
                 Allow: /register

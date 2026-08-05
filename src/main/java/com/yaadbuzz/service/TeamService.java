@@ -5,13 +5,10 @@ import com.yaadbuzz.common.CursorPage;
 import com.yaadbuzz.common.CursorUtil;
 import com.yaadbuzz.domain.Invite;
 import com.yaadbuzz.domain.MediaAsset;
-import com.yaadbuzz.domain.Organization;
-import com.yaadbuzz.domain.OrganizationMembership;
 import com.yaadbuzz.domain.Team;
 import com.yaadbuzz.domain.TeamMember;
 import com.yaadbuzz.domain.User;
 import com.yaadbuzz.enums.InviteStatus;
-import com.yaadbuzz.enums.OrgRole;
 import com.yaadbuzz.enums.TeamRole;
 import com.yaadbuzz.enums.YearbookTheme;
 import com.yaadbuzz.mail.EmailService;
@@ -34,14 +31,11 @@ public class TeamService {
     EmailService emailService;
 
     @Transactional
-    public Team create(User user, UUID organizationId, String name, String brandColor) {
-        accessService.requireOrgAdmin(organizationId, user);
-        Organization org = accessService.requireOrganization(organizationId);
+    public Team create(User user, String name, String brandColor) {
         if (name == null || name.isBlank()) {
             throw ApiException.badRequest("Team name is required");
         }
         Team team = new Team();
-        team.organization = org;
         team.name = name.trim();
         team.brandColor = brandColor;
         team.persist();
@@ -52,21 +46,15 @@ public class TeamService {
         member.nickname = uniqueNickname(team.id, user.displayName);
         member.role = TeamRole.ADMIN;
         member.persist();
-        return team;
+        return initializeTeamGraph(team);
     }
 
     @Transactional
-    public List<Team> listByOrganization(UUID organizationId, User user) {
-        accessService.requireOrganization(organizationId);
-        boolean orgMember = OrganizationMembership.findByOrgAndUser(organizationId, user.id).isPresent();
+    public List<Team> listMine(User user) {
         List<TeamMember> memberships = TeamMember.find(
-                "user.id = ?1 and team.organization.id = ?2 and deletedAt is null and team.deletedAt is null",
-                user.id,
-                organizationId
+                "user.id = ?1 and deletedAt is null and team.deletedAt is null order by team.createdAt desc",
+                user.id
         ).list();
-        if (!orgMember && memberships.isEmpty()) {
-            throw ApiException.forbidden("Not a member of this organization");
-        }
         List<Team> teams = new ArrayList<>();
         for (TeamMember membership : memberships) {
             teams.add(initializeTeamGraph(membership.team));
@@ -84,7 +72,7 @@ public class TeamService {
     @Transactional
     public Team updateSettings(UUID teamId, User user, String brandColor, UUID coverMediaId,
                                Boolean revealTributes, Instant revealAt) {
-        accessService.requireTeamAdmin(teamId, user);
+        accessService.requireTeamMember(teamId, user);
         Team team = accessService.requireTeam(teamId);
         if (brandColor != null) {
             team.brandColor = brandColor;
@@ -119,7 +107,7 @@ public class TeamService {
             Boolean showMemories,
             Boolean showAwards
     ) {
-        accessService.requireTeamAdmin(teamId, user);
+        accessService.requireTeamMember(teamId, user);
         Team team = accessService.requireTeam(teamId);
         if (title != null) {
             team.yearbookTitle = title.isBlank() ? null : title.trim();
@@ -178,7 +166,6 @@ public class TeamService {
         }
         String normalized = email.trim().toLowerCase();
         Team team = accessService.requireTeam(teamId);
-        Hibernate.initialize(team.organization);
 
         User.findByEmail(normalized).ifPresent(existing -> {
             if (TeamMember.findByTeamAndUser(teamId, existing.id).isPresent()) {
@@ -201,7 +188,6 @@ public class TeamService {
                     normalized,
                     user.displayName,
                     team.name,
-                    team.organization.name,
                     invite.code
             );
         } catch (RuntimeException e) {
@@ -219,7 +205,6 @@ public class TeamService {
                 continue;
             }
             Hibernate.initialize(invite.team);
-            Hibernate.initialize(invite.team.organization);
             pending.add(invite);
         }
         return pending;
@@ -272,7 +257,6 @@ public class TeamService {
             throw ApiException.conflict("Already a member of this team");
         }
         Hibernate.initialize(invite.team);
-        Hibernate.initialize(invite.team.organization);
 
         String nick = nickname == null || nickname.isBlank() ? user.displayName : nickname.trim();
         if (TeamMember.count("team.id = ?1 and nickname = ?2 and deletedAt is null", invite.team.id, nick) > 0) {
@@ -286,8 +270,6 @@ public class TeamService {
         member.role = invite.role;
         member.persist();
 
-        ensureOrgMembership(invite.team.organization, user);
-
         invite.useCount += 1;
         if (invite.email != null && !invite.email.isBlank()) {
             invite.status = InviteStatus.ACCEPTED;
@@ -297,26 +279,9 @@ public class TeamService {
         return member;
     }
 
-    private void ensureOrgMembership(Organization org, User user) {
-        if (OrganizationMembership.findByOrgAndUser(org.id, user.id).isPresent()) {
-            return;
-        }
-        OrganizationMembership membership = new OrganizationMembership();
-        membership.organization = org;
-        membership.user = user;
-        membership.role = OrgRole.MEMBER;
-        membership.persist();
-    }
-
-    /**
-     * Leave a team. If the user has no remaining teams in the parent organization,
-     * their organization membership is removed as well.
-     */
     @Transactional
     public void leaveTeam(UUID teamId, User user) {
         TeamMember member = accessService.requireTeamMember(teamId, user);
-        Team team = accessService.requireTeam(teamId);
-        Hibernate.initialize(team.organization);
 
         if (member.role == TeamRole.ADMIN) {
             long otherAdmins = TeamMember.count(
@@ -333,17 +298,34 @@ public class TeamService {
         }
 
         member.softDelete();
+    }
 
-        UUID orgId = team.organization.id;
-        long remainingInOrg = TeamMember.count(
-                "user.id = ?1 and team.organization.id = ?2 and deletedAt is null and team.deletedAt is null",
-                user.id,
-                orgId
-        );
-        if (remainingInOrg == 0) {
-            OrganizationMembership.findByOrgAndUser(orgId, user.id)
-                    .ifPresent(OrganizationMembership::delete);
+    /**
+     * Team admin removes another member. Cannot remove yourself (use leave) or the last admin.
+     */
+    @Transactional
+    public void removeMember(UUID teamId, User adminUser, UUID memberId) {
+        accessService.requireTeamAdmin(teamId, adminUser);
+        TeamMember target = TeamMember.findActiveById(memberId)
+                .orElseThrow(() -> ApiException.notFound("Team member not found"));
+        if (!target.team.id.equals(teamId)) {
+            throw ApiException.notFound("Team member not found");
         }
+        if (target.user.id.equals(adminUser.id)) {
+            throw ApiException.badRequest("Use leave team to remove yourself");
+        }
+        if (target.role == TeamRole.ADMIN) {
+            long otherAdmins = TeamMember.count(
+                    "team.id = ?1 and role = ?2 and deletedAt is null and id <> ?3",
+                    teamId,
+                    TeamRole.ADMIN,
+                    target.id
+            );
+            if (otherAdmins == 0) {
+                throw ApiException.badRequest("Cannot remove the only team admin");
+            }
+        }
+        target.softDelete();
     }
 
     @Transactional
@@ -421,9 +403,7 @@ public class TeamService {
     }
 
     private Team initializeTeamGraph(Team team) {
-        // TeamType.from reads coverMedia.url after the persistence context may be closed.
         Hibernate.initialize(team.coverMedia);
-        Hibernate.initialize(team.organization);
         return team;
     }
 

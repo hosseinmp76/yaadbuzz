@@ -7,7 +7,8 @@
     "tagline": "Online yearbooks for teams"
   },
   "nav": {
-    "organizations": "Organizations",
+    "organizations": "Teams",
+    "teams": "Teams",
     "about": "About",
     "login": "Log in",
     "getStarted": "Get started",
@@ -26,22 +27,22 @@
     "prompt": {
       "eyebrow": "Getting started",
       "title": "Want a quick tour?",
-      "body": "We’ll walk through organizations, teams, and the yearbook tools — with a spotlight on each piece.",
+      "body": "We’ll walk through your teams and the yearbook tools — with a spotlight on each piece.",
       "start": "Start tour",
       "notNow": "Not now"
     },
     "steps": {
       "orgsList": {
-        "title": "Your organizations",
-        "body": "Organizations group your teams. Open one to manage teams and yearbooks."
+        "title": "Your teams",
+        "body": "Teams are where yearbooks live. Open one to collaborate with members."
       },
       "createOrg": {
-        "title": "Create an organization",
-        "body": "Start here when you’re setting up a new class, club, or company space."
+        "title": "Create a team",
+        "body": "Start here when you’re setting up a new class, club, or company yearbook."
       },
       "joinTeam": {
         "title": "Join with an invite",
-        "body": "Already have a code? Join a team without creating a new organization."
+        "body": "Already have a code? Join a team without creating a new one."
       },
       "teamsList": {
         "title": "Teams",
@@ -49,11 +50,11 @@
       },
       "createTeam": {
         "title": "Create a team",
-        "body": "Add a team under this organization, then invite people to it."
+        "body": "Create a team, then invite people to collaborate on the yearbook."
       },
       "emptyContinue": {
         "title": "Create something to explore",
-        "body": "Once you have an organization and a team, replay the tour from the header to see every tab."
+        "body": "Once you have a team, replay the tour from the header to see every tab."
       },
       "tabs": {
         "members": {
@@ -84,9 +85,13 @@
           "title": "Yearbook",
           "body": "Preview the online yearbook, tweak the cover, and export a PDF."
         },
-        "settings": {
-          "title": "Team settings",
-          "body": "Update your team profile, leave the team, manage invites, and brand color."
+        "personalSettings": {
+          "title": "Personal settings",
+          "body": "Update your nickname, photo, and bio for this team, or leave the team."
+        },
+        "adminSettings": {
+          "title": "Admin settings",
+          "body": "Invite people with a code or email, and remove members from the team."
         }
       }
     }
@@ -96,32 +101,43 @@
     "licenseName": "GNU Affero GPL v3",
     "about": "About",
     "features": "Features",
+    "alternatives": "Alternatives",
     "license": "License",
     "source": "Source",
     "agpl": "AGPL-3.0"
   },
   "landing": {
-    "seoTitle": "Yaadbuzz — Online yearbooks for teams",
-    "seoDescription": "Create an organization, gather your team, collect memories, and print a yearbook worth keeping. A FOSS (Free Open Source Software) to save the memories.",
-    "hero": "Create an organization, gather your team, collect memories, and print a yearbook worth keeping.",
+    "seoTitle": "Yaadbuzz — Collaborative online yearbooks",
+    "seoDescription": "Build a yearbook together with your team. Yaad means memory; buzz means someone with a lot of something — someone rich in memories. Free open source software.",
+    "hero": "A collaborative yearbook for your team — write tributes, share memories, and print a keepsake together.",
     "heroFoss": "A FOSS (Free Open Source Software) to save the memories.",
+    "heroMeaning": "Yaad means memory. Buzz means someone with a lot of something. Yaadbuzz: someone rich in memories.",
     "openDashboard": "Open dashboard",
     "startYearbook": "Start your yearbook",
     "seeFeatures": "See features",
     "visualTeams": "Teams",
     "visualYearbooks": "Yearbooks",
     "howTitle": "How Yaadbuzz works",
-    "howSubtitle": "Built for classes, clubs, and companies that want a shared yearbook — online first, print when you are ready.",
+    "howSubtitle": "Built for classes, clubs, and companies that want to collaborate on one shared yearbook — online first, print when you are ready.",
     "step1Title": "Gather your team",
-    "step1Body": "Create an organization, invite members with a code, and keep everyone in one place.",
-    "step2Title": "Collect the year",
-    "step2Body": "Tributes, shared memories, characteristics, and award topics — sealed until reveal day if you want.",
+    "step1Body": "Create a team, invite members with a code or email, and keep everyone collaborating in one place.",
+    "step2Title": "Collect the year together",
+    "step2Body": "Tributes, shared memories, characteristics, and award topics — everyone contributes, sealed until reveal day if you want.",
     "step3Title": "Print the keepsake",
-    "step3Body": "Open the online yearbook, customize the cover, then print or export a PDF for the shelf.",
+    "step3Body": "Open the online yearbook, customize the cover, then print or save a PDF for the shelf.",
     "curious": "Curious how it started?",
     "readStory": "Read the story",
     "previewTitle": "Built like a keepsake",
-    "previewBody": "Teams, tributes, and memories — the same calm workspace you’ll use after you sign in."
+    "previewBody": "Teams, tributes, and memories — a calm collaborative workspace you’ll use after you sign in."
+  },
+  "alternatives": {
+    "seoTitle": "Alternatives",
+    "seoDescription": "Other collaborative yearbook and photo-book platforms — and how Yaadbuzz fits as free open source software.",
+    "eyebrow": "Alternatives",
+    "lead": "Other places people collaborate on yearbooks and photo books.",
+    "intro": "Official sites for collaborative yearbook and photo-book platforms, with a short feature summary for each. Yaadbuzz is the FOSS option you can self-host.",
+    "backHome": "Prefer open source?",
+    "homeLink": "Back to Yaadbuzz"
   },
   "features": {
     "seoTitle": "Features",
@@ -131,8 +147,8 @@
     "examplePdf": "View example yearbook PDF",
     "items": {
       "teams": {
-        "title": "Organizations, teams & invites",
-        "body": "Create an organization, spin up teams, and invite people with a code or email. Everyone lands in one shared space."
+        "title": "Teams & invites",
+        "body": "Create a team and invite people with a code or email. Everyone collaborates in one shared yearbook space."
       },
       "tributes": {
         "title": "Tributes about teammates",
@@ -298,23 +314,23 @@
     "api": "Machine-readable offer"
   },
   "dashboard": {
-    "title": "Your organizations",
-    "subtitle": "Start an organization, then create teams for each yearbook.",
-    "organizations": "Organizations",
+    "title": "Your teams",
+    "subtitle": "Create a team yearbook, invite people, and build memories together.",
+    "teams": "Teams",
     "invitations": "Team invitations",
-    "inviteFromOrg": "{{org}}",
     "acceptInvite": "Accept",
     "rejectInvite": "Decline",
     "inviteAccepted": "Invitation accepted",
     "inviteRejected": "Invitation declined",
     "joinTeam": "Join a team with invite code",
-    "createOrg": "Create organization",
+    "createTeam": "Create team",
     "name": "Name",
-    "orgNameRequired": "Organization name is required",
-    "openTeams": "Open teams",
+    "teamNameRequired": "Team name is required",
+    "openTeam": "Open yearbook workspace",
+    "noTeams": "No teams yet — create one or join with an invite code.",
     "view": "View",
     "create": "Create",
-    "created": "Organization created",
+    "created": "Team created",
     "loading": "Loading…"
   },
   "join": {
@@ -331,7 +347,7 @@
     "registerToContinue": "Create account"
   },
   "org": {
-    "back": "← Back to organizations",
+    "back": "← Back to teams",
     "teams": "Teams",
     "yourTeams": "Your teams",
     "createTeam": "Create team",
@@ -354,7 +370,8 @@
       "topics": "Topics",
       "search": "Search",
       "yearbook": "Yearbook",
-      "settings": "Settings"
+      "personalSettings": "Personal settings",
+      "adminSettings": "Admin settings"
     },
     "searchMembers": "Search members…",
     "noBio": "No bio yet",
@@ -419,6 +436,13 @@
     "sendInvite": "Send invitation email",
     "sending": "Sending…",
     "inviteSent": "Invitation sent to {{email}}",
+    "manageMembers": "Remove members",
+    "manageMembersHint": "Remove someone from this team. They will lose access to the yearbook.",
+    "removeMember": "Remove",
+    "removing": "Removing…",
+    "removeMemberConfirm": "Remove {{name}} from this team?",
+    "memberRemoved": "{{name}} was removed from the team",
+    "you": "you",
     "teamSettings": "Team settings",
     "brandColor": "Brand color",
     "brandColorInvalid": "Enter a valid hex color like #0F766E",
@@ -436,10 +460,10 @@
     "uploadFailed": "Upload failed",
     "loadingProfile": "Loading your profile…",
     "leaveTitle": "Leave this team",
-    "leaveHint": "You will lose access to this yearbook. If this is your only team in the organization, you will leave the organization too.",
+    "leaveHint": "You will lose access to this yearbook.",
     "leave": "Leave team",
     "leaving": "Leaving…",
-    "leaveConfirm": "Leave this team? If you have no other teams in the organization, you will leave the organization as well.",
+    "leaveConfirm": "Leave this team?",
     "leaveSuccess": "You left the team",
     "awardTopics": "Award topics",
     "newTopic": "New topic",
@@ -457,7 +481,11 @@
     "openYearbook": "Open yearbook",
     "printReady": "Print-ready page",
     "customize": "Customize yearbook",
-    "customizeHint": "Team admins can change cover copy, theme, and which sections appear in the yearbook.",
+    "customizeHint": "Anyone on the team can change cover copy, theme, brand color, and which sections appear in the yearbook.",
+    "coverImage": "Team cover image",
+    "coverImageHint": "Shown on the team page and yearbook cover. Upload a square photo for best results.",
+    "coverUpdated": "Team cover image updated",
+    "uploadingCover": "Uploading cover…",
     "coverTitle": "Cover title",
     "coverSubtitle": "Cover subtitle",
     "dedicationLabel": "Dedication / cover message",
@@ -465,7 +493,7 @@
     "yearbookSubtitle": "Subtitle",
     "dedication": "Dedication",
     "titlePlaceholder": "Defaults to team name + Yearbook",
-    "subtitlePlaceholder": "Defaults to organization name",
+    "subtitlePlaceholder": "Defaults to team name",
     "dedicationPlaceholder": "Optional message on the cover",
     "layoutTheme": "Theme",
     "showMembers": "Show members",

@@ -2,7 +2,11 @@ import createClient, { type Middleware } from 'openapi-fetch'
 import { AUTH_STORAGE_KEY, getAccessToken } from '../authStorage'
 import { ApiError } from './authHeaders'
 import { clearClientSession } from '../clearClientSession'
+import { refreshSession } from '../sessionRefresh'
 import type { paths } from './generated/schema'
+
+const RETRY_HEADER = 'X-Yaadbuzz-Auth-Retry'
+const requestClones = new Map<string, Request>()
 
 function isStaleAuthError(message: string | undefined, status?: number): boolean {
   if (status === 401) return true
@@ -21,7 +25,7 @@ export { isStaleAuthError }
 export function isMembershipForbidden(message: string | undefined, status?: number): boolean {
   if (status !== 403 || !message) return false
   const m = message.toLowerCase()
-  return m.includes('not a member of this team') || m.includes('not a member of this organization')
+  return m.includes('not a member of this team')
 }
 
 export function clearStoredAuthAndReload() {
@@ -47,12 +51,31 @@ function errorMessage(error: unknown, fallback: string): string {
 }
 
 const authMiddleware: Middleware = {
-  onRequest({ request }) {
+  onRequest({ request, id }) {
     const token = getAccessToken()
     if (token) {
       request.headers.set('Authorization', `Bearer ${token}`)
     }
+    // Clone before fetch consumes the body so we can retry POSTs after refresh.
+    requestClones.set(id, request.clone())
     return request
+  },
+  async onResponse({ request, response, id }) {
+    const clone = requestClones.get(id)
+    requestClones.delete(id)
+    if (response.status !== 401 || request.headers.get(RETRY_HEADER)) {
+      return response
+    }
+    const refreshed = await refreshSession()
+    if (!refreshed) return response
+    const headers = new Headers((clone ?? request).headers)
+    const token = getAccessToken()
+    if (token) headers.set('Authorization', `Bearer ${token}`)
+    headers.set(RETRY_HEADER, '1')
+    return fetch(new Request(clone ?? request, { headers }))
+  },
+  onError({ id }) {
+    requestClones.delete(id)
   },
 }
 
@@ -66,7 +89,7 @@ type ResultLike<T> = {
   response: Response
 }
 
-/** Throw `ApiError` on non-2xx; handle stale JWT like the old fetch helper. */
+/** Throw `ApiError` on non-2xx; after middleware refresh retry, clear session if still stale. */
 export async function unwrap<T>(resultPromise: Promise<ResultLike<T>>): Promise<T> {
   const result = await resultPromise
   if (result.response.ok) {

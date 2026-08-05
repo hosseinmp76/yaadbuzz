@@ -6,7 +6,7 @@ Guidance for AI coding agents working in this repository. For human-oriented loc
 
 **Yaadbuzz** is an online yearbook app:
 
-register → create organization → create **team** → invite members → tributes / memories / topics / characteristics → view & print yearbook.
+register → create **team** → invite members → tributes / memories / topics / characteristics → view & print yearbook.
 
 Naming: use **Team** (not Department).
 
@@ -30,7 +30,7 @@ Frontend UI libs in use: Tailwind CSS v4, Motion, React Hook Form, Zod, Phosphor
 
 Key entities under `src/main/java/com/yaadbuzz/domain/`:
 
-User, Organization, Team, Invite, TeamMember, Tribute, Memory, Comment, Topic, TopicVote, Characteristic, MediaAsset.
+User, Team, Invite, TeamMember, Tribute, Memory, Comment, Topic, TopicVote, Characteristic, MediaAsset.
 
 Important product rules:
 
@@ -62,7 +62,7 @@ Frontend lives in `src/main/webui/src/` (pages, components, theme, OpenAPI-typed
 |---|---|
 | `POST /api/auth/*` | Register (email → set-password link), login, refresh, forgot/reset password |
 | `GET/PATCH /api/me` | Current user |
-| `/api/organizations`, `/api/teams`, `/api/members`, … | Yearbook domain CRUD/read |
+| `/api/teams`, `/api/members`, … | Yearbook domain CRUD/read |
 | `POST /api/media` | Image upload |
 
 Swagger: `/q/swagger-ui` (Bearer JWT).

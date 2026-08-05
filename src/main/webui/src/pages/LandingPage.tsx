@@ -1,6 +1,6 @@
 import { BookOpenText, Printer, UsersThree } from '@phosphor-icons/react'
 import { motion } from 'motion/react'
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { registerWebMcpTools } from '../agent/webmcp'
@@ -10,6 +10,8 @@ import { Button } from '../components/ui/Button'
 import { Stack } from '../components/ui/Stack'
 import { useAuth } from '../auth'
 import { Seo } from '../seo/Seo'
+
+const MotionPreview = lazy(() => import('../components/LandingPreview'))
 
 const HERO_IMAGE = '/features/feature-yearbook.webp'
 
@@ -27,20 +29,28 @@ export default function LandingPage() {
         path="/"
       />
 
-      <section className="relative -mx-4 min-h-[calc(100dvh-7rem)] overflow-hidden sm:-mx-6">
+      <section className="relative -mx-4 min-h-[min(70dvh,36rem)] overflow-hidden sm:-mx-6 sm:min-h-[calc(100dvh-7rem)]">
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-[color-mix(in_oklab,var(--brand-deep)_85%,#0a2e2c)]"
+        />
         <motion.img
           src={HERO_IMAGE}
           alt=""
+          width={1536}
+          height={1024}
+          fetchPriority="high"
+          decoding="async"
           initial={{ opacity: 0, scale: 1.04 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute inset-0 h-full w-full object-cover object-[center_20%]"
+          className="absolute inset-0 h-full w-full object-cover object-[center_18%]"
         />
         <div
           aria-hidden
-          className="absolute inset-0 bg-gradient-to-t from-[color-mix(in_oklab,var(--brand-deep)_88%,black)] via-[color-mix(in_oklab,var(--brand)_55%,transparent)] to-[color-mix(in_oklab,var(--brand)_25%,transparent)]"
+          className="absolute inset-0 bg-gradient-to-t from-[color-mix(in_oklab,var(--brand-deep)_90%,black)] via-[color-mix(in_oklab,var(--brand-deep)_45%,transparent)] to-[color-mix(in_oklab,var(--brand)_20%,transparent)]"
         />
-        <div className="relative z-10 flex min-h-[calc(100dvh-7rem)] flex-col justify-end px-4 pb-12 pt-16 sm:px-6 sm:pb-16">
+        <div className="relative z-10 flex min-h-[min(70dvh,36rem)] flex-col justify-end px-4 pb-12 pt-16 sm:min-h-[calc(100dvh-7rem)] sm:px-6 sm:pb-16">
           <motion.div
             initial={{ opacity: 0, y: 22 }}
             animate={{ opacity: 1, y: 0 }}
@@ -50,11 +60,11 @@ export default function LandingPage() {
             <h1 className="font-display text-[clamp(3rem,12vw,6.4rem)] leading-[0.9] tracking-[-0.05em] text-white">
               <BrandMark className="text-white [&_span]:text-white" />
             </h1>
-            <p className="mt-5 max-w-xl text-base text-white/85 sm:mt-6 sm:text-xl">
+            <p className="mt-5 max-w-xl text-base text-white/90 sm:mt-6 sm:text-xl">
               {t('landing.hero')}
-              <br />
-              {t('landing.heroFoss')}
             </p>
+            <p className="mt-2 max-w-xl text-base text-white/80 sm:text-lg">{t('landing.heroFoss')}</p>
+            <p className="mt-3 max-w-xl text-sm text-white/70 sm:text-base">{t('landing.heroMeaning')}</p>
             <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
               {user ? (
                 <Link to="/app" className="sm:w-auto">
@@ -135,42 +145,9 @@ export default function LandingPage() {
         </p>
       </section>
 
-      <section className="border-t border-line py-16" aria-labelledby="preview-heading">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 id="preview-heading" className="font-display text-3xl tracking-tight text-brand sm:text-4xl">
-              {t('landing.previewTitle')}
-            </h2>
-            <p className="mt-3 max-w-xl text-muted">{t('landing.previewBody')}</p>
-          </div>
-          <Link to="/features" className="sm:shrink-0">
-            <Button variant="secondary">{t('landing.seeFeatures')}</Button>
-          </Link>
-        </div>
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {[
-            '/features/feature-teams.webp',
-            '/features/feature-tributes.webp',
-            '/features/feature-memories.webp',
-          ].map((src, index) => (
-            <motion.div
-              key={src}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.5, delay: index * 0.08 }}
-              className="overflow-hidden rounded-panel border border-line bg-panel-strong shadow-panel"
-            >
-              <img
-                src={src}
-                alt=""
-                className="aspect-[16/10] h-auto w-full object-cover object-top"
-                loading="lazy"
-              />
-            </motion.div>
-          ))}
-        </div>
-      </section>
+      <Suspense fallback={null}>
+        <MotionPreview />
+      </Suspense>
     </Layout>
   )
 }

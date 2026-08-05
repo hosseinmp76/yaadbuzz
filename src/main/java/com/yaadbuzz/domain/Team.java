@@ -10,16 +10,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "team")
 public class Team extends BaseEntity {
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organization_id", nullable = false)
-    public Organization organization;
 
     @Column(nullable = false)
     public String name;
@@ -70,11 +64,5 @@ public class Team extends BaseEntity {
             return true;
         }
         return revealAt != null && !revealAt.isAfter(Instant.now());
-    }
-
-    public static List<Team> listByOrganization(UUID organizationId) {
-        return list(
-                "from Team t left join fetch t.coverMedia where t.organization.id = ?1 and t.deletedAt is null order by t.createdAt desc",
-                organizationId);
     }
 }

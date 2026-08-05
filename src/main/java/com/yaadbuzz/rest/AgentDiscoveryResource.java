@@ -236,7 +236,7 @@ public class AgentDiscoveryResource {
                 ```
 
                 - REST OpenAPI: %s/q/openapi
-                - Domain API: `/api/organizations`, `/api/teams`, … (Bearer JWT)
+                - Domain API: `/api/teams`, … (Bearer JWT)
                 - Health: %s/q/health
                 - API catalog: %s/.well-known/api-catalog
 

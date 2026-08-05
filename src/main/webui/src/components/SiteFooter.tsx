@@ -25,6 +25,9 @@ export function SiteFooter() {
           <Link to="/features" className="font-semibold text-ink hover:text-brand">
             {t('footer.features')}
           </Link>
+          <Link to="/alternatives" className="font-semibold text-ink hover:text-brand">
+            {t('footer.alternatives')}
+          </Link>
           <Link to="/source" className="font-semibold text-ink hover:text-brand">
             {t('footer.source')}
           </Link>

@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.yaadbuzz.domain.User;
 import com.yaadbuzz.enums.YearbookTheme;
 import com.yaadbuzz.service.MemoryService;
-import com.yaadbuzz.service.OrganizationService;
 import com.yaadbuzz.service.TeamService;
 import com.yaadbuzz.support.AuthSupport;
 import io.quarkus.test.junit.QuarkusTest;
@@ -24,9 +23,6 @@ class YearbookContentServiceTest {
     YearbookContentService yearbookContentService;
 
     @Inject
-    OrganizationService organizationService;
-
-    @Inject
     TeamService teamService;
 
     @Inject
@@ -39,8 +35,7 @@ class YearbookContentServiceTest {
         AuthSupport.register(email, "password123", "YbUser");
         User user = User.findByEmail(email).orElseThrow();
 
-        var org = organizationService.create(user, "Yb Org", "#0F766E");
-        var team = teamService.create(user, org.id, "Yb Team", "#B45309");
+        var team = teamService.create(user, "Yb Team", "#B45309");
         var memory = memoryService.create(
                 team.id, user, "Campfire", "We stayed up late.", false, List.of(), List.of());
         memoryService.addComment(memory.id, user, "Still my favorite night.", null, List.of());
