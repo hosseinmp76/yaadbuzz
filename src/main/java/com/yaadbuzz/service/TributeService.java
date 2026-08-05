@@ -44,6 +44,7 @@ public class TributeService {
         tribute.privateTribute = privateTribute;
         tribute.hidden = true;
         tribute.persist();
+        initializeTribute(tribute);
         return tribute;
     }
 
