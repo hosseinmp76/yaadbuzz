@@ -4,11 +4,13 @@ import com.yaadbuzz.auth.CurrentUserService;
 import com.yaadbuzz.rest.dto.ApiDtos.CharacteristicType;
 import com.yaadbuzz.rest.dto.ApiDtos.TeamMemberType;
 import com.yaadbuzz.rest.dto.ApiRequests.AddCharacteristicRequest;
+import com.yaadbuzz.rest.dto.AuthDtos.MessageResponse;
 import com.yaadbuzz.service.CharacteristicService;
 import com.yaadbuzz.service.TeamService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -56,5 +58,16 @@ public class MemberResource {
     public CharacteristicType addCharacteristic(@PathParam("id") UUID id, AddCharacteristicRequest request) {
         return CharacteristicType.from(
                 characteristicService.add(id, currentUserService.requireUser(), request.title()));
+    }
+
+    @DELETE
+    @Path("/{id}/characteristics/{characteristicId}")
+    @Operation(summary = "Delete a characteristic (team admin only)")
+    public MessageResponse deleteCharacteristic(
+            @PathParam("id") UUID id,
+            @PathParam("characteristicId") UUID characteristicId
+    ) {
+        characteristicService.delete(id, characteristicId, currentUserService.requireUser());
+        return new MessageResponse("Characteristic deleted.");
     }
 }

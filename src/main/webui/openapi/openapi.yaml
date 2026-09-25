@@ -2,6 +2,13 @@
 openapi: 3.1.0
 components:
   schemas:
+    AcceptInviteRequest:
+      type: object
+      properties:
+        nickname:
+          type: string
+        bio:
+          type: string
     AddCharacteristicRequest:
       type: object
       properties:
@@ -155,6 +162,8 @@ components:
           type: string
         brandColor:
           type: string
+        encryptionEnabled:
+          type: boolean
     CreateTopicRequest:
       type: object
       properties:
@@ -170,6 +179,11 @@ components:
         anonymous:
           type: boolean
         privateTribute:
+          type: boolean
+    FeaturesResponse:
+      type: object
+      properties:
+        teamEncryption:
           type: boolean
     ForgotPasswordRequest:
       type: object
@@ -289,6 +303,19 @@ components:
           type: boolean
         telegram:
           type: boolean
+    PendingInviteType:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        teamId:
+          $ref: "#/components/schemas/UUID"
+        teamName:
+          type: string
+        role:
+          $ref: "#/components/schemas/TeamRole"
+        createdAt:
+          $ref: "#/components/schemas/Instant"
     RefreshRequest:
       type: object
       required:
@@ -385,6 +412,8 @@ components:
         yearbookShowMemories:
           type: boolean
         yearbookShowAwards:
+          type: boolean
+        encryptionEnabled:
           type: boolean
     TopicStandingType:
       type: object
@@ -632,6 +661,8 @@ tags:
 - name: AGPL
 - name: Agent discovery
 - name: Auth
+- name: Features
+- name: Invites
 - name: Me
 - name: Media
 - name: Members
@@ -640,7 +671,6 @@ tags:
 - name: Teams
 - name: Topics
 - name: Tributes
-- name: Yearbooks
 paths:
   /.well-known/agent-skills/index.json:
     get:
@@ -902,6 +932,104 @@ paths:
                 $ref: "#/components/schemas/MessageResponse"
         "400":
           description: Bad Request
+  /api/features:
+    get:
+      summary: Feature flags for the current deployment
+      tags:
+      - Features
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeaturesResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/invites/pending:
+    get:
+      summary: List pending email invitations for the current user
+      tags:
+      - Invites
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PendingInviteType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/invites/{id}/accept:
+    post:
+      summary: Accept a pending email invitation
+      tags:
+      - Invites
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptInviteRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamMemberType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - SecurityScheme:
+        - user
+  /api/invites/{id}/reject:
+    post:
+      summary: Reject a pending email invitation
+      tags:
+      - Invites
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
   /api/me:
     patch:
       summary: Update the current user's display name
@@ -1055,6 +1183,36 @@ paths:
           description: Not Allowed
         "400":
           description: Bad Request
+      security:
+      - SecurityScheme:
+        - user
+  /api/members/{id}/characteristics/{characteristicId}:
+    delete:
+      summary: Delete a characteristic (team admin only)
+      tags:
+      - Members
+      parameters:
+      - name: characteristicId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
       security:
       - SecurityScheme:
         - user
@@ -1393,6 +1551,60 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TeamMemberType"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+    delete:
+      summary: Leave a team
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - SecurityScheme:
+        - user
+  /api/teams/{id}/members/{memberId}:
+    delete:
+      summary: Remove a member from the team (admin only)
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: memberId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
         "401":
           description: Not Authorized
         "403":

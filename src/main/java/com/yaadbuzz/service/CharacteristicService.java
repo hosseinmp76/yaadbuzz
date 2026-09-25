@@ -44,4 +44,15 @@ public class CharacteristicService {
         accessService.requireTeamMember(target.team.id, user);
         return Characteristic.list("teamMember.id = ?1 order by count desc, title asc", teamMemberId);
     }
+
+    @Transactional
+    public void delete(UUID teamMemberId, UUID characteristicId, User user) {
+        Characteristic characteristic = Characteristic.<Characteristic>findByIdOptional(characteristicId)
+                .orElseThrow(() -> ApiException.notFound("Characteristic not found"));
+        if (!characteristic.teamMember.id.equals(teamMemberId)) {
+            throw ApiException.notFound("Characteristic not found");
+        }
+        accessService.requireTeamAdmin(characteristic.teamMember.team.id, user);
+        characteristic.delete();
+    }
 }
