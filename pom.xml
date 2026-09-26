@@ -18,7 +18,8 @@
 
     <properties>
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
-        <maven.compiler.release>25</maven.compiler.release>
+        <enforcer-plugin.version>3.5.0</enforcer-plugin.version>
+        <maven.compiler.release>27</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
@@ -177,6 +178,26 @@
                 <configuration>
                     <parameters>true</parameters>
                 </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${enforcer-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>enforce-java-27</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[27,28)</version>
+                                </requireJavaVersion>
+                            </rules>
+                            <fail>true</fail>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
