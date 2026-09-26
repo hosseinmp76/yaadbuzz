@@ -600,16 +600,14 @@ function CharacteristicsTab({ teamId }: { teamId: string }) {
       return
     }
     setLoading(true)
-    const next: MemberChars[] = []
-    for (const m of members) {
-      const characteristics = await api.characteristics(m.id)
-      next.push({
+    const next = await Promise.all(
+      members.map(async (m) => ({
         id: m.id,
         nickname: m.nickname,
         avatarUrl: m.avatar?.url,
-        characteristics,
-      })
-    }
+        characteristics: await api.characteristics(m.id),
+      })),
+    )
     setRows(next)
     setLoading(false)
   }, [members])
