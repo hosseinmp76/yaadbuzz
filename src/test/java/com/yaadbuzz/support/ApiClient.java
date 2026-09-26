@@ -23,6 +23,10 @@ public final class ApiClient {
         return request(token).body(body == null ? Map.of() : body).when().patch(path).then();
     }
 
+    public static ValidatableResponse delete(String token, String path) {
+        return request(token).when().delete(path).then();
+    }
+
     @SuppressWarnings("unchecked")
     public static Map<String, Object> json(ValidatableResponse response, int status) {
         response.statusCode(status);

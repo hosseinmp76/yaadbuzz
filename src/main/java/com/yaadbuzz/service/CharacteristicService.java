@@ -44,4 +44,18 @@ public class CharacteristicService {
         accessService.requireTeamMember(target.team.id, user);
         return Characteristic.list("teamMember.id = ?1 order by count desc, title asc", teamMemberId);
     }
+
+    @Transactional
+    public void deleteOwn(UUID teamMemberId, UUID characteristicId, User user) {
+        TeamMember target = TeamMember.findActiveById(teamMemberId)
+                .orElseThrow(() -> ApiException.notFound("Team member not found"));
+        if (!target.user.id.equals(user.id)) {
+            throw ApiException.forbidden("You can only delete your own characteristics");
+        }
+
+        Characteristic characteristic = Characteristic.<Characteristic>findByIdOptional(characteristicId)
+                .filter(item -> item.teamMember.id.equals(target.id))
+                .orElseThrow(() -> ApiException.notFound("Characteristic not found"));
+        characteristic.delete();
+    }
 }

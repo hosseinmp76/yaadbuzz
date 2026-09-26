@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Tag,
   Trophy,
+  Trash,
   UsersThree,
   type Icon,
 } from '@phosphor-icons/react'
@@ -50,6 +51,22 @@ import { MemoryComments } from '../components/MemoryComments'
 
 const YEARBOOK_THEMES = ['CLASSIC', 'MODERN', 'SCRAPBOOK', 'MINIMAL'] as const
 type YearbookThemeOption = (typeof YEARBOOK_THEMES)[number]
+
+async function loadAllTeamMembers(teamId: string): Promise<TeamMember[]> {
+  const members: TeamMember[] = []
+  let after: string | undefined
+
+  while (true) {
+    const page = await api.teamMembers(teamId, { first: 50, after })
+    members.push(...page.items)
+
+    const nextCursor = page.nextCursor ?? undefined
+    if (!page.hasNext || !nextCursor || nextCursor === after) break
+    after = nextCursor
+  }
+
+  return members
+}
 
 type Tab =
   | 'members'
@@ -188,7 +205,9 @@ export default function TeamPage() {
               onWrongKey={teamCrypto.rejectWrongKey}
             />
           )}
-          {tab === 'characteristics' && <CharacteristicsTab teamId={teamId} />}
+          {tab === 'characteristics' && (
+            <CharacteristicsTab teamId={teamId} myMemberId={membership?.id} />
+          )}
           {tab === 'memories' && (
             <MemoriesTab
               teamId={teamId}
@@ -571,21 +590,31 @@ type MemberChars = {
   characteristics: CharItem[]
 }
 
-function CharacteristicsTab({ teamId }: { teamId: string }) {
+function CharacteristicsTab({
+  teamId,
+  myMemberId,
+}: {
+  teamId: string
+  myMemberId?: string
+}) {
   const { t } = useTranslation()
-  const [{ data: membersPage }] = useApiQuery(
+  const [{ data: members }] = useApiQuery(
     !!teamId,
-    () => api.teamMembers(teamId, { first: 100 }),
+    () => loadAllTeamMembers(teamId),
     [teamId],
   )
   const [, addCharacteristic] = useApiMutation((teamMemberId: string, title: string) =>
     api.addCharacteristic(teamMemberId, title),
   )
+  const [, deleteCharacteristic] = useApiMutation(
+    (teamMemberId: string, characteristicId: string) =>
+      api.deleteCharacteristic(teamMemberId, characteristicId),
+  )
   const [rows, setRows] = useState<MemberChars[]>([])
   const [loading, setLoading] = useState(false)
   const [memberId, setMemberId] = useState('')
   const [title, setTitle] = useState('')
-  const members = membersPage?.items
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const memberList = members ?? []
 
   useEffect(() => {
@@ -629,6 +658,31 @@ function CharacteristicsTab({ teamId }: { teamId: string }) {
     await load()
   }
 
+  async function onDelete(characteristic: CharItem) {
+    if (
+      !myMemberId ||
+      !window.confirm(
+        t('team.deleteOwnCharacteristicConfirm', {
+          title: characteristic.title,
+        }),
+      )
+    )
+      return
+
+    setDeletingId(characteristic.id)
+    try {
+      const result = await deleteCharacteristic(myMemberId, characteristic.id)
+      if (result.error) {
+        toast.error(result.error.message)
+        return
+      }
+      toast.success(t('team.characteristicDeleted'))
+      await load()
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   return (
     <div className="grid gap-5 md:grid-cols-2">
       <section className={stackClass}>
@@ -656,8 +710,22 @@ function CharacteristicsTab({ teamId }: { teamId: string }) {
               ) : (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {row.characteristics.map((c) => (
-                    <Chip key={c.id}>
-                      {c.title} × {c.count}
+                    <Chip key={c.id} className="gap-1 py-1 pe-1">
+                      <span className="px-1">{c.title} × {c.count}</span>
+                      {row.id === myMemberId && (
+                        <button
+                          type="button"
+                          className="inline-flex size-7 items-center justify-center rounded-full text-danger transition hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-50"
+                          aria-label={t('team.deleteCharacteristicLabel', { title: c.title })}
+                          title={t('team.deleteCharacteristic')}
+                          disabled={deletingId === c.id}
+                          onClick={() => {
+                            void onDelete(c)
+                          }}
+                        >
+                          <Trash size={15} aria-hidden="true" />
+                        </button>
+                      )}
                     </Chip>
                   ))}
                 </div>
@@ -880,9 +948,9 @@ function MemoriesTab({
 function TopicsTab({ teamId }: { teamId: string }) {
   const { t } = useTranslation()
   const [{ data: topics }, reexecute] = useApiQuery(!!teamId, () => api.topics(teamId), [teamId])
-  const [{ data: membersPage }] = useApiQuery(
+  const [{ data: members }] = useApiQuery(
     !!teamId,
-    () => api.teamMembers(teamId, { first: 50 }),
+    () => loadAllTeamMembers(teamId),
     [teamId],
   )
   const [, createTopic] = useApiMutation((id: string, topicTitle: string) =>
@@ -967,7 +1035,7 @@ function TopicsTab({ teamId }: { teamId: string }) {
             {t('team.nominee')}
             <Select value={nomineeId} onChange={(e) => setNomineeId(e.target.value)} required>
               <option value="">{t('team.selectMember')}</option>
-              {(membersPage?.items ?? []).map((m) => (
+              {(members ?? []).map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.nickname}
                 </option>
