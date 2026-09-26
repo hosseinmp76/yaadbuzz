@@ -52,6 +52,22 @@ import { MemoryComments } from '../components/MemoryComments'
 const YEARBOOK_THEMES = ['CLASSIC', 'MODERN', 'SCRAPBOOK', 'MINIMAL'] as const
 type YearbookThemeOption = (typeof YEARBOOK_THEMES)[number]
 
+async function loadAllTeamMembers(teamId: string): Promise<TeamMember[]> {
+  const members: TeamMember[] = []
+  let after: string | undefined
+
+  while (true) {
+    const page = await api.teamMembers(teamId, { first: 50, after })
+    members.push(...page.items)
+
+    const nextCursor = page.nextCursor ?? undefined
+    if (!page.hasNext || !nextCursor || nextCursor === after) break
+    after = nextCursor
+  }
+
+  return members
+}
+
 type Tab =
   | 'members'
   | 'tributes'
@@ -582,9 +598,9 @@ function CharacteristicsTab({
   myMemberId?: string
 }) {
   const { t } = useTranslation()
-  const [{ data: membersPage }] = useApiQuery(
+  const [{ data: members }] = useApiQuery(
     !!teamId,
-    () => api.teamMembers(teamId, { first: 100 }),
+    () => loadAllTeamMembers(teamId),
     [teamId],
   )
   const [, addCharacteristic] = useApiMutation((teamMemberId: string, title: string) =>
@@ -599,7 +615,6 @@ function CharacteristicsTab({
   const [memberId, setMemberId] = useState('')
   const [title, setTitle] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const members = membersPage?.items
   const memberList = members ?? []
 
   useEffect(() => {
@@ -935,9 +950,9 @@ function MemoriesTab({
 function TopicsTab({ teamId }: { teamId: string }) {
   const { t } = useTranslation()
   const [{ data: topics }, reexecute] = useApiQuery(!!teamId, () => api.topics(teamId), [teamId])
-  const [{ data: membersPage }] = useApiQuery(
+  const [{ data: members }] = useApiQuery(
     !!teamId,
-    () => api.teamMembers(teamId, { first: 50 }),
+    () => loadAllTeamMembers(teamId),
     [teamId],
   )
   const [, createTopic] = useApiMutation((id: string, topicTitle: string) =>
@@ -1022,7 +1037,7 @@ function TopicsTab({ teamId }: { teamId: string }) {
             {t('team.nominee')}
             <Select value={nomineeId} onChange={(e) => setNomineeId(e.target.value)} required>
               <option value="">{t('team.selectMember')}</option>
-              {(membersPage?.items ?? []).map((m) => (
+              {(members ?? []).map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.nickname}
                 </option>
