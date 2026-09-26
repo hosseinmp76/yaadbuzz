@@ -322,6 +322,12 @@ export const api = {
         body: { title },
       }),
     ) as Promise<Characteristic>,
+  deleteCharacteristic: (teamMemberId: string, characteristicId: string) =>
+    unwrap(
+      openapi.DELETE('/api/members/{id}/characteristics/{characteristicId}', {
+        params: { path: { id: teamMemberId, characteristicId } },
+      }),
+    ) as Promise<{ message: string }>,
 
   search: (teamId: string, q: string, opts?: { first?: number; after?: string }) =>
     unwrap(
