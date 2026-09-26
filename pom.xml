@@ -261,6 +261,11 @@
                 <skipITs>true</skipITs>
                 <quarkus.native.enabled>true</quarkus.native.enabled>
                 <quarkus.package.jar.enabled>false</quarkus.package.jar.enabled>
+                <!-- The Mandrel/GraalVM native-image builder container lags behind new JDK
+                     GA releases, so it may not understand class files compiled for the
+                     latest release yet. Target the highest release the current builder
+                     image supports until an updated builder image is available. -->
+                <maven.compiler.release>25</maven.compiler.release>
             </properties>
         </profile>
     </profiles>
