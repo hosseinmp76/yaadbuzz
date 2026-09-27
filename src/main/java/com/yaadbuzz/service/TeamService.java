@@ -364,23 +364,27 @@ public class TeamService {
         int limit = first == null || first < 1 || first > 50 ? 20 : first;
         CursorUtil.Cursor cursor = CursorUtil.decode(after);
 
-        StringBuilder ql = new StringBuilder("team.id = ?1 and deletedAt is null");
+        // left join fetch avatar: TeamMemberType.from() reads MediaAsset fields
+        // (not just its id), so without fetching it eagerly every member with an
+        // avatar would trigger its own lazy-load query (N+1).
+        StringBuilder ql = new StringBuilder(
+                "select tm from TeamMember tm left join fetch tm.avatar where tm.team.id = ?1 and tm.deletedAt is null");
         var params = new java.util.ArrayList<>();
         params.add(teamId);
         int idx = 2;
         if (query != null && !query.isBlank()) {
-            ql.append(" and lower(nickname) like ?").append(idx++);
+            ql.append(" and lower(tm.nickname) like ?").append(idx++);
             params.add("%" + query.trim().toLowerCase() + "%");
         }
         if (cursor != null) {
-            ql.append(" and (createdAt < ?").append(idx++)
-                    .append(" or (createdAt = ?").append(idx++)
-                    .append(" and id < ?").append(idx++).append("))");
+            ql.append(" and (tm.createdAt < ?").append(idx++)
+                    .append(" or (tm.createdAt = ?").append(idx++)
+                    .append(" and tm.id < ?").append(idx++).append("))");
             params.add(cursor.createdAt());
             params.add(cursor.createdAt());
             params.add(cursor.id());
         }
-        ql.append(" order by createdAt desc, id desc");
+        ql.append(" order by tm.createdAt desc, tm.id desc");
 
         List<TeamMember> rows = TeamMember.find(ql.toString(), params.toArray())
                 .page(0, limit + 1)
