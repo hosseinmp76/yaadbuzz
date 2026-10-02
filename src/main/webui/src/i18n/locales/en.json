@@ -97,6 +97,7 @@
     }
   },
   "footer": {
+    "version": "Version",
     "copy": "© {{year}} Yaadbuzz · free & open source under the",
     "licenseName": "GNU Affero GPL v3",
     "about": "About",

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 const AGPL_URL = 'https://www.gnu.org/licenses/agpl-3.0.html'
+const APP_VERSION = import.meta.env.VITE_APP_VERSION?.trim() || 'dev'
 
 export function SiteFooter() {
   const { t } = useTranslation()
@@ -44,6 +45,9 @@ export function SiteFooter() {
           </a>
         </nav>
       </div>
+      <p className="mt-4 text-xs">
+        {t('footer.version')}: <bdi dir="ltr">{APP_VERSION}</bdi>
+      </p>
     </footer>
   )
 }

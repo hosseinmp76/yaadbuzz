@@ -35,6 +35,9 @@ echo "${ROOT}"
 
 DOCKERHUB_USER="${DOCKERHUB_USER:-hosseinmp762}"
 IMAGE_NAME="${IMAGE_NAME:-yaadbuzz}"
+IMAGE_TAG="${IMAGE_TAG:-1.0.0-SNAPSHOT}"
+# Quinoa passes this to Vite, which embeds the image tag in the site footer.
+export VITE_APP_VERSION="${IMAGE_TAG}"
 LOCAL_IMAGE="hosseinmp762/${IMAGE_NAME}:${IMAGE_TAG}"
 
 if [[ -z "${DOCKERHUB_USER}" ]]; then

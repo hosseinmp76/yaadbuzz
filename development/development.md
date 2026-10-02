@@ -8,7 +8,7 @@ Companion agent context: [`../AGENTS.md`](../AGENTS.md).
 
 | Tool | Notes |
 |---|---|
-| Java **25** | Recommended via [sdkman](https://sdkman.io/) (GraalVM or Temurin) |
+| Java **27** | Required by Maven Enforcer; native builds target Java **25** for the builder image |
 | Node.js **24.x LTS** | Via [nvm](https://github.com/nvm-sh/nvm); Quinoa can also install Node automatically |
 | Docker + Compose | Postgres, Elasticsearch, MinIO; also used for full-stack and image builds |
 | Maven Wrapper | Use `./mvnw` from the repo root (no global Maven required) |
@@ -21,6 +21,14 @@ nvm use --lts
 ```
 
 ## Infrastructure (always needed for local app runs)
+
+The backend uses **Quarkus 4.0.0.Beta1**, a prerelease. See the
+[Quarkus 4 migration guide](https://github.com/quarkusio/quarkus/wiki/Migration-Guide-4.0).
+PostgreSQL 16 meets the new default database requirement. Hibernate batch fetching
+uses `quarkus.hibernate-orm.fetch.batch-size` (the old property was removed).
+Quinoa is updated to 2.9.2 to avoid its older reference to the removed
+`DevServicesResultBuildItem.RunningDevService` API. Native runtime Dockerfiles
+use UBI 10 to match Quarkus 4's native builder.
 
 Start dependencies (not the app itself):
 
@@ -345,6 +353,10 @@ export DOCKERHUB_USER=yaadbuzz
 export IMAGE_TAG=1.0.0-SNAPSHOT
 ./development/push-dockerhub.sh
 ```
+
+The script embeds `IMAGE_TAG` in the website footer for JVM and native builds
+via `VITE_APP_VERSION`. Builds without this variable show `dev`.
+`SKIP_BUILD=1` preserves the version already embedded in the existing image.
 
 Pull on a server:
 

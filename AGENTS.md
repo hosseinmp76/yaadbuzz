@@ -14,7 +14,7 @@ Naming: use **Team** (not Department).
 
 | Layer | Choice |
 |---|---|
-| Backend | Quarkus **3.37.4**, Java **25**, Maven Wrapper (`./mvnw`) |
+| Backend | Quarkus **4.0.0.Beta1**, Java **27** (native target **25**), Maven Wrapper (`./mvnw`) |
 | Frontend | React 19 + TypeScript + Vite via **Quinoa** (`src/main/webui`) |
 | App API | REST + OpenAPI (`/api/*`) |
 | Binary endpoints | Multipart media upload under `/api` |

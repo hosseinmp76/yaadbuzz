@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.hibernate.exception.ConstraintViolationException;
 
 @ApplicationScoped
 public class TopicService {
@@ -26,10 +27,22 @@ public class TopicService {
         if (title == null || title.isBlank()) {
             throw ApiException.badRequest("Topic title is required");
         }
+        String normalizedTitle = title.trim();
+        if (Topic.count("team.id = ?1 and title = ?2", teamId, normalizedTitle) > 0) {
+            throw ApiException.conflict("A topic with this title already exists in this team");
+        }
         Topic topic = new Topic();
         topic.team = accessService.requireTeam(teamId);
-        topic.title = title.trim();
-        topic.persist();
+        topic.title = normalizedTitle;
+        try {
+            // Flush here so concurrent duplicate requests also receive a 409.
+            topic.persistAndFlush();
+        } catch (ConstraintViolationException e) {
+            if ("uk_topic_team_title".equals(e.getConstraintName())) {
+                throw ApiException.conflict("A topic with this title already exists in this team");
+            }
+            throw e;
+        }
         return topic;
     }
 
